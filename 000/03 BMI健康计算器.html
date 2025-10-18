@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMI健康计算器</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .calculator {
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 500px;
+            padding: 30px;
+            text-align: center;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 25px;
+            font-size: 28px;
+        }
+        .input-group {
+            margin: 20px 0;
+            text-align: left;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #34495e;
+            font-weight: 500;
+        }
+        input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input:focus {
+            border-color: #3498db;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin: 25px 0;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        #result {
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 500;
+            display: none;
+        }
+        .bmi-value {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .bmi-classification {
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+        .info-table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+        .info-table th, .info-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+        }
+        .info-table th {
+            background-color: #f2f2f2;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <h1>BMI健康计算器</h1>
+        <div class="input-group">
+            <label for="height">身高 (厘米):</label>
+            <input type="number" id="height" step="0.1" placeholder="请输入身高 (厘米)" min="1">
+        </div>
+        <div class="input-group">
+            <label for="weight">体重 (斤):</label>
+            <input type="number" id="weight" step="0.1" placeholder="请输入体重 (斤)" min="1">
+        </div>
+        <button onclick="calculateBMI()">计算 BMI</button>
+        <div id="result">
+            <div class="bmi-value" id="bmi-value">0.0</div>
+            <div class="bmi-classification" id="bmi-classification">健康状态</div>
+            <div id="health-tip"></div>
+            
+            <table class="info-table">
+                <tr>
+                    <th>BMI 范围</th>
+                    <th>体重分类</th>
+                    <th>健康风险</th>
+                </tr>
+                <tr>
+                    <td>&lt; 18.5</td>
+                    <td>体重过轻</td>
+                    <td>营养不良风险</td>
+                </tr>
+                <tr>
+                    <td>18.5 - 23.9</td>
+                    <td>健康体重</td>
+                    <td>最低风险</td>
+                </tr>
+                <tr>
+                    <td>24.0 - 27.9</td>
+                    <td>超重</td>
+                    <td>轻度增加</td>
+                </tr>
+                <tr>
+                    <td>≥ 28.0</td>
+                    <td>肥胖</td>
+                    <td>显著增加</td>
+                </tr>
+            </table>
+        </div>
+        <div class="footer">
+            注：根据中国成人BMI分类标准 
+        </div>
+    </div>
+
+    <script>
+        function calculateBMI() {
+            // 获取输入值
+            const heightCm = parseFloat(document.getElementById('height').value);
+            const weightJin = parseFloat(document.getElementById('weight').value);
+            
+            // 验证输入
+            if (isNaN(heightCm) || isNaN(weightJin) || heightCm <= 0 || weightJin <= 0) {
+                alert("请输入有效的数值");
+                return;
+            }
+            
+            // 单位转换
+            const heightM = heightCm / 100;          // 厘米转米
+            const weightKg = weightJin / 2;          // 斤转千克
+            
+            // 计算BMI
+            const bmi = weightKg / (heightM * heightM);
+            
+            // 显示结果
+            document.getElementById('bmi-value').textContent = bmi.toFixed(1);
+            
+            // 根据BMI分类设置健康提示
+            let classification = "";
+            let healthTip = "";
+            let bmiClass = "";
+            
+            if (bmi < 18.5) {
+                classification = "体重过轻";
+                healthTip = "建议增加营养摄入，适当增重";
+                bmiClass = "underweight";
+            } else if (bmi >= 18.5 && bmi < 24) {
+                classification = "健康体重";
+                healthTip = "恭喜！保持健康的生活方式";
+                bmiClass = "healthy";
+            } else if (bmi >= 24 && bmi < 28) {
+                classification = "超重";
+                healthTip = "建议适当控制饮食，增加运动量";
+                bmiClass = "overweight";
+            } else {
+                classification = "肥胖";
+                healthTip = "建议咨询专业人士，制定科学减重计划";
+                bmiClass = "obese";
+            }
+            
+            document.getElementById('bmi-classification').textContent = classification;
+            document.getElementById('health-tip').textContent = healthTip;
+            
+            // 设置分类颜色
+            const classificationElement = document.getElementById('bmi-classification');
+            classificationElement.className = "bmi-classification " + bmiClass;
+            
+            // 显示结果区域
+            document.getElementById('result').style.display = "block";
+            
+            // 根据分类设置背景色
+            const colors = {
+                underweight: "#3498db",   // 蓝色
+                healthy: "#2ecc71",       // 绿色
+                overweight: "#f39c12",    // 橙色
+                obese: "#e74c3c"          // 红色
+            };
+            
+            classificationElement.style.backgroundColor = colors[bmiClass];
+            classificationElement.style.color = "white";
+        }
+    </script>
+</body>
+</html>

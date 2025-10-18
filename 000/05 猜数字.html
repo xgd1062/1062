@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>猜数字小游戏</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #2c3e50, #4a6491);
+            color: white;
+            text-align: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .game-container {
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 10;
+            /* 游戏容器保持在中层 */
+        }
+
+        h1 {
+            color: #ffd700;
+            margin-bottom: 20px;
+            font-size: 2.5rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .range-info {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+        }
+
+        .range-info span {
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        input {
+            padding: 14px 20px;
+            width: 80%;
+            max-width: 300px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            margin: 15px 0;
+            text-align: center;
+        }
+
+        input:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.5);
+        }
+
+        button {
+            background: linear-gradient(to right, #3498db, #2c3e50);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 14px 35px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px 5px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        #resultText {
+            min-height: 60px;
+            margin: 15px 0;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            background: rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1.4;
+        }
+
+        #resultText b {
+            margin-left: 8px;
+        }
+
+        #resultText br+span {
+            margin-left: 22px;
+        }
+
+        .history-title {
+            margin-top: 20px;
+            color: #ffd700;
+        }
+
+        #historyList {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .history-item {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 1rem;
+        }
+
+        /* 烟花容器 - 放在最上层 */
+        .fireworks-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            /* 允许穿透点击 */
+            z-index: 20;
+            /* 确保在所有元素上方 */
+        }
+
+        @media (max-width: 480px) {
+            .game-container {
+                padding: 20px 15px;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            button {
+                width: 90%;
+                margin: 8px 0;
+            }
+
+            #resultText {
+                min-height: 50px;
+                padding: 10px 15px;
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 烟花容器 -->
+    <div class="fireworks-container" id="fireworksContainer"></div>
+
+    <div class="game-container">
+        <h1>猜数字小游戏</h1>
+        <p>我已经想好了一个1-100的数字，猜猜是多少？</p>
+
+        <div class="range-info">
+            当前猜测范围: <span id="currentRange">1 - 100</span>
+        </div>
+
+        <div id="resultText">等待你的第一次猜测...</div>
+
+        <input type="number" id="guessInput" min="1" max="100" placeholder="输入1-100的数字">
+        <div>
+            <button onclick="checkGuess()">提交猜测</button>
+            <button onclick="restartGame()">重新开始</button>
+        </div>
+
+        <div class="history-title">猜测历史</div>
+        <div id="historyList"></div>
+    </div>
+
+    <script>
+        // 游戏变量
+        let randomNumber;
+        let attempts = 0;
+        let guessHistory = [];
+        let minRange = 1;
+        let maxRange = 100;
+        const fireworksContainer = document.getElementById('fireworksContainer');
+
+        // 初始化游戏
+        function startGame() {
+            randomNumber = Math.floor(Math.random() * 100) + 1;
+            attempts = 0;
+            guessHistory = [];
+            minRange = 1;
+            maxRange = 100;
+            document.getElementById('currentRange').textContent = `${minRange} - ${maxRange}`;
+            document.getElementById('resultText').textContent = '等待你的第一次猜测...';
+            document.getElementById('historyList').innerHTML = '';
+            document.getElementById('guessInput').value = '';
+            document.getElementById('guessInput').disabled = false;
+            // 更新输入框的范围限制
+            document.getElementById('guessInput').min = minRange;
+            document.getElementById('guessInput').max = maxRange;
+            fireworksContainer.innerHTML = '';
+
+            console.log(`目标数字: ${randomNumber}`);
+        }
+
+        // 检查猜测
+        function checkGuess() {
+            const guessInput = document.getElementById('guessInput');
+            const resultText = document.getElementById('resultText');
+            const guess = parseInt(guessInput.value);
+
+            // 验证输入有效性 - 增加范围外检查
+            if (isNaN(guess)) {
+                resultText.innerHTML = '⚠️ 请输入有效的数字！';
+                return;
+            }
+            if (guess < minRange || guess > maxRange) {
+                resultText.innerHTML = `⚠️ 请输入${minRange}-${maxRange}之间的数字！`;
+                return;
+            }
+
+            attempts++;
+            guessHistory.push(guess);
+            updateHistoryDisplay();
+
+            if (guess < randomNumber) {
+                minRange = Math.max(minRange, guess + 1);
+                resultText.innerHTML = `📉 <b>${guess}</b> 太小了！<br><span>尝试次数: ${attempts}</span>`;
+                // 更新输入框范围限制
+                guessInput.min = minRange;
+            } else if (guess > randomNumber) {
+                maxRange = Math.min(maxRange, guess - 1);
+                resultText.innerHTML = `📈 <b>${guess}</b> 太大了！<br><span>尝试次数: ${attempts}</span>`;
+                // 更新输入框范围限制
+                guessInput.max = maxRange;
+            } else {
+                // 猜对了，显示烟花
+                resultText.innerHTML = `🎉 <b>恭喜你！猜对了！</b><br><span>总尝试次数: ${attempts}</span>`;
+                guessInput.disabled = true;
+                launchFireworks(8); // 发射8组烟花
+            }
+
+            document.getElementById('currentRange').textContent = `${minRange} - ${maxRange}`;
+            guessInput.value = '';
+            guessInput.focus();
+        }
+
+        // 更新历史记录显示
+        function updateHistoryDisplay() {
+            const historyList = document.getElementById('historyList');
+            historyList.innerHTML = '';
+
+            guessHistory.forEach((guess, index) => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                historyItem.textContent = `${index + 1}: ${guess}`;
+
+                if (guess < randomNumber) {
+                    historyItem.style.background = 'rgba(231, 76, 60, 0.3)';
+                } else if (guess > randomNumber) {
+                    historyItem.style.background = 'rgba(52, 152, 219, 0.3)';
+                } else {
+                    historyItem.style.background = 'rgba(46, 204, 113, 0.4)';
+                }
+
+                historyList.appendChild(historyItem);
+            });
+        }
+
+        // 重新开始游戏
+        function restartGame() {
+            startGame();
+        }
+
+        // 烟花特效核心函数 - 加快发射速度
+        function launchFireworks(count) {
+            fireworksContainer.innerHTML = '';
+
+            const colors = [
+                '#ff3864', '#ffdd57', '#23d16b', '#61dafb',
+                '#b86bff', '#ff9f1c', '#ffffff', '#00e5ff'
+            ];
+
+            // 发射指定数量的烟花，缩短间隔时间（200ms）
+            for (let i = 0; i < count; i++) {
+                setTimeout(() => {
+                    const firework = document.createElement('div');
+                    const startX = Math.random() * window.innerWidth;
+                    const endY = Math.random() * window.innerHeight * 0.6;
+                    const color = colors[Math.floor(Math.random() * colors.length)];
+
+                    firework.style.cssText = `
+                        position: absolute;
+                        width: 4px;
+                        height: 20px;
+                        background: linear-gradient(to top, ${color}, rgba(255,255,255,0.8));
+                        border-radius: 50% 50% 0 0;
+                        bottom: 0;
+                        left: ${startX}px;
+                        z-index: 20;
+                        box-shadow: 0 0 10px ${color};
+                        transform-origin: bottom center;
+                        opacity: 0;
+                    `;
+
+                    fireworksContainer.appendChild(firework);
+
+                    // 加快上升速度（0.8秒完成上升，原1.2秒）
+                    setTimeout(() => {
+                        firework.style.transition = `all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1)`;
+                        firework.style.bottom = `${window.innerHeight - endY}px`;
+                        firework.style.opacity = 1;
+
+                        // 提前爆炸（800ms后，原1200ms）
+                        setTimeout(() => {
+                            explodeFirework(startX, endY, color);
+                            firework.remove();
+                        }, 800);
+                    }, 10);
+                }, i * 200); // 每组烟花间隔200ms（原500ms）
+            }
+        }
+
+        // 烟花绽放效果 - 加快爆炸速度
+        function explodeFirework(x, y, color) {
+            const particleCount = 80;
+            const particles = [];
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                const size = Math.random() * 4 + 2;
+                const angle = (i / particleCount) * Math.PI * 2;
+                const distance = Math.random() * 80 + 40;
+                const vx = Math.cos(angle) * distance;
+                const vy = Math.sin(angle) * distance;
+
+                particle.style.cssText = `
+                    position: absolute;
+                    width: ${size}px;
+                    height: ${size}px;
+                    background: ${color};
+                    border-radius: 50%;
+                    left: ${x}px;
+                    top: ${y}px;
+                    box-shadow: 0 0 8px ${color};
+                    opacity: 0;
+                `;
+
+                fireworksContainer.appendChild(particle);
+                particles.push(particle);
+
+                // 加快爆炸扩散速度（1秒完成，原1.5秒）
+                setTimeout(() => {
+                    particle.style.transition = `all 1s ease-out`;
+                    particle.style.left = `${x + vx}px`;
+                    particle.style.top = `${y + vy}px`;
+                    particle.style.opacity = 1;
+
+                    // 加快淡出速度（600ms，原800ms）
+                    setTimeout(() => {
+                        particle.style.transition = `opacity 0.6s ease-out`;
+                        particle.style.opacity = 0;
+                        setTimeout(() => particle.remove(), 600);
+                    }, 600);
+                }, 10);
+            }
+        }
+
+        // 键盘支持
+        document.getElementById('guessInput').addEventListener('keyup', function (event) {
+            if (event.key === 'Enter') {
+                checkGuess();
+            }
+        });
+
+        // 页面加载时开始游戏
+        window.onload = startGame;
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>电量计算器</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            padding: 20px;
+        }
+        
+        .calculator {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 450px;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        
+        .input-group {
+            margin-bottom: 25px;
+            text-align: left;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2c3e50;
+            font-weight: 500;
+            font-size: 16px;
+        }
+        
+        input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+        
+        input:focus {
+            border-color: #3498db;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+        
+        button {
+            background: linear-gradient(to right, #3498db, #2c3e50);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 16px 25px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 12px;
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .result.show {
+            display: block;
+        }
+        
+        .result h2 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+        
+        .result-value {
+            font-size: 42px;
+            font-weight: 700;
+            color: #3498db;
+        }
+        
+        .unit {
+            font-size: 20px;
+            color: #7f8c8d;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <h1>电量消耗计算器</h1>
+        
+        <div class="input-group">
+            <label for="power">设备功率 (瓦特/W)</label>
+            <input type="number" id="power" placeholder="例如：60" min="1" step="0.1">
+        </div>
+        
+        <div class="input-group">
+            <label for="hours">使用时长 (小时)</label>
+            <input type="number" id="hours" placeholder="例如：5" min="0.1" step="0.1">
+        </div>
+        
+        <button onclick="calculate()">计算耗电量</button>
+        
+        <div class="result" id="result">
+            <h2>耗电量结果</h2>
+            <div>
+                <span class="result-value" id="consumption">0.00</span>
+                <span class="unit">千瓦时 (kWh)</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function calculate() {
+            const power = parseFloat(document.getElementById('power').value);
+            const hours = parseFloat(document.getElementById('hours').value);
+            
+            if (isNaN(power) || isNaN(hours) || power <= 0 || hours <= 0) {
+                alert("请输入有效的正数值");
+                return;
+            }
+            
+            // 计算公式：电量 (kWh) = 功率 (W) × 时间 (小时) ÷ 1000
+            const consumption = (power * hours) / 1000;
+            
+            document.getElementById('consumption').textContent = consumption.toFixed(2);
+            document.getElementById('result').classList.add('show');
+        }
+    </script>
+</body>
+</html>
