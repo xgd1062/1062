@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>诗意在线工具箱</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            line-height: 1.6;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 20px;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            animation: fadeIn 1s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .poem-title {
+            font-size: 2.8rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(45deg, #a78bfa, #c084fc, #f472b6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            transition: all 0.5s ease;
+            padding: 10px 0;
+        }
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 20px;
+        }
+        .tool-card {
+            display: block;
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(5px);
+            padding: 20px;
+            border-radius: 12px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(124, 58, 237, 0.2);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+            height: 100%;
+        }
+        .tool-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(124, 58, 237, 0.3);
+            background: rgba(30, 41, 59, 0.85);
+            border-color: rgba(124, 58, 237, 0.4);
+        }
+        .tool-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(167, 139, 250, 0.1), transparent);
+            transition: all 0.8s ease;
+        }
+        .tool-card:hover::before {
+            left: 100%;
+        }
+        .tool-card h3 {
+            color: #c084fc;
+            margin-top: 0;
+            font-size: 1.35rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .tool-card p {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 0.9rem;
+            margin-bottom: 0;
+            line-height: 1.5;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.85rem;
+        }
+        .icon {
+            font-size: 1.5rem;
+        }
+        @media (max-width: 768px) {
+            .tool-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            .poem-title {
+                font-size: 2.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 class="poem-title" id="poemTitle">工欲善其事，必先利其器</h1>
+        </header>
+        <div class="tool-grid">
+            <!-- 工具卡片 1 -->
+            <a href="#" class="tool-card">
+                <h3><span class="icon">{ }</span> JSON格式化与校验</h3>
+                <p>轻松格式化和验证JSON数据，支持高亮显示和错误提示。</p>
+            </a>
+            <!-- 工具卡片 2 -->
+            <a href="#" class="tool-card">
+                <h3><span class="icon">≡</span> Base64编码/解码</h3>
+                <p>快速在文本和Base64编码之间进行转换，支持URL安全模式。</p>
+            </a>
+            <!-- 工具卡片 3 -->
+            <a href="#" class="tool-card">
+                <h3><span class="icon">📝</span> Markdown编辑器</h3>
+                <p>实时预览的Markdown编辑器，支持导出为HTML或PDF文件。</p>
+            </a>
+            <!-- 工具卡片 4 -->
+            <a href="#" class="tool-card">
+                <h3><span class="icon">🔲</span> 二维码生成器</h3>
+                <p>将任何URL或文本转换为高质量的二维码图片，可自定义样式。</p>
+            </a>
+            <!-- 工具卡片 5 -->
+            <a href="#" class="tool-card">
+                <h3><span class="icon">🔒</span> 密码强度检查</h3>
+                <p>评估密码强度并提供改进建议，帮助您创建更安全的密码。</p>
+            </a>
+            <!-- 工具卡片 6 -->
+            <a href="#" class="tool-card">
+                <h3><span class="icon">🖼️</span> 图片压缩工具</h3>
+                <p>在不显著降低质量的前提下，有效压缩图片文件大小。</p>
+            </a>
+            <!-- 工具卡片 7 -->
+            <a href="#" class="tool-card">
+                <h3><span class="icon">🌐</span> IP地址查询</h3>
+                <p>快速查询IP地址的地理位置和网络服务提供商信息。</p>
+            </a>
+            <!-- 工具卡片 8 -->
+            <a href="#" class="tool-card">
+                <h3><span class="icon">📊</span> 数据转换器</h3>
+                <p>支持JSON、XML、YAML等多种数据格式之间的相互转换。</p>
+            </a>
+        </div>
+        <div class="footer">
+            <p>诗意工具箱 &copy; 2023 | 每次刷新页面，标题诗句都会变化</p>
+        </div>
+    </div>
+    <script>
+        // 诗句数组 - 包含多句与工具、工作相关的诗句
+        const poems = [
+            "工欲善其事，必先利其器",
+            "磨刀不误砍柴工，利器在手事易成",
+            "运筹帷幄之中，决胜千里之外",
+            "利器入手，快意恩仇皆可求",
+            "妙手偶得之，工具助其成",
+            "效率之道，利器为先",
+            "庖丁解牛，善用其器",
+            "工具有道，事半功倍",
+            "智巧生于器用之间",
+            "器利则工善，工善则事成"
+        ];
+        
+        // 当页面加载时
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取标题元素
+            const poemTitle = document.getElementById('poemTitle');
+            // 随机选择一首诗
+            const randomIndex = Math.floor(Math.random() * poems.length);
+            const selectedPoem = poems[randomIndex];
+            // 更新标题文本
+            poemTitle.textContent = selectedPoem;
+            // 添加动态效果
+            setTimeout(() => {
+                poemTitle.style.transform = "scale(1.03)";
+                poemTitle.style.textShadow = "0 6px 18px rgba(0, 0, 0, 0.4)";
+            }, 300);
+        });
+    </script>
+</body>
+</html>
