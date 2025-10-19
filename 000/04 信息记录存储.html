@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>信息存储与历史记录</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(90deg, #4b6cb7 0%, #182848 100%);
+            color: white;
+            padding: 25px 30px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .subtitle {
+            opacity: 0.85;
+            font-weight: 300;
+        }
+
+        .input-section {
+            padding: 30px;
+            border-bottom: 1px solid #eee;
+        }
+
+        textarea {
+            width: 100%;
+            height: 120px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            resize: vertical;
+            font-size: 1rem;
+            margin-bottom: 15px;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #4b6cb7;
+            box-shadow: 0 0 0 2px rgba(75, 108, 183, 0.2);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            flex: 1;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-width: 120px;
+        }
+
+        #saveBtn {
+            background: linear-gradient(to right, #4b6cb7, #3a56a0);
+            color: white;
+        }
+
+        #saveBtn:hover {
+            opacity: 0.92;
+            transform: translateY(-2px);
+        }
+
+        #exportBtn {
+            background: linear-gradient(to right, #28a745, #218838);
+            color: white;
+        }
+
+        #exportBtn:hover {
+            opacity: 0.92;
+            transform: translateY(-2px);
+        }
+
+        #clearBtn {
+            background: linear-gradient(to right, #dc3545, #bb2d3b);
+            color: white;
+        }
+
+        #clearBtn:hover {
+            opacity: 0.92;
+            transform: translateY(-2px);
+        }
+
+        .latest-section {
+            padding: 25px 30px;
+            background-color: #f8f9ff;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            color: #2c3e50;
+            font-size: 1.4rem;
+        }
+
+        .section-title::before {
+            content: "▶";
+            margin-right: 10px;
+            color: #4b6cb7;
+            font-size: 0.9rem;
+        }
+
+        .latest-cards {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 25px;
+            justify-content: center;
+        }
+
+        .card {
+            width: 320px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+            padding: 16px 20px;
+            position: relative;
+            border-left: 4px solid #4b6cb7;
+            transition: transform 0.2s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @media (max-width: 700px) {
+            .card {
+                width: calc(50% - 10px);
+                min-width: 250px;
+            }
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .card-time {
+            font-size: 0.8rem;
+            color: #777;
+            white-space: nowrap;
+            line-height: 1;
+        }
+
+        .card-content {
+            flex: 1;
+            line-height: 1.6;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            /* 确保长文本自动换行 */
+            word-wrap: break-word;
+            /* 旧版浏览器兼容 */
+            word-break: break-word;
+            /* 允许在单词内换行 */
+            hyphens: auto;
+            /* 自动连字符（增强可读性） */
+        }
+
+        .history-section {
+            padding: 25px 30px;
+        }
+
+        .history-container {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            padding: 15px;
+            background: white;
+            margin-top: 10px;
+        }
+
+        .history-item {
+            padding: 12px 15px;
+            border-bottom: 1px dashed #eee;
+            cursor: pointer;
+            transition: background 0.2s;
+            background-color: white;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .history-item:hover {
+            background-color: #f0f5ff;
+        }
+
+        .history-content-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .history-time {
+            font-size: 0.85rem;
+            color: #777;
+            white-space: nowrap;
+        }
+
+        .history-time:empty {
+            display: none;
+            /* 时间为空时不显示 */
+        }
+
+        .history-content {
+            line-height: 1.6;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            width: 100%;
+            /* 确保长文本自动换行 */
+            word-wrap: break-word;
+            /* 旧版浏览器兼容 */
+            word-break: break-word;
+            /* 允许在单词内换行 */
+            hyphens: auto;
+            /* 自动连字符（增强可读性） */
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        @media (max-width: 600px) {
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .latest-cards {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .card {
+                width: 100%;
+                max-width: 320px;
+            }
+
+            .history-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+                min-height: auto;
+            }
+
+            .history-time {
+                text-align: left;
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>信息存储管理系统</h1>
+            <p class="subtitle">输入信息自动保存 · 最新记录优先展示 · 点击复制历史内容</p>
+        </header>
+
+        <section class="input-section">
+            <textarea id="infoInput" placeholder="请输入您要保存的信息（例如：项目进度、重要笔记、待办事项...）"></textarea>
+            <div class="btn-group">
+                <button id="saveBtn">保存信息</button>
+                <button id="exportBtn">导出历史记录</button>
+                <button id="clearBtn">清空历史记录</button>
+            </div>
+        </section>
+
+        <section class="latest-section">
+            <h2 class="section-title">最新记录（最近2条）</h2>
+            <div class="latest-cards" id="latestRecords">
+                <!-- 初始内容由JS生成 -->
+            </div>
+        </section>
+
+        <section class="history-section">
+            <h2 class="section-title">全部历史记录</h2>
+            <div class="history-container" id="historyContainer">
+                <!-- 初始内容由JS生成 -->
+            </div>
+        </section>
+    </div>
+
+    <div class="notification" id="notification">内容已复制到剪贴板!</div>
+
+    <script>
+        // 初始化数据存储，限制最大记录数为100条
+        const MAX_RECORDS = 100;
+        let storedData = JSON.parse(localStorage.getItem('infoStorage')) || [];
+
+        // DOM元素
+        const infoInput = document.getElementById('infoInput');
+        const saveBtn = document.getElementById('saveBtn');
+        const exportBtn = document.getElementById('exportBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const latestRecords = document.getElementById('latestRecords');
+        const historyContainer = document.getElementById('historyContainer');
+        const notification = document.getElementById('notification');
+
+        // 事件监听
+        saveBtn.addEventListener('click', saveInformation);
+        exportBtn.addEventListener('click', exportHistory);
+        clearBtn.addEventListener('click', clearHistory);
+
+        // 初始化显示
+        updateDisplay();
+
+        function saveInformation() {
+            const content = infoInput.value.trim();
+            if (!content) {
+                showNotification('内容不能为空!');
+                return;
+            }
+
+            const newRecord = {
+                id: Date.now(),
+                content: content,
+                timestamp: new Date().toISOString()
+            };
+
+            // 添加到存储数组的开头
+            storedData.unshift(newRecord);
+
+            // 限制最大记录数
+            if (storedData.length > MAX_RECORDS) {
+                storedData = storedData.slice(0, MAX_RECORDS);
+            }
+
+            // 保存到localStorage
+            localStorage.setItem('infoStorage', JSON.stringify(storedData));
+
+            // 更新显示
+            updateDisplay();
+
+            // 清空输入框
+            infoInput.value = '';
+
+            showNotification('信息保存成功!');
+        }
+
+        function updateDisplay() {
+            updateLatestRecords();
+            updateHistory();
+        }
+
+        function updateLatestRecords() {
+            if (storedData.length === 0) {
+                // 初始状态显示2个空卡片，保持布局对称
+                latestRecords.innerHTML = `
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-time">暂无记录</div>
+                        </div>
+                        <div class="card-content">添加第一条记录后这里将显示最新信息</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-time">暂无记录</div>
+                        </div>
+                        <div class="card-content">添加更多记录后这里将显示第二条信息</div>
+                    </div>
+                `;
+                return;
+            }
+
+            // 只取前2条最新记录
+            const latest = storedData.slice(0, 2);
+            latestRecords.innerHTML = latest.map(record => `
+                <div class="card" data-id="${record.id}">
+                    <div class="card-header">
+                        <div class="card-time">${formatDate(record.timestamp)}</div>
+                    </div>
+                    <div class="card-content">${formatContent(record.content)}</div>
+                </div>
+            `).join('');
+
+            // 补全第二个卡片（当只有1条记录时）
+            if (storedData.length === 1) {
+                latestRecords.innerHTML += `
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-time">暂无记录</div>
+                        </div>
+                        <div class="card-content">添加更多记录后这里将显示第二条信息</div>
+                    </div>
+                `;
+            }
+
+            // 添加点击复制功能
+            document.querySelectorAll('.latest-section .card').forEach(card => {
+                const id = card.getAttribute('data-id');
+                if (id) { // 只有有记录ID的卡片才添加点击事件
+                    card.addEventListener('click', () => copyToClipboard(id));
+                }
+            });
+        }
+
+        function updateHistory() {
+            if (storedData.length === 0) {
+                historyContainer.innerHTML = `
+                    <div class="history-item">
+                        <div class="history-content-wrapper">
+                            <div class="history-content">暂无历史记录</div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // 从第3条开始显示剩余记录
+            const history = storedData.slice(2);
+            historyContainer.innerHTML = history.map(record => `
+                <div class="history-item" data-id="${record.id}">
+                    <div class="history-content-wrapper">
+                        <div class="history-time">${formatDate(record.timestamp)}</div>
+                        <div class="history-content">${formatContent(record.content)}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            // 添加点击复制功能
+            document.querySelectorAll('.history-item').forEach(item => {
+                item.addEventListener('click', function () {
+                    const id = this.getAttribute('data-id');
+                    copyToClipboard(id);
+                });
+            });
+        }
+
+        // 兼容式复制功能
+        function copyToClipboard(id) {
+            const record = storedData.find(item => item.id == id);
+            if (!record) return;
+
+            // 创建临时文本框用于复制（兼容所有浏览器）
+            const tempInput = document.createElement('textarea');
+            tempInput.value = record.content; // 使用原始内容复制（保留换行）
+            document.body.appendChild(tempInput);
+            tempInput.select();
+
+            try {
+                const success = document.execCommand('copy');
+                showNotification(success ? '内容已复制到剪贴板!' : '复制失败，请重试');
+            } catch (err) {
+                showNotification('复制失败，请重试');
+            } finally {
+                document.body.removeChild(tempInput);
+            }
+        }
+
+        function exportHistory() {
+            if (storedData.length === 0) {
+                showNotification('没有可导出的记录!');
+                return;
+            }
+
+            // 构建导出内容
+            let exportContent = "历史记录导出\n\n";
+            exportContent += "生成时间: " + new Date().toLocaleString() + "\n";
+            exportContent += "记录总数: " + storedData.length + "\n\n";
+
+            storedData.forEach((record, index) => {
+                exportContent += `记录 #${index + 1}\n`;
+                exportContent += `时间: ${formatDate(record.timestamp)}\n`;
+                exportContent += `内容: ${record.content}\n\n`;
+            });
+
+            // 创建下载链接
+            const blob = new Blob([exportContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+
+            // 优化文件名格式（使用本地日期格式）
+            const dateStr = new Date().toLocaleDateString().replace(/\//g, '-');
+            a.download = `历史记录_${dateStr}.txt`;
+
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showNotification('历史记录已导出!');
+        }
+
+        function clearHistory() {
+            if (storedData.length === 0) {
+                showNotification('没有可清空的记录!');
+                return;
+            }
+
+            if (confirm('确定要清空所有历史记录吗？此操作不可恢复。')) {
+                storedData = [];
+                localStorage.removeItem('infoStorage');
+                updateDisplay();
+                showNotification('历史记录已清空!');
+            }
+        }
+
+        // 格式化日期显示
+        function formatDate(isoString) {
+            const date = new Date(isoString);
+            return date.toLocaleString();
+        }
+
+        // 格式化内容（将换行符转换为<br>）
+        function formatContent(content) {
+            return content.replace(/\n/g, '<br>');
+        }
+
+        // 显示通知
+        function showNotification(message) {
+            notification.textContent = message;
+            notification.style.opacity = 1;
+
+            setTimeout(() => {
+                notification.style.opacity = 0;
+            }, 2000);
+        }
+    </script>
+</body>
+
+</html>

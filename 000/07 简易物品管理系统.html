@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>智能记账系统 v1.0</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background: #f0f2f5;
+            padding: 15px;
+            min-height: 100vh;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        header {
+            text-align: center;
+            margin: 15px 0 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        header h1 {
+            color: #2c3e50;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        .data-actions {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .data-btn {
+            background: #8e44ad;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: background 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .data-btn:hover {
+            background: #7d3c98;
+        }
+
+        .data-btn.import-btn {
+            background: #27ae60;
+        }
+
+        .data-btn.import-btn:hover {
+            background: #219653;
+        }
+
+        #import-input {
+            display: none;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+        }
+
+        .card h2 {
+            color: #2c3e50;
+            margin-bottom: 18px;
+            font-size: 1.3rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+        }
+
+        .card h2::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 20px;
+            background: #3498db;
+            border-radius: 2px;
+            margin-right: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #e1e4e8;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .form-control::placeholder {
+            color: #a0aabf;
+        }
+
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: background 0.2s ease, transform 0.1s ease;
+        }
+
+        .btn:hover {
+            background: #2980b9;
+        }
+
+        .btn:active {
+            transform: scale(0.99);
+        }
+
+        .btn-secondary {
+            background: #95a5a6;
+        }
+
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+
+        /* 表格样式 - 桌面端 */
+        .table-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th {
+            background: #f8f9fa;
+            color: #4a5568;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+
+        th,
+        td {
+            padding: 14px 15px;
+            text-align: left;
+            border-bottom: 1px solid #f1f3f5;
+        }
+
+        tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        tbody tr:nth-child(even) {
+            background: #f8fafc;
+        }
+
+        .summary {
+            display: flex;
+            justify-content: space-around;
+            margin: 15px 0 25px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .summary-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            flex: 1;
+            min-width: 140px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s ease;
+        }
+
+        .summary-item:hover {
+            transform: translateY(-3px);
+        }
+
+        .summary-item h3 {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .summary-item p {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .summary-item:nth-child(1) p {
+            color: #e74c3c;
+        }
+
+        .summary-item:nth-child(2) p {
+            color: #2ecc71;
+        }
+
+        .summary-item:nth-child(3) p {
+            color: #3498db;
+        }
+
+        .delete-btn,
+        .edit-btn {
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+            border: none;
+        }
+
+        .delete-btn {
+            background: #f8fafc;
+            color: #e74c3c;
+            border: 1px solid #f1f5f9;
+        }
+
+        .delete-btn:hover {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .edit-btn {
+            background: #f8fafc;
+            color: #3498db;
+            border: 1px solid #f1f5f9;
+            margin-right: 5px;
+        }
+
+        .edit-btn:hover {
+            background: #3498db;
+            color: white;
+        }
+
+        .delete-btn:active,
+        .edit-btn:active {
+            transform: scale(0.95);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #94a3b8;
+            font-style: italic;
+        }
+
+        /* 弹窗样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+        }
+
+        .modal-content {
+            background-color: white;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 500px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            animation: modalFadeIn 0.3s ease;
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .modal-title {
+            margin: 0;
+            font-size: 1.2rem;
+            color: #2c3e50;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        /* 移动端样式 */
+        @media (max-width: 640px) {
+            header h1 {
+                font-size: 1.5rem;
+            }
+
+            .data-actions {
+                flex-wrap: wrap;
+                padding: 0 10px;
+            }
+
+            .data-btn {
+                flex: 1;
+                min-width: 120px;
+                justify-content: center;
+            }
+
+            .card {
+                padding: 15px;
+                width: 100%;
+            }
+
+            .card h2 {
+                font-size: 1.1rem;
+                margin-bottom: 15px;
+            }
+
+            .form-control {
+                padding: 10px 12px;
+                font-size: 0.95rem;
+            }
+
+            .summary {
+                margin: 10px 0 20px;
+            }
+
+            .summary-item {
+                padding: 12px;
+            }
+
+            .summary-item p {
+                font-size: 1.1rem;
+            }
+
+            /* 响应式表格 */
+            table,
+            thead,
+            tbody,
+            th,
+            td,
+            tr {
+                display: block;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+
+            thead tr {
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+
+            tr {
+                margin-bottom: 12px;
+                border-radius: 10px;
+                overflow: hidden;
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+                background: white;
+                position: relative;
+            }
+
+            td {
+                position: relative;
+                padding: 10px 12px 10px 35%;
+                border-bottom: 1px solid #f1f3f5;
+                min-height: 40px;
+                display: flex;
+                align-items: center;
+                font-size: 0.92rem;
+                line-height: 1.3;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            td:last-child {
+                border-bottom: none;
+            }
+
+            td::before {
+                position: absolute;
+                left: 12px;
+                width: 30%;
+                padding-right: 8px;
+                white-space: nowrap;
+                content: attr(data-label);
+                font-weight: 600;
+                color: #64748b;
+                font-size: 0.88rem;
+                text-align: left;
+            }
+
+            /* 移动端特殊样式 */
+            td[data-label="名称"] {
+                background-color: #f8fafc;
+                font-weight: 600;
+                font-size: 1.02rem;
+                padding-right: 50px;
+            }
+
+            td[data-label="金额"],
+            td[data-label="日均摊"] {
+                color: #e74c3c;
+                font-weight: 500;
+            }
+
+            /* 移动端悬浮按钮组 - 右上角 */
+            .mobile-actions {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
+                z-index: 10;
+            }
+
+            .mobile-btn {
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                font-size: 16px;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+                transition: all 0.2s ease;
+                border: none;
+            }
+
+            .mobile-edit-btn {
+                background: #3498db;
+                color: white;
+            }
+
+            .mobile-delete-btn {
+                background: #e74c3c;
+                color: white;
+            }
+
+            .mobile-edit-btn:hover,
+            .mobile-delete-btn:hover {
+                transform: scale(1.1);
+            }
+
+            .mobile-edit-btn:hover {
+                background: #2980b9;
+            }
+
+            .mobile-delete-btn:hover {
+                background: #c0392b;
+            }
+
+            /* 移动端隐藏操作列 */
+            td[data-label="操作"] {
+                display: none;
+            }
+
+            tbody tr:nth-child(even) {
+                background: white;
+            }
+
+            tbody tr:hover {
+                background: white;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.09);
+            }
+        }
+
+        /* 桌面端隐藏移动端按钮 */
+        @media (min-width: 641px) {
+            .mobile-actions {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>智能记账系统 v1.0</h1>
+            <div class="data-actions">
+                <button class="data-btn export-btn" onclick="exportData()">
+                    <span>导出数据</span>
+                </button>
+                <label class="data-btn import-btn" for="import-input">
+                    <span>导入数据</span>
+                </label>
+                <input type="file" id="import-input" accept=".json">
+            </div>
+        </header>
+
+        <div class="card">
+            <h2>添加新记录</h2>
+            <form id="expense-form">
+                <div class="form-group">
+                    <input type="text" id="name" class="form-control" placeholder="物品名称" required>
+                </div>
+                <div class="form-group">
+                    <input type="number" id="quantity" class="form-control" min="1" value="1" placeholder="数量" required>
+                </div>
+                <div class="form-group">
+                    <input type="number" id="amount" class="form-control" min="0" step="0.01" placeholder="金额 (¥)"
+                        required>
+                </div>
+                <div class="form-group">
+                    <input type="date" id="purchase-date" class="form-control" required>
+                </div>
+                <button type="submit" class="btn">保存记录</button>
+            </form>
+        </div>
+
+        <div class="summary">
+            <div class="summary-item">
+                <h3>总消费</h3>
+                <p>¥<span id="total-amount">0.00</span></p>
+            </div>
+            <div class="summary-item">
+                <h3>物品总数</h3>
+                <p><span id="total-items">0</span> 件</p>
+            </div>
+            <div class="summary-item">
+                <h3>日均总摊</h3>
+                <p>¥<span id="daily-average">0.00</span></p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>消费记录</h2>
+            <div class="table-container">
+                <table id="expense-table">
+                    <thead>
+                        <tr>
+                            <th>名称</th>
+                            <th>数量</th>
+                            <th>金额</th>
+                            <th>购买日期</th>
+                            <th>已使用天数</th>
+                            <th>日均摊</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="expense-list"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑弹窗 -->
+    <div class="modal" id="edit-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">编辑记录</h3>
+                <button class="close-modal" onclick="closeEditModal()">&times;</button>
+            </div>
+            <form id="edit-form">
+                <input type="hidden" id="edit-id">
+                <div class="form-group">
+                    <input type="text" id="edit-name" class="form-control" placeholder="物品名称" required>
+                </div>
+                <div class="form-group">
+                    <input type="number" id="edit-quantity" class="form-control" min="1" placeholder="数量" required>
+                </div>
+                <div class="form-group">
+                    <input type="number" id="edit-amount" class="form-control" min="0" step="0.01" placeholder="金额 (¥)"
+                        required>
+                </div>
+                <div class="form-group">
+                    <input type="date" id="edit-purchase-date" class="form-control" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()">取消</button>
+                    <button type="submit" class="btn">保存修改</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // 初始化日期为当天
+        document.getElementById('purchase-date').valueAsDate = new Date();
+
+        // 从本地存储加载数据
+        let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
+
+        // 计算两个日期之间的天数（包含开始日期）
+        function getDaysBetween(startDateStr) {
+            const startDate = new Date(startDateStr);
+            const today = new Date();
+
+            // 仅比较日期部分，忽略时间
+            startDate.setHours(0, 0, 0, 0);
+            today.setHours(0, 0, 0, 0);
+
+            // 计算毫秒差并转换为天数
+            const timeDiff = today - startDate;
+            const dayDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+
+            // 确保至少为1天（购买当天）
+            return Math.max(dayDiff + 1, 1);
+        }
+
+        // 计算日均摊金额
+        function calculateDailyAverage(amount, startDateStr) {
+            const days = getDaysBetween(startDateStr);
+            return amount / days;
+        }
+
+        // 表单提交处理
+        document.getElementById('expense-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const expense = {
+                id: Date.now(),
+                name: document.getElementById('name').value,
+                quantity: parseInt(document.getElementById('quantity').value),
+                amount: parseFloat(document.getElementById('amount').value),
+                purchaseDate: document.getElementById('purchase-date').value
+            };
+            expenses.push(expense);
+            saveData();
+            renderList();
+            updateSummary();
+
+            // 添加保存成功的视觉反馈
+            const submitBtn = this.querySelector('.btn');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = '保存成功!';
+            submitBtn.style.background = '#2ecc71';
+
+            setTimeout(() => {
+                submitBtn.textContent = originalText;
+                submitBtn.style.background = '';
+                this.reset();
+                document.getElementById('purchase-date').valueAsDate = new Date();
+            }, 1000);
+        });
+
+        // 编辑表单提交处理
+        document.getElementById('edit-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const id = parseInt(document.getElementById('edit-id').value);
+            const index = expenses.findIndex(item => item.id === id);
+
+            if (index !== -1) {
+                expenses[index] = {
+                    id: id,
+                    name: document.getElementById('edit-name').value,
+                    quantity: parseInt(document.getElementById('edit-quantity').value),
+                    amount: parseFloat(document.getElementById('edit-amount').value),
+                    purchaseDate: document.getElementById('edit-purchase-date').value
+                };
+
+                saveData();
+                renderList();
+                updateSummary();
+                closeEditModal();
+            }
+        });
+
+        // 保存数据到本地存储
+        function saveData() {
+            localStorage.setItem('expenses', JSON.stringify(expenses));
+        }
+
+        // 导出数据为JSON文件
+        function exportData() {
+            if (expenses.length === 0) {
+                alert('没有可导出的记录');
+                return;
+            }
+
+            // 创建包含元数据的导出对象
+            const exportData = {
+                version: '1.0',
+                exportDate: new Date().toISOString(),
+                data: expenses
+            };
+
+            // 转换为JSON字符串
+            const jsonString = JSON.stringify(exportData, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+
+            // 创建下载链接
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+
+            // 生成包含日期的文件名
+            const date = new Date();
+            const fileName = `记账数据_${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}.json`;
+            a.download = fileName;
+
+            // 触发下载
+            document.body.appendChild(a);
+            a.click();
+
+            // 清理
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 0);
+        }
+
+        // 导入数据处理
+        document.getElementById('import-input').addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // 验证文件类型
+            if (file.type !== 'application/json' && !file.name.endsWith('.json')) {
+                alert('请选择JSON格式的文件');
+                this.value = '';
+                return;
+            }
+
+            // 确认覆盖现有数据
+            if (!confirm('导入将覆盖现有所有数据，是否继续？')) {
+                this.value = '';
+                return;
+            }
+
+            // 读取文件内容
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                try {
+                    const importedData = JSON.parse(event.target.result);
+
+                    // 验证数据格式
+                    if (!importedData.data || !Array.isArray(importedData.data)) {
+                        throw new Error('数据格式不正确');
+                    }
+
+                    // 应用导入的数据
+                    expenses = importedData.data;
+                    saveData();
+                    renderList();
+                    updateSummary();
+
+                    alert('导入成功，共导入 ' + expenses.length + ' 条记录');
+                } catch (error) {
+                    alert('导入失败：' + error.message);
+                } finally {
+                    // 重置文件输入
+                    document.getElementById('import-input').value = '';
+                }
+            };
+
+            reader.readAsText(file);
+        });
+
+        // 删除记录
+        function deleteExpense(id) {
+            if (confirm('确定要删除这条记录吗？此操作不可恢复。')) {
+                expenses = expenses.filter(item => item.id !== id);
+                saveData();
+                renderList();
+                updateSummary();
+            }
+        }
+
+        // 打开编辑模态框
+        function editExpense(id) {
+            const expense = expenses.find(item => item.id === id);
+            if (expense) {
+                document.getElementById('edit-id').value = expense.id;
+                document.getElementById('edit-name').value = expense.name;
+                document.getElementById('edit-quantity').value = expense.quantity;
+                document.getElementById('edit-amount').value = expense.amount;
+                document.getElementById('edit-purchase-date').value = expense.purchaseDate;
+
+                document.getElementById('edit-modal').style.display = 'flex';
+            }
+        }
+
+        // 关闭编辑模态框
+        function closeEditModal() {
+            document.getElementById('edit-modal').style.display = 'none';
+        }
+
+        // 点击模态框外部关闭
+        window.onclick = function (event) {
+            const modal = document.getElementById('edit-modal');
+            if (event.target === modal) {
+                closeEditModal();
+            }
+        }
+
+        // 渲染记录列表
+        function renderList() {
+            const list = document.getElementById('expense-list');
+            if (expenses.length === 0) {
+                list.innerHTML = '<tr><td colspan="7" class="empty-state">暂无消费记录，添加一条吧！</td></tr>';
+                return;
+            }
+
+            list.innerHTML = '';
+
+            expenses.forEach(item => {
+                const daysUsed = getDaysBetween(item.purchaseDate);
+                const dailyAvg = calculateDailyAverage(item.amount, item.purchaseDate);
+
+                // 处理过长的名称
+                const shortName = item.name.length > 15 ? item.name.substring(0, 15) + '...' : item.name;
+
+                const row = document.createElement('tr');
+                row.style.opacity = '0';
+                row.style.transform = 'translateY(10px)';
+                row.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+
+                // 添加移动端操作按钮组
+                row.innerHTML = `
+                    <div class="mobile-actions">
+                        <button class="mobile-btn mobile-edit-btn" onclick="editExpense(${item.id})">✎</button>
+                        <button class="mobile-btn mobile-delete-btn" onclick="deleteExpense(${item.id})">✕</button>
+                    </div>
+                    <td data-label="名称">${shortName}</td>
+                    <td data-label="数量">${item.quantity}</td>
+                    <td data-label="金额">¥${item.amount.toFixed(2)}</td>
+                    <td data-label="购买日期">${item.purchaseDate}</td>
+                    <td data-label="已使用天数">${daysUsed}</td>
+                    <td data-label="日均摊">¥${dailyAvg.toFixed(2)}</td>
+                    <td data-label="操作">
+                        <button class="edit-btn" onclick="editExpense(${item.id})">编辑</button>
+                        <button class="delete-btn" onclick="deleteExpense(${item.id})">删除</button>
+                    </td>
+                `;
+
+                list.appendChild(row);
+
+                setTimeout(() => {
+                    row.style.opacity = '1';
+                    row.style.transform = 'translateY(0)';
+                }, 50);
+            });
+        }
+
+        // 更新统计信息
+        function updateSummary() {
+            const totalAmount = expenses.reduce((sum, item) => sum + item.amount, 0);
+            const totalItems = expenses.reduce((sum, item) => sum + item.quantity, 0);
+            const totalDailyAverage = expenses.reduce((sum, item) => {
+                return sum + calculateDailyAverage(item.amount, item.purchaseDate);
+            }, 0);
+
+            animateValue('total-amount', parseFloat(document.getElementById('total-amount').textContent), totalAmount, 500);
+            animateValue('total-items', parseInt(document.getElementById('total-items').textContent), totalItems, 500);
+            animateValue('daily-average', parseFloat(document.getElementById('daily-average').textContent), totalDailyAverage, 500);
+        }
+
+        // 数字变化动画函数
+        function animateValue(id, start, end, duration) {
+            const obj = document.getElementById(id);
+            if (!obj) return;
+
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+
+                if (id === 'total-items') {
+                    obj.textContent = Math.floor(progress * (end - start) + start);
+                } else {
+                    obj.textContent = (progress * (end - start) + start).toFixed(2);
+                }
+
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        // 初始化页面
+        renderList();
+        updateSummary();
+    </script>
+</body>
+
+</html>
