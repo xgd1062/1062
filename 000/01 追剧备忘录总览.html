@@ -691,6 +691,9 @@
         // 备份操作类型（upload或download）
         let currentBackupOperation = null;
 
+        // 上传失败计数器
+        let uploadFailureCount = parseInt(localStorage.getItem('uploadFailureCount')) || 0;
+
         // UTF8与Base64兼容转换工具
         const Utf8Base64 = {
             encode: (str) => {
@@ -717,6 +720,9 @@
         // 标记成功记录
         function markSuccessfulRecord() {
             localStorage.setItem('githubLastSuccess', 'true');
+            // 成功后重置失败计数器
+            uploadFailureCount = 0;
+            localStorage.setItem('uploadFailureCount', '0');
         }
 
         // 封装本地保存函数
@@ -917,6 +923,15 @@
 
         // 核心优化：上传按钮点击处理
         uploadBtn.onclick = async () => {
+            // 检查是否已达到最大失败次数
+            if (uploadFailureCount >= 3) {
+                // 清除保存的令牌并提示重新输入
+                localStorage.removeItem('githubToken');
+                uploadFailureCount = 0;
+                localStorage.setItem('uploadFailureCount', '0');
+                alert('上传已连续失败3次，请重新输入GitHub令牌');
+            }
+
             const token = localStorage.getItem('githubToken');
             const repo = localStorage.getItem('repoName');
 
@@ -1084,11 +1099,22 @@
                 markSuccessfulRecord(); // 更新成功记录状态
                 alert('数据上传成功！');
             } catch (error) {
-                let errorMsg = '上传失败：';
+                // 失败时增加计数器
+                uploadFailureCount++;
+                localStorage.setItem('uploadFailureCount', uploadFailureCount.toString());
+
+                // 检查是否达到最大失败次数
+                let errorMsg = `上传失败（${uploadFailureCount}/3）：`;
                 if (error.message.includes('401')) errorMsg += 'GitHub令牌无效或权限不足，请检查令牌是否包含repo权限';
                 else if (error.message.includes('404')) errorMsg += '仓库不存在或您无访问权限，请确认仓库名称格式（用户名/仓库名）';
                 else if (error.message.includes('Base64')) errorMsg += '数据编码失败，内容包含异常字符';
                 else errorMsg += error.message;
+
+                // 如果达到最大失败次数，提示重新输入
+                if (uploadFailureCount >= 3) {
+                    errorMsg += '\n已连续失败3次，请重新输入GitHub令牌';
+                    localStorage.removeItem('githubToken');
+                }
 
                 alert(errorMsg);
                 console.error('上传错误详情：', error);
