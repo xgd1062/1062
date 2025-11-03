@@ -486,6 +486,16 @@
             color: #718096;
         }
 
+        /* 转移按钮样式 */
+        .transfer-btn {
+            background-color: #fcc367 !important;
+            color: white !important;
+        }
+
+        .transfer-btn:hover {
+            background-color: #f9b334 !important;
+        }
+
         @media (max-width: 768px) {
             body {
                 padding: 15px;
@@ -663,6 +673,33 @@
         </div>
     </div>
 
+    <!-- 条目转移模态框 -->
+    <div class="modal" id="transferModal">
+        <div class="modal-content">
+            <button class="close-btn" id="closeTransferModalBtn">&times;</button>
+            <div class="modal-header">
+                <h3 class="modal-title">转移条目到其他日期</h3>
+                <div class="modal-subtitle">选择目标日期，该条目将从原日期移动到所选日期</div>
+            </div>
+            <div class="input-group">
+                <label class="input-label" for="targetDay">目标日期</label>
+                <select id="targetDay" class="input-field">
+                    <option value="周一">周一</option>
+                    <option value="周二">周二</option>
+                    <option value="周三">周三</option>
+                    <option value="周四">周四</option>
+                    <option value="周五">周五</option>
+                    <option value="周六">周六</option>
+                    <option value="周日">周日</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn secondary" id="cancelTransferBtn">取消</button>
+                <button class="modal-btn primary" id="confirmTransferBtn">确认转移</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // 初始化数据
         const days = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
@@ -675,6 +712,11 @@
                 memoData[day] = [{ content: '', number: '' }];
             }
         });
+
+        // 转移条目相关变量
+        let transferModal = document.getElementById('transferModal');
+        let targetDaySelect = document.getElementById('targetDay');
+        let currentTransferData = null; // 存储当前要转移的条目信息：{fromDay, index, entry}
 
         // DOM元素引用
         const githubModal = document.getElementById('githubModal');
@@ -848,6 +890,7 @@
                                 <button class="number-btn number-minus" data-day="${day}" data-index="${entryIndex}">-</button>
                                 <span class="overview-number">${entry.number || '0'}</span>
                                 <button class="number-btn number-plus" data-day="${day}" data-index="${entryIndex}">+</button>
+                                <button class="number-btn transfer-btn" data-day="${day}" data-index="${entryIndex}">→</button>
                             </div>
                         `;
                         dayCard.appendChild(entryEl);
@@ -921,7 +964,7 @@
             alert('数据已保存！');
         };
 
-        // 核心优化：上传按钮点击处理
+        // 上传按钮点击处理
         uploadBtn.onclick = async () => {
             // 检查是否已达到最大失败次数
             if (uploadFailureCount >= 3) {
@@ -964,7 +1007,7 @@
             }
         };
 
-        // 核心优化：下载按钮点击处理
+        // 下载按钮点击处理
         downloadBtn.onclick = async () => {
             const token = localStorage.getItem('githubToken');
             const repo = localStorage.getItem('repoName');
@@ -1064,7 +1107,7 @@
                 }
 
                 let sha = null;
-                // 核心优化：有成功记录时自动覆盖，无需确认
+                // 有成功记录时自动覆盖，无需确认
                 if (checkResponse.ok) {
                     const fileData = await checkResponse.json();
                     sha = fileData.sha;
@@ -1124,7 +1167,7 @@
         // 从GitHub下载数据
         async function downloadFromGitHub(token, repo) {
             try {
-                // 核心优化：有成功记录时简化提示，保留必要的安全确认
+                // 有成功记录时简化提示，保留必要的安全确认
                 const confirmProceed = confirm('确定要从GitHub下载数据吗？这将覆盖当前本地数据。');
                 if (!confirmProceed) return;
 
@@ -1173,6 +1216,55 @@
                 console.error('下载错误详情：', error);
             }
         }
+
+        // 转移弹窗关闭事件
+        document.getElementById('closeTransferModalBtn').onclick = () => {
+            transferModal.style.display = 'none';
+            currentTransferData = null;
+        };
+        document.getElementById('cancelTransferBtn').onclick = () => {
+            transferModal.style.display = 'none';
+            currentTransferData = null;
+        };
+
+        // 转移按钮点击事件
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('transfer-btn')) {
+                const fromDay = e.target.getAttribute('data-day');
+                const index = parseInt(e.target.getAttribute('data-index'));
+                const entry = memoData[fromDay][index];
+                // 存储转移信息
+                currentTransferData = { fromDay, index, entry };
+                // 显示弹窗（默认选中原日期）
+                targetDaySelect.value = fromDay;
+                transferModal.style.display = 'flex';
+            }
+        });
+
+        // 确认转移事件
+        document.getElementById('confirmTransferBtn').onclick = () => {
+            if (!currentTransferData) return;
+            const { fromDay, index, entry } = currentTransferData;
+            const toDay = targetDaySelect.value;
+
+            // 跳过同日期转移
+            if (fromDay === toDay) {
+                alert('目标日期与原日期相同，无需转移');
+                transferModal.style.display = 'none';
+                return;
+            }
+
+            // 执行转移：从原日期删除，添加到目标日期
+            memoData[fromDay].splice(index, 1);
+            memoData[toDay].push(entry);
+
+            // 同步保存和更新视图
+            saveToLocalStorage();
+            renderOverview();
+            transferModal.style.display = 'none';
+            currentTransferData = null;
+            alert(`条目已从${fromDay}转移到${toDay}`);
+        };
 
         // 初始化页面
         document.getElementById('currentDate').textContent = days[currentDay];
