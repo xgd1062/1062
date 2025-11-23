@@ -4,107 +4,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GitHub 文件上传器</title>
+    <title>GitHub 全屏拖拽上传器</title>
     <style>
-        :root {
-            --primary: #2563eb;
-            --primary-light: #eff6ff;
-            --secondary: #10b981;
-            --danger: #ef4444;
-            --gray-100: #f3f4f6;
-            --gray-200: #e5e7eb;
-            --gray-300: #d1d5db;
-            --gray-700: #374151;
-            --shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-            background: #f9fafb;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            line-height: 1.5;
-        }
-
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 2rem 1rem;
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 2.5rem;
-            padding-bottom: 1.5rem;
-            border-bottom: 1px solid var(--gray-200);
-        }
-
-        .logo {
-            width: 50px;
-            height: 50px;
-            background: #111827;
-            border-radius: 50%;
-            margin: 0 auto 1.25rem;
+            margin: 0;
+            height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-        }
-
-        h1 {
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: #111827;
-            margin-bottom: 0.75rem;
-        }
-
-        .subtitle {
-            color: #6b7280;
-            font-size: 0.9375rem;
-            max-width: 450px;
-            margin: 0 auto;
+            background: #f0f2f5;
         }
 
         .card {
             background: white;
-            border-radius: 0.75rem;
-            box-shadow: var(--shadow);
-            overflow: hidden;
-            margin-bottom: 1.5rem;
+            padding: 2.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+            z-index: 10;
         }
 
-        .card-header {
-            padding: 1.25rem 1.5rem;
-            background: var(--gray-100);
-            border-bottom: 1px solid var(--gray-200);
+        h2 {
+            margin-top: 0;
+            color: #1f2937;
+            text-align: center;
         }
 
-        .card-header h2 {
-            font-size: 1.125rem;
-            font-weight: 600;
-            color: var(--gray-700);
-        }
-
-        .card-body {
-            padding: 1.5rem;
-        }
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.25rem;
-            margin-bottom: 1.25rem;
-        }
-
-        .form-group {
-            margin-bottom: 1.25rem;
-        }
-
-        .form-group.full-width {
-            grid-column: 1 / -1;
+        .input-group {
+            margin-bottom: 1.2rem;
         }
 
         label {
@@ -118,853 +48,327 @@
         input[type="text"],
         input[type="password"] {
             width: 100%;
-            padding: 0.625rem 0.875rem;
+            padding: 0.75rem;
             border: 1px solid #d1d5db;
-            border-radius: 0.375rem;
-            font-size: 0.9375rem;
-            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            border-radius: 0.5rem;
+            box-sizing: border-box;
+            font-size: 1rem;
+            transition: border-color 0.2s;
         }
 
         input:focus {
             outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+            border-color: #2563eb;
+            ring: 2px solid #2563eb;
         }
 
-        .helper-text {
-            font-size: 0.75rem;
-            color: #6b7280;
-            margin-top: 0.25rem;
-            line-height: 1.4;
-        }
-
-        .helper-text a {
-            color: var(--primary);
-            text-decoration: none;
-        }
-
-        .helper-text a:hover {
-            text-decoration: underline;
-        }
-
-        .file-upload-container {
-            margin: 1.5rem 0;
-        }
-
-        .file-upload-label {
-            display: block;
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: #4b5563;
-            margin-bottom: 0.5rem;
-        }
-
-        .upload-card {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            align-items: stretch;
-        }
-
-        .upload-section {
-            border: 1px solid var(--gray-200);
-            border-radius: 0.5rem;
-            overflow: hidden;
-            transition: all 0.3s ease;
-            flex-shrink: 0;
-        }
-
-        .upload-section.drag-over {
-            border-color: var(--primary);
-            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
-        }
-
-        .upload-placeholder {
-            padding: 2rem 1.5rem;
-            text-align: center;
-            cursor: pointer;
-            background: var(--primary-light);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .upload-icon {
-            width: 64px;
-            height: 64px;
-            margin-bottom: 1rem;
-            color: var(--primary);
-        }
-
-        .upload-text {
-            font-size: 0.9375rem;
-            color: #4b5563;
-            margin-bottom: 0.25rem;
-            font-weight: 500;
-        }
-
-        .upload-subtext {
-            font-size: 0.75rem;
-            color: #6b7280;
-        }
-
-        .file-info {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            padding: 0.875rem 1.25rem;
-            background: var(--gray-100);
-            border-top: 1px solid var(--gray-200);
-            font-size: 0.875rem;
-            color: #4b5563;
-            animation: slideIn 0.2s ease;
-            flex-wrap: wrap;
-        }
-
-        @keyframes slideIn {
-            from {
-                transform: translateY(-10px);
-                opacity: 0;
-            }
-
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        .file-info.hidden {
+        #fileInput {
             display: none;
         }
 
-        .file-info-left {
-            display: flex;
-            align-items: center;
-            flex: 1;
-            min-width: 0;
-            flex-wrap: wrap;
-            margin-bottom: 0.5rem;
-        }
-
-        .check-icon {
-            color: var(--secondary);
-            margin-right: 0.5rem;
-            flex-shrink: 0;
-            width: 20px;
-            height: 20px;
-        }
-
-        .check-icon svg {
-            width: 100%;
-            height: 100%;
-        }
-
-        .selected-file-name {
-            font-weight: 500;
-            margin-left: 0.25rem;
-            white-space: normal;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            word-break: break-all;
-            flex: 1;
-        }
-
-        .clear-btn {
-            color: var(--danger);
-            font-size: 0.75rem;
+        /* 文件显示区域样式 */
+        .file-display {
+            border: 2px dashed #d1d5db;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            text-align: center;
+            color: #6b7280;
+            background: #f9fafb;
             cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            /* 为清除按钮定位做准备 */
+        }
+
+        .file-display:hover {
+            border-color: #2563eb;
+            background: #eff6ff;
+        }
+
+        .file-display.has-file {
+            border-color: #10b981;
+            background: #ecfdf5;
+            color: #059669;
+            border-style: solid;
+        }
+
+        /* 新增：清除按钮样式 */
+        .clear-btn {
+            color: #ef4444;
+            font-size: 0.875rem;
+            font-weight: bold;
+            margin-left: 10px;
+            cursor: pointer;
+            display: none;
+            /* 默认隐藏 */
             text-decoration: underline;
-            transition: color 0.2s ease;
-            margin-left: 0.5rem;
-            flex-shrink: 0;
-            align-self: center;
         }
 
         .clear-btn:hover {
             color: #dc2626;
         }
 
-        .hidden-file-input {
-            display: none;
-        }
-
-        .action-card {
-            background: var(--primary);
-            border-radius: 0.5rem;
-            overflow: hidden;
+        button.upload-btn {
+            width: 100%;
+            padding: 0.875rem;
+            background: #2563eb;
             color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
             cursor: pointer;
-            transition: background 0.3s ease;
+            margin-top: 1rem;
+            transition: background 0.2s;
         }
 
-        .action-card:hover {
+        button.upload-btn:hover {
             background: #1d4ed8;
         }
 
-        .action-card.loading {
+        button.upload-btn:disabled {
             background: #93c5fd;
             cursor: not-allowed;
         }
 
-        .action-icon {
-            width: 48px;
-            height: 48px;
-            margin-right: 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .action-text {
-            text-align: left;
-        }
-
-        .action-title {
-            font-size: 1rem;
-            font-weight: 600;
-            margin-bottom: 0.25rem;
-        }
-
-        .action-subtitle {
-            font-size: 0.75rem;
-            opacity: 0.9;
-        }
-
-        .submit-btn {
-            display: none;
-        }
-
-        /* 优化提示框布局 */
-        .alert {
-            padding: 1rem;
-            border-radius: 0.375rem;
-            margin-bottom: 1.5rem;
+        #status {
+            margin-top: 1rem;
             font-size: 0.875rem;
-            display: flex;
-            align-items: flex-start;
-            max-width: 100%;
-            box-sizing: border-box;
-            flex-direction: column;
-        }
-
-        @media (min-width: 480px) {
-            .alert {
-                flex-direction: row;
-            }
-        }
-
-        .alert-success {
-            background: #d1fae5;
-            color: #059669;
-            border-left: 4px solid var(--secondary);
-        }
-
-        .alert-error {
-            background: #fee2e2;
-            color: #dc2626;
-            border-left: 4px solid var(--danger);
-        }
-
-        .alert-icon {
-            margin-right: 0.75rem;
-            margin-top: 0.125rem;
-            flex-shrink: 0;
-            width: 24px;
-            height: 24px;
-        }
-
-        .alert-content {
-            flex: 1;
-            line-height: 1.5;
-        }
-
-        .alert-content p {
-            margin-bottom: 0.35rem;
-        }
-
-        .alert-content a {
-            color: var(--primary);
-            text-decoration: none;
             word-break: break-all;
+            min-height: 1.5rem;
         }
 
-        .alert-content a:hover {
-            text-decoration: underline;
-        }
-
-        @media (max-width: 480px) {
-            .alert {
-                padding: 0.75rem;
-                font-size: 0.8rem;
-            }
-
-            .alert-icon {
-                width: 16px;
-                height: 16px;
-                margin-right: 0.5rem;
-            }
-        }
-
-        .full-dropzone {
+        /* 全屏拖拽遮罩 */
+        #dropOverlay {
             position: fixed;
             inset: 0;
-            z-index: 999;
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(37, 99, 235, 0.95);
+            z-index: 9999;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.2s ease;
         }
 
-        .full-dropzone.active {
+        #dropOverlay.active {
             opacity: 1;
             pointer-events: auto;
         }
 
-        .full-dropzone-content {
-            border: 2px dashed var(--primary);
-            background: var(--primary-light);
-            border-radius: 0.75rem;
-            padding: 2.5rem 1.5rem;
-            text-align: center;
-            max-width: 350px;
-            width: 90%;
+        .drop-text {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-top: 1rem;
         }
 
-        .full-dropzone-icon {
-            margin-bottom: 1rem;
-        }
-
-        .full-dropzone-text {
-            font-size: 1rem;
-            font-weight: 600;
-            color: var(--gray-700);
-        }
-
-        footer {
-            text-align: center;
-            color: #6b7280;
-            font-size: 0.75rem;
-            margin-top: 2rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid var(--gray-200);
-        }
-
-        footer a {
-            color: var(--primary);
-            text-decoration: none;
-        }
-
-        footer a:hover {
-            text-decoration: underline;
-        }
-
-        .loader {
-            position: fixed;
-            inset: 0;
-            z-index: 1000;
-            background: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: opacity 0.3s ease;
-        }
-
-        .loader.hide {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid var(--primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-
-        .spinner-inline {
-            width: 24px;
-            height: 24px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-top: 3px solid white;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        @media (max-width: 480px) {
-            .form-grid {
-                grid-template-columns: 1fr;
-                gap: 1rem;
-            }
-
-            .upload-placeholder {
-                padding: 1.5rem 1rem;
-            }
-
-            .upload-icon {
-                width: 48px;
-                height: 48px;
-            }
-
-            h1 {
-                font-size: 1.5rem;
-            }
-
-            .card-body {
-                padding: 1.25rem;
-            }
-
-            .card-header {
-                padding: 1rem 1.25rem;
-            }
-
-            .selected-file-name {
-                max-width: 100%;
-            }
-
-            .action-card {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .action-icon {
-                margin-right: 0;
-                margin-bottom: 0.5rem;
-            }
+        .drop-icon {
+            width: 64px;
+            height: 64px;
+            color: white;
         }
     </style>
 </head>
 
 <body>
-    <div class="loader" id="loader">
-        <div class="spinner"></div>
+
+    <div id="dropOverlay">
+        <svg xmlns="http://www.w3.org/2000/svg" class="drop-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+        </svg>
+        <div class="drop-text">松开鼠标以上传文件</div>
     </div>
 
-    <div class="full-dropzone" id="fullDropzone">
-        <div class="full-dropzone-content">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-14 w-14 text-blue-600 mb-3 full-dropzone-icon" fill="none"
-                viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-            </svg>
-            <p class="font-medium text-gray-700 full-dropzone-text">松开鼠标上传文件</p>
+    <div class="card">
+        <h2>GitHub 极简上传</h2>
+
+        <div class="input-group">
+            <label>GitHub Token</label>
+            <input type="password" id="token" placeholder="ghp_...">
         </div>
-    </div>
 
-    <div class="container">
-        <header>
-            <div class="logo">
-                <!-- 替换为GitHub官方风格图标 -->
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="currentColor"
-                    viewBox="0 0 24 24">
-                    <path fill-rule="evenodd"
-                        d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
-                        clip-rule="evenodd" />
-                </svg>
-            </div>
-            <h1>GitHub 文件上传器</h1>
-            <p class="subtitle">拖拽文件到页面任意位置，或点击选择文件，指定目录后快速上传到GitHub仓库</p>
-        </header>
+        <div class="input-group">
+            <label>上传路径 (自动解析 用户/仓库)</label>
+            <input type="text" id="fullPath" value="XGD1062/1062/">
+        </div>
 
-        <div id="message" class="hidden alert"></div>
-
-        <div class="card">
-            <div class="card-header">
-                <h2>GitHub 仓库信息</h2>
-            </div>
-            <div class="card-body">
-                <form id="githubUploadForm">
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="githubUsername">GitHub 用户名</label>
-                            <input type="text" id="githubUsername" placeholder="您的GitHub用户名" required value="XGD1062">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="githubRepo">仓库名称</label>
-                            <input type="text" id="githubRepo" placeholder="要上传的仓库名称" required value="1062">
-                        </div>
-
-                        <div class="form-group full-width">
-                            <label for="githubToken">GitHub 个人访问令牌</label>
-                            <input type="password" id="githubToken" placeholder="ghp_..." required>
-                            <div class="helper-text">
-                                需要拥有 repo 权限的个人访问令牌。<a href="https://github.com/settings/tokens/new"
-                                    target="_blank">创建令牌</a>
-                            </div>
-                        </div>
-
-                        <div class="form-group full-width">
-                            <label for="targetDir">上传目录（可选）</label>
-                            <input type="text" id="targetDir" placeholder="例如: docs/notes/ 或 images/">
-                            <div class="helper-text">
-                                格式说明：目录结尾需加“/”（如 docs/），留空直接上传到仓库根目录
-                            </div>
-                        </div>
-
-                        <div class="form-group full-width">
-                            <label for="commitMessage">提交信息</label>
-                            <input type="text" id="commitMessage" placeholder="描述您的更改（如：上传月度报告）" required
-                                value="上传本地文件">
-                        </div>
-                    </div>
-
-                    <div class="form-group full-width file-upload-container">
-                        <label class="file-upload-label">选择本地文件</label>
-                        <div class="upload-card">
-                            <div class="upload-section">
-                                <div class="upload-placeholder" id="formDropzone">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 upload-icon" fill="none"
-                                        viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                    </svg>
-                                    <p class="upload-text">点击上传文件 或 拖拽文件到此处</p>
-                                    <p class="upload-subtext">支持任意文件类型，单文件最大25MB（GitHub限制）</p>
-                                </div>
-                                <div class="file-info hidden" id="fileInfo">
-                                    <div class="file-info-left">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 check-icon" fill="none"
-                                            viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M5 13l4 4L19 7" />
-                                        </svg>
-                                        <span>已选择：</span>
-                                        <span id="selectedFileName" class="selected-file-name"></span>
-                                    </div>
-                                    <span class="clear-btn" id="clearFile">清除</span>
-                                </div>
-                            </div>
-
-                            <div class="action-card" id="actionCard" role="button" tabindex="0">
-                                <div class="action-icon" id="actionCardIcon">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
-                                        viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                    </svg>
-                                </div>
-                                <div class="action-text" id="actionCardText">
-                                    <div class="action-title">上传到 GitHub</div>
-                                    <div class="action-subtitle">点击确认上传所选文件</div>
-                                </div>
-                            </div>
-                        </div>
-                        <input type="file" id="localFile" class="hidden-file-input" required>
-                    </div>
-
-                    <button type="submit" id="submitBtn" class="submit-btn"></button>
-                </form>
+        <div class="input-group">
+            <label>文件 (点击选择或拖拽到页面)</label>
+            <input type="file" id="fileInput">
+            <div class="file-display" id="fileDisplayArea">
+                <span id="fileNameDisplay">点击或拖拽文件到此处</span>
+                <span id="clearBtn" class="clear-btn">[清除]</span>
             </div>
         </div>
 
-        <footer>
-            <p>使用 GitHub API 构建 | <a href="https://docs.github.com/cn/rest" target="_blank">查看 API 文档</a></p>
-        </footer>
+        <button id="uploadBtn" class="upload-btn" onclick="handleUpload()">开始上传</button>
+        <div id="status"></div>
     </div>
 
     <script>
-        window.addEventListener('load', function () {
-            document.getElementById('loader').classList.add('hide');
+        // --- 元素获取 ---
+        const dropOverlay = document.getElementById('dropOverlay');
+        const fileInput = document.getElementById('fileInput');
+        const fileDisplayArea = document.getElementById('fileDisplayArea');
+        const fileNameDisplay = document.getElementById('fileNameDisplay');
+        const clearBtn = document.getElementById('clearBtn');
+        let dragCounter = 0;
 
-            const els = {
-                fullDropzone: document.getElementById('fullDropzone'),
-                formDropzone: document.getElementById('formDropzone'),
-                formDropzoneSection: document.querySelector('.upload-section'),
-                localFileInput: document.getElementById('localFile'),
-                fileInfo: document.getElementById('fileInfo'),
-                selectedFileName: document.getElementById('selectedFileName'),
-                clearFile: document.getElementById('clearFile'),
-                submitBtn: document.getElementById('submitBtn'),
-                message: document.getElementById('message'),
-                githubUploadForm: document.getElementById('githubUploadForm'),
-                githubToken: document.getElementById('githubToken'),
-                githubUsername: document.getElementById('githubUsername'),
-                githubRepo: document.getElementById('githubRepo'),
-                targetDir: document.getElementById('targetDir'),
-                commitMessage: document.getElementById('commitMessage'),
-                actionCard: document.getElementById('actionCard'),
-                actionCardIcon: document.getElementById('actionCardIcon'),
-                actionCardText: document.getElementById('actionCardText')
-            };
+        // --- 拖拽与文件选择逻辑 ---
 
-            const originalActionIconHTML = els.actionCardIcon.innerHTML;
-
-            let dragCounter = 0;
-
-            function preventDefaults(e) { e.preventDefault(); }
-            ['dragover', 'drop'].forEach(e => document.body.addEventListener(e, preventDefaults));
-
-            document.body.addEventListener('dragenter', e => {
-                dragCounter++;
-                els.fullDropzone.classList.add('active');
-            });
-
-            document.body.addEventListener('dragleave', e => {
-                dragCounter--;
-                if (dragCounter === 0) {
-                    els.fullDropzone.classList.remove('active');
-                }
-            });
-
-            document.body.addEventListener('drop', e => {
-                dragCounter = 0;
-                els.fullDropzone.classList.remove('active');
-                if (e.dataTransfer.files.length > 0) {
-                    handleFileSelect(e.dataTransfer.files[0]);
-                    els.localFileInput.files = e.dataTransfer.files;
-                }
-            });
-
-            els.formDropzone.addEventListener('dragenter', e => {
-                e.stopPropagation();
-                dragCounter++;
-                els.formDropzoneSection.classList.add('drag-over');
-            });
-
-            els.formDropzone.addEventListener('dragleave', e => {
-                e.stopPropagation();
-                dragCounter--;
-                els.formDropzoneSection.classList.remove('drag-over');
-            });
-
-            els.formDropzone.addEventListener('drop', e => {
-                e.stopPropagation();
-                dragCounter = 0;
-                els.fullDropzone.classList.remove('active');
-                els.formDropzoneSection.classList.remove('drag-over');
-                if (e.dataTransfer.files.length > 0) {
-                    handleFileSelect(e.dataTransfer.files[0]);
-                    els.localFileInput.files = e.dataTransfer.files;
-                }
-            });
-
-            els.formDropzone.addEventListener('click', () => {
-                els.localFileInput.click();
-            });
-
-            els.actionCard.addEventListener('click', () => {
-                if (!els.actionCard.classList.contains('loading')) {
-                    els.submitBtn.click();
-                }
-            });
-
-            els.actionCard.addEventListener('keydown', (e) => {
-                if ((e.key === 'Enter' || e.key === ' ') && !els.actionCard.classList.contains('loading')) {
-                    e.preventDefault();
-                    els.submitBtn.click();
-                }
-            });
-
-            els.localFileInput.addEventListener('change', function () {
-                if (this.files && this.files.length > 0) {
-                    handleFileSelect(this.files[0]);
-                }
-            });
-
-            els.clearFile.addEventListener('click', () => {
-                els.localFileInput.value = '';
-                els.fileInfo.classList.add('hidden');
-                els.selectedFileName.textContent = '';
-                els.formDropzoneSection.classList.remove('drag-over');
-                els.actionCard.style.pointerEvents = 'auto';
-            });
-
-            function handleFileSelect(file) {
-                els.selectedFileName.textContent = file.name;
-                els.fileInfo.classList.remove('hidden');
-                els.fileInfo.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }
-
-            els.githubUploadForm.addEventListener('submit', async function (e) {
+        // 阻止默认行为
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            document.body.addEventListener(eventName, e => {
                 e.preventDefault();
-
-                setLoadingState(true);
-                els.message.classList.add('hidden');
-
-                try {
-                    const token = els.githubToken.value;
-                    const username = els.githubUsername.value;
-                    const repo = els.githubRepo.value;
-                    let targetDir = els.targetDir.value;
-                    const commitMessage = els.commitMessage.value;
-                    const file = els.localFileInput.files[0];
-
-                    if (!file) {
-                        throw new Error('请先选择要上传的文件');
-                    }
-                    if (file.size === 0) {
-                        throw new Error('无法上传空文件，请选择有效的文件');
-                    }
-                    if (file.size > 20 * 1024 * 1024) {
-                        throw new Error(`文件过大（${(file.size / 1024 / 1024).toFixed(1)}MB），可能导致编码失败，建议压缩后再试`);
-                    }
-
-                    const normalizedTargetDir = targetDir ? targetDir.endsWith('/') ? targetDir : `${targetDir}/` : '';
-                    const finalFilePath = `${normalizedTargetDir}${file.name}`;
-
-                    const base64Content = await readFileAsBase64(file);
-                    if (!base64Content) {
-                        throw new Error('文件内容编码失败，请重新选择文件');
-                    }
-
-                    const fileApiUrl = `https://api.github.com/repos/${username}/${repo}/contents/${finalFilePath}`;
-                    let fileSha = null;
-
-                    try {
-                        const checkResp = await fetch(fileApiUrl, {
-                            headers: {
-                                'Authorization': `token ${token}`,
-                                'Accept': 'application/vnd.github.v3+json'
-                            }
-                        });
-
-                        if (!checkResp.ok) {
-                            if (checkResp.status !== 404) {
-                                throw new Error(`检查文件状态失败: ${checkResp.statusText}`);
-                            }
-                            fileSha = null;
-                        } else {
-                            const fileData = await checkResp.json();
-                            fileSha = fileData.sha;
-                        }
-                    } catch (err) {
-                        throw new Error(`网络错误: 无法检查文件状态，请重试`);
-                    }
-
-                    const uploadResp = await fetch(fileApiUrl, {
-                        method: 'PUT',
-                        headers: {
-                            'Authorization': `token ${token}`,
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/vnd.github.v3+json'
-                        },
-                        body: JSON.stringify({
-                            message: commitMessage,
-                            content: base64Content,
-                            ...(fileSha && { sha: fileSha })
-                        })
-                    });
-
-                    const uploadResult = await uploadResp.json();
-
-                    if (!uploadResp.ok) {
-                        let errorMsg = uploadResult.message || '上传失败';
-                        if (uploadResp.status === 401) {
-                            errorMsg = 'Token 无效或已过期，请重新创建（需repo权限）';
-                        }
-                        if (uploadResp.status === 403) {
-                            errorMsg = '权限不足/速率限制：检查Token权限（私有仓库需repo权限）或稍后重试';
-                        }
-                        if (uploadResp.status === 404) {
-                            errorMsg = '仓库/路径不存在：检查用户名、仓库名是否正确';
-                        }
-                        if (uploadResp.status === 422) {
-                            errorMsg = uploadResult.message.includes('sha')
-                                ? '更新文件需提供SHA：文件已存在，请重试'
-                                : `提交无效：${uploadResult.message}`;
-                        }
-                        if (uploadResp.status === 413) {
-                            errorMsg = '文件过大：GitHub单文件限制25MB';
-                        }
-                        throw new Error(errorMsg);
-                    }
-
-                    showMessage(`
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600 alert-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                        </svg>
-                        <div class="alert-content">
-                            <p class="font-medium">上传成功！</p>
-                            <p class="mt-1">
-                                路径：<code>${finalFilePath}</code>
-                                <br>
-                                查看：<a href="${uploadResult.content.html_url}" target="_blank">${uploadResult.content.html_url}</a>
-                            </p>
-                        </div>
-                    `, 'success');
-
-                    els.clearFile.click();
-
-                } catch (error) {
-                    showMessage(`
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-600 alert-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <div class="alert-content">
-                            <p class="font-medium">上传失败</p>
-                            <p class="mt-1">${error.message}</p>
-                        </div>
-                    `, 'error');
-                    console.error(error);
-
-                } finally {
-                    setLoadingState(false);
-                }
-            });
-
-            function readFileAsBase64(file) {
-                return new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        const base64Data = e.target.result.split(',')[1];
-                        if (base64Data) {
-                            resolve(base64Data);
-                        } else {
-                            reject(new Error('文件Base64编码失败'));
-                        }
-                    };
-                    reader.onerror = (err) => reject(new Error('文件读取失败'));
-                    reader.readAsDataURL(file);
-                });
-            }
-
-            function showMessage(html, type) {
-                els.message.innerHTML = html;
-                els.message.classList.remove('hidden', 'alert-success', 'alert-error');
-                els.message.classList.add(type === 'success' ? 'alert-success' : 'alert-error');
-                els.message.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-
-            function setLoadingState(isLoading) {
-                if (isLoading) {
-                    els.actionCard.classList.add('loading');
-                    els.actionCard.style.pointerEvents = 'none';
-                    els.actionCardIcon.innerHTML = '<div class="spinner-inline"></div>';
-                    els.actionCardText.querySelector('.action-title').textContent = '上传中...';
-                    els.actionCardText.querySelector('.action-subtitle').textContent = '请稍候';
-                } else {
-                    els.actionCard.classList.remove('loading');
-                    els.actionCard.style.pointerEvents = 'auto';
-                    els.actionCardIcon.innerHTML = originalActionIconHTML;
-                    els.actionCardText.querySelector('.action-title').textContent = '上传到 GitHub';
-                    els.actionCardText.querySelector('.action-subtitle').textContent = '点击确认上传所选文件';
-                }
-            }
+                e.stopPropagation();
+            }, false);
         });
+
+        // 拖入
+        document.body.addEventListener('dragenter', () => {
+            dragCounter++;
+            dropOverlay.classList.add('active');
+        });
+
+        // 拖出
+        document.body.addEventListener('dragleave', () => {
+            dragCounter--;
+            if (dragCounter === 0) dropOverlay.classList.remove('active');
+        });
+
+        // 松手 (Drop)
+        document.body.addEventListener('drop', (e) => {
+            dragCounter = 0;
+            dropOverlay.classList.remove('active');
+            const dt = e.dataTransfer;
+            if (dt.files.length > 0) handleFileSelection(dt.files[0]);
+        });
+
+        // 点击区域选择文件
+        fileDisplayArea.addEventListener('click', () => fileInput.click());
+
+        // 监听 Input 变化
+        fileInput.addEventListener('change', function () {
+            if (this.files.length > 0) handleFileSelection(this.files[0]);
+        });
+
+        // 处理文件选中
+        function handleFileSelection(file) {
+            // 如果是拖拽来源，手动赋值给 input
+            if (fileInput.files[0] !== file) {
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                fileInput.files = dataTransfer.files;
+            }
+
+            fileNameDisplay.textContent = `已选择: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+            fileDisplayArea.classList.add('has-file');
+            clearBtn.style.display = 'inline'; // 显示清除按钮
+            document.getElementById('status').innerHTML = '';
+        }
+
+        // --- 清除文件逻辑 ---
+        clearBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // 关键：防止冒泡触发父元素的“选择文件”点击事件
+            resetFileState();
+        });
+
+        function resetFileState() {
+            fileInput.value = ''; // 清空 Input
+            fileNameDisplay.textContent = '点击或拖拽文件到此处';
+            fileDisplayArea.classList.remove('has-file');
+            clearBtn.style.display = 'none'; // 隐藏清除按钮
+            document.getElementById('status').innerHTML = '';
+        }
+
+        // --- 上传逻辑 ---
+        async function handleUpload() {
+            const btn = document.getElementById('uploadBtn');
+            const token = document.getElementById('token').value.trim();
+            const pathInput = document.getElementById('fullPath').value.trim();
+            const file = fileInput.files[0];
+
+            if (!token) return showMsg('请填写 Token', 'red');
+            if (!file) return showMsg('请先选择文件', 'red');
+            if (!pathInput || pathInput.split('/').length < 2) return showMsg('路径格式错误', 'red');
+
+            try {
+                btn.disabled = true;
+                btn.innerText = '上传中...';
+                showMsg('正在处理...', 'blue');
+
+                const { username, repo, finalFilePath } = parseGitHubPath(pathInput, file.name);
+                const contentBase64 = await readFileAsBase64(file);
+                const apiUrl = `https://api.github.com/repos/${username}/${repo}/contents/${finalFilePath}`;
+
+                // 检查文件是否存在
+                let sha = null;
+                try {
+                    const check = await fetch(apiUrl, { headers: { 'Authorization': `token ${token}` } });
+                    if (check.ok) sha = (await check.json()).sha;
+                } catch (e) { }
+
+                // 上传
+                const resp = await fetch(apiUrl, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: `Upload ${file.name}`,
+                        content: contentBase64,
+                        sha: sha
+                    })
+                });
+
+                const res = await resp.json();
+                if (resp.ok) {
+                    showMsg(`✅ 成功! <a href="${res.content.html_url}" target="_blank">查看文件</a>`, 'green');
+                    resetFileState(); // 上传成功后自动清空
+                } else {
+                    throw new Error(res.message);
+                }
+            } catch (err) {
+                showMsg(`❌ ${err.message}`, 'red');
+            } finally {
+                btn.disabled = false;
+                btn.innerText = '开始上传';
+            }
+        }
+
+        function parseGitHubPath(inputPath, fileName) {
+            let path = inputPath.trim().replace(/\\/g, '/').replace(/^\/+/, '');
+            const parts = path.split('/');
+            const username = parts[0];
+            const repo = parts[1];
+            let dirPath = parts.slice(2).join('/');
+
+            let finalFilePath = (inputPath.endsWith('/') || dirPath === '')
+                ? (dirPath ? `${dirPath}/${fileName}` : fileName)
+                : dirPath;
+
+            return { username, repo, finalFilePath: finalFilePath.replace(/\/+/g, '/') };
+        }
+
+        function readFileAsBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = e => resolve(e.target.result.split(',')[1]);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function showMsg(html, color) {
+            const el = document.getElementById('status');
+            el.innerHTML = html;
+            el.style.color = color === 'red' ? '#dc2626' : (color === 'green' ? '#059669' : '#2563eb');
+        }
     </script>
 </body>
 
