@@ -406,12 +406,12 @@
                 <label for="updateDayOfWeek">每周更新日:</label>
                 <select id="updateDayOfWeek" required>
                     <option value="0">周日</option>
-                    <option value="6">周六</option>
-                    <option value="5">周五</option>
-                    <option value="4">周四</option>
-                    <option value="3">周三</option>
-                    <option value="2">周二</option>
                     <option value="1">周一</option>
+                    <option value="2">周二</option>
+                    <option value="3">周三</option>
+                    <option value="4">周四</option>
+                    <option value="5">周五</option>
+                    <option value="6">周六</option>
                 </select>
 
                 <button type="submit" id="saveAnimeBtn">保存</button>
@@ -848,7 +848,8 @@
             const todayDayIndex = new Date().getDay();
 
             for (let i = 0; i < 7; i++) {
-                const day = (todayDayIndex + i) % 7;
+                // 核心修改：(今天索引 - 偏移量 i + 7) % 7 保证索引在 0-6 且不为负数
+                const day = (todayDayIndex - i + 7) % 7;
                 const list = groupedData[day];
 
                 if (list.length > 0) {
