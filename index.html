@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>诗意在线工具箱</title>
     <style>
+        /* --- 保持你原有的 CSS 不变 --- */
         * {
             margin: 0;
             padding: 0;
@@ -59,12 +60,14 @@
             padding: 10px 0;
         }
 
+        /* 网格布局 */
         .tool-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
             gap: 20px;
         }
 
+        /* 卡片样式 */
         .tool-card {
             display: block;
             background: rgba(30, 41, 59, 0.7);
@@ -142,6 +145,13 @@
                 font-size: 2.2rem;
             }
         }
+
+        /* 加载中的提示样式 */
+        .loading-text {
+            text-align: center;
+            color: #a78bfa;
+            grid-column: 1 / -1;
+        }
     </style>
 </head>
 
@@ -150,98 +160,126 @@
         <header>
             <h1 class="poem-title" id="poemTitle">工欲善其事，必先利其器</h1>
         </header>
-        <div class="tool-grid">
-            <!-- 工具卡片 1 -->
-            <a href="./000/01.1 追剧备忘录总览.html" class="tool-card">
-                <h3><span class="icon">{ }</span> 追剧备忘录总览</h3>
-                <p>轻松记录和查看追剧记录，支持上传和下载，多设备同步。</p>
-            </a>
-            <!-- 工具卡片 2 -->
-            <a href="./000/02.1 电量消耗计算器.html" class="tool-card">
-                <h3><span class="icon">≡</span> 电量消耗计算器</h3>
-                <p>一款易于使用的在线工具，可帮助您估算家用电器和设备的用电量</p>
-            </a>
-            <!-- 工具卡片 3 -->
-            <a href="./000/03 BMI健康计算器.html" class="tool-card">
-                <h3><span class="icon">📝</span> BMI健康计算器</h3>
-                <p>实时预览的Markdown编辑器，支持导出为HTML或PDF文件。</p>
-            </a>
-            <!-- 工具卡片 4 -->
-            <a href="https://github.com/xgd1062/1062" class="tool-card">
-                <h3><span class="icon">🔲</span> Github开源网站</h3>
-                <p>将任何URL或文本转换为高质量的二维码图片，可自定义样式。</p>
-            </a>
-            <!-- 工具卡片 5 -->
-            <a href="./000/05 猜数字.html" class="tool-card">
-                <h3><span class="icon">🔒</span> 猜数字小游戏</h3>
-                <p>评估密码强度并提供改进建议，帮助您创建更安全的密码。</p>
-            </a>
-            <!-- 工具卡片 6 -->
-            <a href="./000/06 投骰子.html" class="tool-card">
-                <h3><span class="icon">🖼️</span> 投骰子拼大小</h3>
-                <p>在不显著降低质量的前提下，有效压缩图片文件大小。</p>
-            </a>
-            <!-- 工具卡片 7 -->
-            <a href="./000/07 简易物品管理系统.html" class="tool-card">
-                <h3><span class="icon">🌐</span> 物品管理系统</h3>
-                <p>快速查询IP地址的地理位置和网络服务提供商信息。</p>
-            </a>
-            <!-- 工具卡片 8 -->
-            <a href="./000/08 GitHub 文件上传器.html" class="tool-card">
-                <h3><span class="icon">📊</span> GitHub 文件上传器</h3>
-                <p>支持JSON、XML、YAML等多种数据格式之间的相互转换。</p>
-            </a>
-            <!-- 工具卡片 9 -->
-            <a href="./000/09 信息记录存储.html" class="tool-card">
-                <h3><span class="icon">🌐</span> 信息记录存储</h3>
-                <p>快速查询IP地址的地理位置和网络服务提供商信息。</p>
-            </a>
 
-            <!-- 工具卡片 10 -->
-            <a href="./000/10 书签页.html" class="tool-card">
-                <h3><span class="icon">🌐</span> 书签页</h3>
-                <p>快速查询IP地址的地理位置和网络服务提供商信息。</p>
-            </a>
-            <!-- 工具卡片 11 -->
-            <a href="./000/11 二维码生成器.html" class="tool-card">
-                <h3><span class="icon">🌐</span> 二维码生成器</h3>
-                <p>快速查询IP地址的地理位置和网络服务提供商信息。</p>
-            </a>
+        <div class="tool-grid" id="toolGrid">
+            <p class="loading-text">正在读取工具列表...</p>
         </div>
+
         <div class="footer">
             <p>诗意工具箱 &copy; 202X | 每次刷新，都会是新的变化</p>
         </div>
     </div>
+
     <script>
-        // 诗句数组 - 包含多句与工具、工作相关的诗句
+        // --- 1. 诗句功能 (保持不变) ---
         const poems = [
-            "工欲善其事，必先利其器",
-            "磨刀不误砍柴工，利器在手事易成",
-            "运筹帷幄之中，决胜千里之外",
-            "利器入手，快意恩仇皆可求",
-            "妙手偶得之，工具助其成",
-            "效率之道，利器为先",
-            "庖丁解牛，善用其器",
-            "工具有道，事半功倍",
-            "智巧生于器用之间",
-            "器利则工善，工善则事成"
+            "工欲善其事，必先利其器", "磨刀不误砍柴工，利器在手事易成", "运筹帷幄之中，决胜千里之外",
+            "利器入手，快意恩仇皆可求", "妙手偶得之，工具助其成", "效率之道，利器为先",
+            "庖丁解牛，善用其器", "工具有道，事半功倍", "智巧生于器用之间", "器利则工善，工善则事成"
         ];
 
-        // 当页面加载时
         document.addEventListener('DOMContentLoaded', function () {
-            // 获取标题元素
             const poemTitle = document.getElementById('poemTitle');
-            // 随机选择一首诗
             const randomIndex = Math.floor(Math.random() * poems.length);
-            const selectedPoem = poems[randomIndex];
-            // 更新标题文本
-            poemTitle.textContent = selectedPoem;
-            // 添加动态效果
+            poemTitle.textContent = poems[randomIndex];
             setTimeout(() => {
                 poemTitle.style.transform = "scale(1.03)";
                 poemTitle.style.textShadow = "0 6px 18px rgba(0, 0, 0, 0.4)";
             }, 300);
+
+            // --- 2. 新增：读取并渲染 Markdown 功能 ---
+            fetchAndRenderTools();
         });
+
+        // 读取 md 文件并渲染
+        async function fetchAndRenderTools() {
+            const grid = document.getElementById('toolGrid');
+
+            try {
+                // 读取同目录下的 '主页.md' 文件
+                // 注意：必须通过 http/https 服务运行，不能直接打开 html 文件
+                const response = await fetch('./主页.md');
+
+                if (!response.ok) {
+                    throw new Error('无法读取主页.md文件，请确保文件存在');
+                }
+
+                const text = await response.text();
+                const tools = parseMarkdown(text);
+
+                // 清空“正在加载”
+                grid.innerHTML = '';
+
+                // 生成 HTML
+                tools.forEach(tool => {
+                    const card = document.createElement('a');
+                    card.className = 'tool-card';
+                    card.href = tool.link;
+                    // 如果链接是外部的，可以加上 target="_blank"
+                    // card.target = "_blank"; 
+
+                    card.innerHTML = `
+                        <h3><span class="icon">${tool.icon}</span> ${tool.title}</h3>
+                        <p>${tool.desc}</p>
+                    `;
+                    grid.appendChild(card);
+                });
+
+            } catch (error) {
+                console.error('加载失败:', error);
+                grid.innerHTML = `<p class="loading-text" style="color:red">加载失败: 请确保使用本地服务器 (Live Server) 运行，且 '主页.md' 文件存在。<br><br>错误信息: ${error.message}</p>`;
+            }
+        }
+
+        // 解析 Markdown 文本的简单函数
+        function parseMarkdown(mdText) {
+            const tools = [];
+            // 按 '##' 分割不同的块
+            const blocks = mdText.split('##');
+
+            blocks.forEach(block => {
+                // 跳过空块（通常是文件的第一个空行）
+                if (!block.trim()) return;
+
+                // 按行分割
+                const lines = block.trim().split('\n');
+
+                // 第一行包含 [图标] 和 标题
+                // 例如: [📝] BMI健康计算器
+                const titleLine = lines[0].trim();
+
+                // 提取图标: 查找 [] 里面的内容
+                let icon = '';
+                let title = titleLine;
+
+                const iconMatch = titleLine.match(/\[(.*?)\]/);
+                if (iconMatch) {
+                    icon = iconMatch[1];
+                    // 标题是去掉图标后的部分
+                    title = titleLine.replace(iconMatch[0], '').trim();
+                }
+
+                // 查找链接和描述
+                let link = '#';
+                let desc = '暂无描述';
+
+                lines.forEach(line => {
+                    const l = line.trim();
+                    if (l.startsWith('- link:')) {
+                        link = l.replace('- link:', '').trim();
+                    } else if (l.startsWith('- desc:')) {
+                        desc = l.replace('- desc:', '').trim();
+                    }
+                });
+
+                // 只有当有标题时才添加
+                if (title) {
+                    tools.push({ icon, title, link, desc });
+                }
+            });
+
+            return tools;
+        }
     </script>
 </body>
 
