@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>追番进度管理 - GitHub 同步 (PC 左对齐/移动端适配版)</title>
+    <title>追番进度管理 - GitHub 同步 (更新逻辑修正/PC 左对齐/移动端适配版)</title>
 
     <style>
         :root {
@@ -118,14 +118,13 @@
             font-size: 1.3em;
         }
 
-        /* 卡片排列行 - 核心修改：改为左对齐 (flex-start) */
+        /* 卡片排列行 - PC 左对齐 */
         .anime-row {
             display: flex;
             flex-wrap: wrap;
             gap: 15px;
             align-items: flex-start;
             justify-content: flex-start;
-            /* PC端左对齐 */
         }
 
         /* 单个番剧卡片 */
@@ -362,15 +361,12 @@
             .anime-row {
                 gap: 10px;
                 justify-content: stretch;
-                /* 在移动端拉伸以充满整行 */
             }
 
             .day-group {
                 padding: 5px;
             }
         }
-
-        /* ====================== */
     </style>
 </head>
 
@@ -468,7 +464,6 @@
             if (storedData) {
                 animeData = JSON.parse(storedData);
             }
-            // 确保每个记录都有 deleted 字段
             animeData = animeData.map(entry => ({
                 ...entry,
                 deleted: entry.deleted === true
@@ -499,7 +494,7 @@
         }
 
         /**
-         * 自动更新集数核心逻辑
+         * 自动更新集数核心逻辑 (已根据用户需求修正)
          */
         function calculateCurrentUpdatedEpisode(entry) {
             const dateAdded = new Date(entry.dateAdded + 'T00:00:00Z');
@@ -507,25 +502,39 @@
             const initialUpdatedEpisode = entry.initialUpdatedEpisode;
 
             const today = new Date();
+            // 使用 UTC 日期来确保星期几和日期计算的准确性
             const todayUTC = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
 
             const timeDiff = todayUTC.getTime() - dateAdded.getTime();
             const totalDaysPassed = Math.floor(timeDiff / MS_PER_DAY);
 
+            // 如果今天早于添加日期，则不计算
             if (totalDaysPassed < 0) return initialUpdatedEpisode;
 
+            // 1. 计算从添加日期到下一个更新日的间隔天数
             const addedDayOfWeek = dateAdded.getUTCDay();
-            const daysToFirstUpdate = (updateDay - addedDayOfWeek + 7) % 7;
+            let daysToFirstUpdate = (updateDay - addedDayOfWeek + 7) % 7;
 
-            const daysSinceFirstUpdate = totalDaysPassed - daysToFirstUpdate;
+            // 2. 核心修正逻辑：
+            // 如果 daysToFirstUpdate 为 0，说明添加当天就是更新日。
+            // 根据用户要求，此时首次更新应从下一周开始算，所以将首次更新日延迟 7 天。
+            if (daysToFirstUpdate === 0) {
+                daysToFirstUpdate = 7;
+            }
+
+            // 3. 计算从首次“有效”更新日开始，过去了多少天
+            const daysSinceFirstEffectiveUpdate = totalDaysPassed - daysToFirstUpdate;
 
             let weeksPassed = 0;
-            if (daysSinceFirstUpdate >= 0) {
-                weeksPassed = Math.floor(daysSinceFirstUpdate / 7) + 1;
+            if (daysSinceFirstEffectiveUpdate >= 0) {
+                // 如果是首次有效更新日 (daysSinceFirstEffectiveUpdate = 0)
+                // Math.floor(0/7) + 1 = 1，正确计算了本次更新
+                weeksPassed = Math.floor(daysSinceFirstEffectiveUpdate / 7) + 1;
             }
 
             let calculatedEp = initialUpdatedEpisode + weeksPassed;
 
+            // 4. 截止逻辑
             if (entry.totalEpisodes > 0) {
                 calculatedEp = Math.min(calculatedEp, entry.totalEpisodes);
             }
@@ -570,7 +579,6 @@
          * 生成 Markdown 内容 (过滤掉待删除记录)
          */
         function generateMarkdown(data) {
-            // 过滤掉所有已标记删除的记录
             const liveData = data.filter(entry => !entry.deleted);
 
             if (liveData.length === 0) {
@@ -825,7 +833,7 @@
             }
         }
 
-        // --- 3. 渲染视图 (增加待删除状态显示) ---
+        // --- 3. 渲染视图 ---
         const overviewContainer = document.getElementById('overview-container');
 
         function renderOverview() {
@@ -1107,6 +1115,7 @@
             renderOverview();
 
             updateTimeAndWeather();
+            // 每秒更新时间
             setInterval(updateTimeAndWeather, 1000);
 
             document.getElementById('syncBtn').addEventListener('click', syncData);
