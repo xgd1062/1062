@@ -4,11 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>追番进度管理 - GitHub 同步 (带待删除状态)</title>
-    
+    <title>追番进度管理 - GitHub 同步 (PC 左对齐/移动端适配版)</title>
+
     <style>
         :root {
-            --primary-color: #f67b8d; 
+            --primary-color: #f67b8d;
             --secondary-color: #6c757d;
             --success-color: #28a745;
             --danger-color: #dc3545;
@@ -17,7 +17,7 @@
             --card-bg: #ffffff;
             --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
             --watching-color: #f67b8d;
-            --update-color: #ffc107; 
+            --update-color: #ffc107;
         }
 
         * {
@@ -26,7 +26,7 @@
         }
 
         body {
-            max-width: 900px; 
+            max-width: 900px;
             margin: 0 auto;
             padding: 20px;
             background-color: var(--bg-light);
@@ -44,13 +44,19 @@
             border-radius: 12px;
             color: white;
             box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+            flex-wrap: wrap;
         }
-        
+
+        .header h1 {
+            margin: 0;
+        }
+
         /* 头部右侧容器 */
         .header-right {
             display: flex;
             align-items: center;
-            gap: 10px; 
+            gap: 10px;
+            flex-wrap: wrap;
         }
 
         /* 时间信息区域 */
@@ -60,6 +66,7 @@
             font-size: 0.9em;
             opacity: 0.9;
         }
+
         .datetime-info p {
             margin: 0;
             white-space: nowrap;
@@ -67,25 +74,28 @@
 
 
         /* 按钮样式 */
-        .action-btn, button:not(.anime-actions button) {
+        .action-btn,
+        button:not(.anime-actions button) {
             padding: 10px 18px;
             border: none;
             border-radius: 8px;
             cursor: pointer;
             font-size: 16px;
             transition: background-color 0.3s, transform 0.1s;
-            flex-shrink: 0; 
+            flex-shrink: 0;
+            min-width: 80px;
         }
 
         .action-btn {
             background-color: white;
             color: var(--watching-color);
         }
-        
-        #syncBtn { 
-             background-color: #2196f3;
-             color: white;
+
+        #syncBtn {
+            background-color: #2196f3;
+            color: white;
         }
+
         #syncBtn:hover {
             background-color: #1e88e5;
         }
@@ -99,7 +109,7 @@
             background-color: #fff;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
-        
+
         .day-group h3 {
             color: var(--watching-color);
             border-bottom: 2px solid #ffedf0;
@@ -108,18 +118,20 @@
             font-size: 1.3em;
         }
 
-        /* 卡片排列行 */
+        /* 卡片排列行 - 核心修改：改为左对齐 (flex-start) */
         .anime-row {
             display: flex;
-            flex-wrap: wrap; 
-            gap: 15px; 
+            flex-wrap: wrap;
+            gap: 15px;
             align-items: flex-start;
             justify-content: flex-start;
+            /* PC端左对齐 */
         }
 
         /* 单个番剧卡片 */
         .anime-item {
-            width: 154px; 
+            width: 154px;
+            max-width: 100%;
             padding: 10px;
             background-color: var(--bg-light);
             border: 1px solid #dee2e6;
@@ -128,23 +140,24 @@
             box-shadow: var(--shadow);
             display: flex;
             flex-direction: column;
-            transition: all 0.3s ease; /* 添加过渡效果 */
+            transition: all 0.3s ease;
         }
-        
-        /* === NEW: 待删除状态样式 === */
+
+        /* 待删除状态样式 */
         .anime-item.deleted {
             opacity: 0.5;
-            background-color: #ffeeee; /* 浅红色背景 */
+            background-color: #ffeeee;
             border-left: 5px solid var(--danger-color);
             text-decoration: line-through;
         }
+
         .anime-item.deleted .anime-content h4 {
             color: var(--danger-color);
         }
+
         .anime-item.deleted .delete-btn {
-            background-color: var(--secondary-color) !important; /* 取消删除按钮换色 */
+            background-color: var(--secondary-color) !important;
         }
-        /* ======================== */
 
 
         .anime-content h4 {
@@ -155,13 +168,14 @@
             white-space: nowrap;
             text-overflow: ellipsis;
         }
-        
+
         /* 进度信息容器：紧凑化 */
         .progress-info {
             font-size: 0.8em;
             color: var(--secondary-color);
-            margin-bottom: 5px; 
+            margin-bottom: 5px;
         }
+
         .progress-info p {
             margin: 0;
             line-height: 1.2;
@@ -170,25 +184,32 @@
         /* 进度条 */
         .progress-bar {
             height: 6px;
-            margin-bottom: 5px; 
+            margin-bottom: 5px;
         }
 
         .progress-fill {
-             height: 100%;
-             background-color: var(--watching-color);
-             transition: width 0.5s ease-in-out;
+            height: 100%;
+            background-color: var(--watching-color);
+            transition: width 0.5s ease-in-out;
         }
-        
-        .updated-episode-display { color: var(--update-color); font-weight: bold; }
-        .user-episode-display { color: var(--info-color); font-weight: bold; }
+
+        .updated-episode-display {
+            color: var(--update-color);
+            font-weight: bold;
+        }
+
+        .user-episode-display {
+            color: var(--info-color);
+            font-weight: bold;
+        }
 
         /* 动作行：只包含按钮 */
         .action-row {
             display: flex;
-            flex-direction: row; 
-            justify-content: center; 
+            flex-direction: row;
+            justify-content: center;
             align-items: center;
-            margin-top: 8px; 
+            margin-top: 8px;
             padding-top: 5px;
             border-top: 1px dashed #eee;
         }
@@ -196,14 +217,15 @@
         /* 按钮容器：平均分配空间 */
         .anime-actions {
             display: flex;
-            width: 100%; 
-            gap: 5px; 
+            width: 100%;
+            gap: 5px;
         }
+
         .anime-actions button {
-            flex-grow: 1; 
+            flex-grow: 1;
             flex-basis: 0;
-            padding: 5px 0; 
-            font-size: 0.8em; 
+            padding: 5px 0;
+            font-size: 0.8em;
             line-height: 1;
             margin: 0;
             border: none;
@@ -212,19 +234,143 @@
             transition: background-color 0.1s;
         }
 
-        .plus-one-btn { background-color: var(--success-color); color: white; }
-        .edit-btn { background-color: var(--secondary-color); color: white; }
-        .delete-btn { background-color: var(--danger-color); color: white; }
+        .plus-one-btn {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .edit-btn {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .delete-btn {
+            background-color: var(--danger-color);
+            color: white;
+        }
 
 
-        /* 弹窗部分 (保持不变) */
-        .modal { display: none; position: fixed; z-index: 10; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); justify-content: center; align-items: center; }
-        .modal-content { background-color: var(--card-bg); padding: 30px; border-radius: 10px; box-shadow: var(--shadow); width: 90%; max-width: 500px; position: relative; }
-        .close-btn { color: #aaa; float: right; font-size: 28px; font-weight: bold; position: absolute; top: 10px; right: 20px; }
-        .close-btn:hover { color: #000; cursor: pointer; }
-        #animeForm label, #configForm label { display: block; margin: 10px 0 5px; font-weight: bold; }
-        #animeForm input, #animeForm select, #configForm input { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; }
-        #animeForm button[type="submit"], #configForm button[type="submit"] { width: 100%; background-color: var(--watching-color); color: white; padding: 12px; }
+        /* 弹窗部分 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 10;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .close-btn {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            position: absolute;
+            top: 10px;
+            right: 20px;
+        }
+
+        .close-btn:hover {
+            color: #000;
+            cursor: pointer;
+        }
+
+        #animeForm label,
+        #configForm label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: bold;
+        }
+
+        #animeForm input,
+        #animeForm select,
+        #configForm input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        #animeForm button[type="submit"],
+        #configForm button[type="submit"] {
+            width: 100%;
+            background-color: var(--watching-color);
+            color: white;
+            padding: 12px;
+        }
+
+
+        /* === 移动端媒体查询：确保移动端仍能正确显示 === */
+        @media (max-width: 500px) {
+            body {
+                padding: 10px;
+            }
+
+            .header {
+                padding: 15px;
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .header h1 {
+                font-size: 1.5em;
+                margin-bottom: 10px;
+                text-align: center;
+            }
+
+            .datetime-info {
+                display: none;
+            }
+
+            .header-right {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+                width: 100%;
+            }
+
+            .action-btn,
+            button:not(.anime-actions button) {
+                width: 100%;
+            }
+
+            /* 卡片布局改为单列，并拉伸以充满宽度 */
+            .anime-item {
+                width: 100%;
+                max-width: 100%;
+            }
+
+            .anime-row {
+                gap: 10px;
+                justify-content: stretch;
+                /* 在移动端拉伸以充满整行 */
+            }
+
+            .day-group {
+                padding: 5px;
+            }
+        }
+
+        /* ====================== */
     </style>
 </head>
 
@@ -254,13 +400,13 @@
 
                 <label for="totalEpisodes">总集数 (0 表示未知):</label>
                 <input type="number" id="totalEpisodes" min="0" value="12" required>
-                
+
                 <label for="initialUpdatedEpisode">源站已更新到第几集:</label>
                 <input type="number" id="initialUpdatedEpisode" min="1" value="1" required>
 
                 <label for="currentEpisode">您正在看第几集:</label>
                 <input type="number" id="currentEpisode" min="1" value="1" required>
-                
+
                 <label for="updateDayOfWeek">每周更新日:</label>
                 <select id="updateDayOfWeek" required>
                     <option value="0">周日</option>
@@ -276,7 +422,7 @@
             </form>
         </div>
     </div>
-    
+
     <div id="githubConfigModal" class="modal">
         <div class="modal-content">
             <span class="close-btn config-close-btn">&times;</span>
@@ -303,10 +449,10 @@
         // --- 1. 数据模型与存储 ---
         const LS_KEY = 'animeTrackerWatchingOnlyV2';
         const CONFIG_KEY = 'githubSyncConfig';
-        const DAY_NAMES = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']; 
+        const DAY_NAMES = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
         const MS_PER_DAY = 1000 * 60 * 60 * 24;
-        
-        let animeData = []; 
+
+        let animeData = [];
         let githubConfig = null;
 
         const DEFAULT_REPO_CONFIG = {
@@ -325,7 +471,7 @@
             // 确保每个记录都有 deleted 字段
             animeData = animeData.map(entry => ({
                 ...entry,
-                deleted: entry.deleted === true // 如果存在且为 true 则保留 true，否则为 undefined/false
+                deleted: entry.deleted === true
             }));
 
             const storedConfig = localStorage.getItem(CONFIG_KEY);
@@ -343,7 +489,7 @@
         function saveGithubConfig() {
             localStorage.setItem(CONFIG_KEY, JSON.stringify(githubConfig));
         }
-        
+
         function getTodayDateString() {
             const today = new Date();
             const yyyy = today.getFullYear();
@@ -351,9 +497,9 @@
             const dd = String(today.getDate()).padStart(2, '0');
             return `${yyyy}-${mm}-${dd}`;
         }
-        
+
         /**
-         * 自动更新集数核心逻辑 (保持不变)
+         * 自动更新集数核心逻辑
          */
         function calculateCurrentUpdatedEpisode(entry) {
             const dateAdded = new Date(entry.dateAdded + 'T00:00:00Z');
@@ -368,27 +514,27 @@
 
             if (totalDaysPassed < 0) return initialUpdatedEpisode;
 
-            const addedDayOfWeek = dateAdded.getUTCDay(); 
-            const daysToFirstUpdate = (updateDay - addedDayOfWeek + 7) % 7; 
-            
+            const addedDayOfWeek = dateAdded.getUTCDay();
+            const daysToFirstUpdate = (updateDay - addedDayOfWeek + 7) % 7;
+
             const daysSinceFirstUpdate = totalDaysPassed - daysToFirstUpdate;
 
             let weeksPassed = 0;
             if (daysSinceFirstUpdate >= 0) {
                 weeksPassed = Math.floor(daysSinceFirstUpdate / 7) + 1;
             }
-            
+
             let calculatedEp = initialUpdatedEpisode + weeksPassed;
-            
+
             if (entry.totalEpisodes > 0) {
                 calculatedEp = Math.min(calculatedEp, entry.totalEpisodes);
             }
-            
+
             return Math.max(calculatedEp, initialUpdatedEpisode);
         }
-        
+
         /**
-         * 按更新日分组 (保持不变)
+         * 按更新日分组
          */
         function groupAnimeByDay(data) {
             const groups = {};
@@ -406,13 +552,18 @@
             const dayOfWeek = DAY_NAMES[now.getDay()];
             const timeString = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
             const dateString = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日`;
-            
+
             const timeElement = document.getElementById('current-time');
             if (timeElement) {
-                timeElement.innerHTML = `${dateString} ${dayOfWeek} ${timeString}`;
+                // 仅在 PC 端显示时间，移动端 CSS 已隐藏
+                if (window.innerWidth > 500) {
+                    timeElement.innerHTML = `${dateString} ${dayOfWeek} ${timeString}`;
+                } else {
+                    timeElement.innerHTML = '';
+                }
             }
         }
-        
+
         // --- 2. GitHub API 及同步逻辑 ---
 
         /**
@@ -427,29 +578,29 @@
             }
 
             const now = new Date();
-            const timestamp = now.toLocaleString('zh-CN', { 
-                year: 'numeric', month: '2-digit', day: '2-digit', 
-                hour: '2-digit', minute: '2-digit', second: '2-digit' 
+            const timestamp = now.toLocaleString('zh-CN', {
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit', second: '2-digit'
             });
 
             let markdown = `# 🍿 追番进度管理导出 (${timestamp})\n\n`;
-            
+
             const groupedData = groupAnimeByDay(liveData);
-            
+
             for (let day = 0; day < 7; day++) {
                 const list = groupedData[day];
-                
+
                 if (list.length > 0) {
                     const dayGroupName = DAY_NAMES[day];
                     markdown += `## ${dayGroupName}更新 (${list.length}部)\n\n`;
-                    
+
                     markdown += '| 名称 | 更新至 | 追番进度 | 总集数 | 更新日 |\n';
-                    markdown += '| :--- | :--- | :--- | :--- | :--- |\n';
+                    markdown += '| :--- | :--- | :--- | :--- | :--- | \n';
 
                     list.forEach(({ entry }) => {
                         const calculatedUpdatedEp = calculateCurrentUpdatedEpisode(entry);
                         const totalText = entry.totalEpisodes > 0 ? entry.totalEpisodes : '??';
-                        
+
                         markdown += `| ${entry.title} | ${calculatedUpdatedEp} | ${entry.currentEpisode} | ${totalText} | ${DAY_NAMES[entry.updateDayOfWeek]} |\n`;
                     });
                     markdown += '\n';
@@ -457,15 +608,15 @@
             }
             return markdown;
         }
-        
+
         /**
-         * 解析 Markdown 内容回数据结构 (保持不变)
+         * 解析 Markdown 内容回数据结构 
          */
         function parseMarkdownToData(markdownContent) {
             const lines = markdownContent.split('\n');
             const parsedData = [];
-            let currentDay = 0; 
-            
+            let currentDay = 0;
+
             const dayNameToIndex = DAY_NAMES.reduce((acc, name, index) => {
                 acc[name] = index;
                 return acc;
@@ -476,7 +627,7 @@
                 if (dayMatch && dayMatch[1] && dayNameToIndex.hasOwnProperty(dayMatch[1])) {
                     currentDay = dayNameToIndex[dayMatch[1]];
                 }
-                
+
                 const dataMatch = line.match(/^\| (.+?) \| (\d+) \| (\d+) \| (.+?) \| (.+?) \|$/);
                 if (dataMatch) {
                     const title = dataMatch[1].trim();
@@ -488,11 +639,11 @@
                     const remoteEntry = {
                         title: title,
                         totalEpisodes: totalEpisodes,
-                        currentEpisode: currentEpisode, 
-                        updateDayOfWeek: currentDay, 
-                        dateAdded: getTodayDateString(), 
+                        currentEpisode: currentEpisode,
+                        updateDayOfWeek: currentDay,
+                        dateAdded: getTodayDateString(),
                         initialUpdatedEpisode: calculatedUpdatedEp,
-                        deleted: false // 远程数据默认为未删除状态
+                        deleted: false
                     };
 
                     parsedData.push(remoteEntry);
@@ -503,46 +654,38 @@
         }
 
         /**
-         * **新的合并和删除处理逻辑**
-         * 1. 筛选出本地未删除的记录 (`localLiveRecords`)。
-         * 2. 识别本地已标记删除的记录 (`localDeletedTitles`)。
-         * 3. 过滤远程数据，排除那些与本地待删除记录同名的条目。
-         * 4. 将过滤后的远程数据与本地未删除数据合并。
-         * @param {Array} remoteData - 从 GitHub 下载的数组
-         * @param {Array} localData - 本地完整的数组（包含已删除标记）
-         * @returns {Array} mergedData - 合并后的“活着的”数据
+         * 新的合并和删除处理逻辑
          */
         function processRemoteAndDelete(remoteData, localData) {
-            
+
             // 1. 本地未被标记删除的记录
             const localLiveRecords = localData.filter(item => !item.deleted);
             const localLiveTitles = new Set(localLiveRecords.map(item => item.title));
-            
+
             // 2. 本地待删除的记录
             const localDeletedTitles = new Set(localData
                 .filter(item => item.deleted)
                 .map(item => item.title));
-            
+
             // 3. 过滤远程数据：排除那些在本地被标记删除的记录
             const remoteLiveRecords = remoteData.filter(remoteEntry => {
                 return !localDeletedTitles.has(remoteEntry.title);
             });
-            
+
             // 4. 合并本地未删除记录和过滤后的远程记录 (远程独有的添加进来)
             const merged = [...localLiveRecords];
 
             remoteLiveRecords.forEach(remoteEntry => {
                 if (!localLiveTitles.has(remoteEntry.title)) {
-                    // 远程记录是新增的，添加到本地
                     merged.push(remoteEntry);
                 }
             });
-            
-            return merged; 
+
+            return merged;
         }
 
         /**
-         * 从 GitHub 获取文件内容和 SHA (保持不变)
+         * 从 GitHub 获取文件内容和 SHA 
          */
         async function fetchFileFromGithub(config) {
             const url = `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}`;
@@ -550,29 +693,29 @@
                 const response = await fetch(url, {
                     headers: {
                         'Authorization': `token ${config.token}`,
-                        'Accept': 'application/vnd.github.v3+json' 
+                        'Accept': 'application/vnd.github.v3+json'
                     }
                 });
 
                 if (response.status === 404) {
                     return { content: null, sha: null };
                 }
-                
+
                 if (!response.ok) {
-                     const errorJson = await response.json().catch(() => ({ message: response.statusText }));
-                     throw new Error(`GitHub Fetch Error: ${response.status} - ${errorJson.message || 'Unknown API Error'}`);
+                    const errorJson = await response.json().catch(() => ({ message: response.statusText }));
+                    throw new Error(`GitHub Fetch Error: ${response.status} - ${errorJson.message || 'Unknown API Error'}`);
                 }
 
                 const contentData = await response.json();
-                
+
                 if (contentData.content && contentData.sha) {
                     // Base64 解码，同时处理 UTF-8 (中文) 字符
-                    const fileContent = decodeURIComponent(escape(atob(contentData.content))); 
+                    const fileContent = decodeURIComponent(escape(atob(contentData.content)));
                     return { content: fileContent, sha: contentData.sha };
                 }
-                
-                return { content: null, sha: null }; 
-                
+
+                return { content: null, sha: null };
+
             } catch (error) {
                 console.error("GitHub Fetch failed:", error);
                 throw new Error(`获取 GitHub 文件失败: ${error.message || error}`);
@@ -580,18 +723,18 @@
         }
 
         /**
-         * 上传或更新文件到 GitHub (保持不变)
+         * 上传或更新文件到 GitHub 
          */
         async function uploadFileToGithub(config, content, sha) {
             const url = `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}`;
-            
+
             // Base64 编码，确保 UTF-8 支持
-            const base64Content = btoa(unescape(encodeURIComponent(content))); 
-            
+            const base64Content = btoa(unescape(encodeURIComponent(content)));
+
             const payload = {
                 message: sha ? `Sync: Update watch list via local app at ${new Date().toLocaleString('zh-CN')}` : `Sync: Initial upload of watch list via local app`,
                 content: base64Content,
-                sha: sha 
+                sha: sha
             };
 
             try {
@@ -603,14 +746,14 @@
                     },
                     body: JSON.stringify(payload)
                 });
-                
+
                 if (!response.ok) {
                     const errorJson = await response.json();
                     throw new Error(`GitHub Upload Error: ${response.status} - ${errorJson.message || '未知错误'}`);
                 }
 
                 const result = await response.json();
-                return result; 
+                return result;
 
             } catch (error) {
                 console.error("GitHub Upload failed:", error);
@@ -619,7 +762,7 @@
         }
 
         /**
-         * 主同步函数 (更新了合并和删除处理)
+         * 主同步函数
          */
         async function syncData() {
             if (!githubConfig.token) {
@@ -627,7 +770,7 @@
                 showConfigModal();
                 return;
             }
-            
+
             const syncBtn = document.getElementById('syncBtn');
             const originalText = syncBtn.textContent;
             syncBtn.textContent = '同步中...';
@@ -638,27 +781,27 @@
                 const { content: remoteContent, sha } = await fetchFileFromGithub(githubConfig);
                 let contentToUpload = '';
                 let newSha = sha;
-                
+
                 if (remoteContent && remoteContent.trim().length > 0) {
                     // A. 文件存在：合并数据
                     console.log('云端文件存在，进行删除处理和合并...');
                     const remoteData = parseMarkdownToData(remoteContent);
-                    
+
                     // 执行删除标记处理和合并
                     const mergedData = processRemoteAndDelete(remoteData, animeData);
-                    
+
                     // 将合并后的数据存回本地并重新渲染 (本地的待删除记录在此步骤被清理)
-                    animeData = mergedData; 
+                    animeData = mergedData;
                     saveToLocalStorage();
                     renderOverview();
-                    
-                    // 生成上传内容 (仅包含 mergedData 中的记录，即 live records)
+
+                    // 生成上传内容 (仅包含 live records)
                     contentToUpload = generateMarkdown(mergedData);
                     alert('同步成功：已处理删除标记，下载云端记录并与本地记录合并，合并后的数据已保存到本地并重新上传！');
                 } else {
                     // B. 文件不存在：直接上传本地未删除数据
                     console.log('云端文件不存在或为空，直接上传本地数据...');
-                    
+
                     // 确保上传前本地数据已清理已标记删除的记录
                     const localLiveData = animeData.filter(entry => !entry.deleted);
                     animeData = localLiveData;
@@ -666,10 +809,10 @@
                     renderOverview();
 
                     contentToUpload = generateMarkdown(localLiveData);
-                    newSha = null; 
+                    newSha = null;
                     alert('同步成功：首次上传本地数据到 GitHub！');
                 }
-                
+
                 // 2. 上传合并/本地数据
                 await uploadFileToGithub(githubConfig, contentToUpload, newSha);
 
@@ -681,28 +824,28 @@
                 syncBtn.disabled = false;
             }
         }
-        
+
         // --- 3. 渲染视图 (增加待删除状态显示) ---
         const overviewContainer = document.getElementById('overview-container');
 
         function renderOverview() {
             overviewContainer.innerHTML = '';
-            
+
             if (animeData.length === 0) {
                 overviewContainer.innerHTML = '<p style="text-align:center; color:#999;">暂无追番记录，点击“新增番剧”开始追番吧！</p>';
                 return;
             }
 
             const groupedData = groupAnimeByDay(animeData);
-            const todayDayIndex = new Date().getDay(); 
-            
+            const todayDayIndex = new Date().getDay();
+
             for (let i = 0; i < 7; i++) {
-                const day = (todayDayIndex + i) % 7; 
+                const day = (todayDayIndex + i) % 7;
                 const list = groupedData[day];
-                
+
                 if (list.length > 0) {
                     const dayGroupName = DAY_NAMES[day] + (day === todayDayIndex ? ' (今天)' : '');
-                    
+
                     const dayGroup = document.createElement('div');
                     dayGroup.className = 'day-group';
                     dayGroup.innerHTML = `<h3>${dayGroupName}更新 (${list.length}部)</h3>`;
@@ -711,17 +854,15 @@
                     animeRow.className = 'anime-row';
 
                     list.forEach(({ entry, originalIndex }) => {
-                        
+
                         const calculatedUpdatedEp = calculateCurrentUpdatedEpisode(entry);
                         const totalText = entry.totalEpisodes > 0 ? entry.totalEpisodes : '??';
-                        const progressPercentage = entry.totalEpisodes > 0 
-                                                   ? Math.min(100, (entry.currentEpisode / entry.totalEpisodes) * 100).toFixed(0) 
-                                                   : 0;
+                        const progressPercentage = entry.totalEpisodes > 0
+                            ? Math.min(100, (entry.currentEpisode / entry.totalEpisodes) * 100).toFixed(0)
+                            : 0;
 
                         const item = document.createElement('div');
-                        // === NEW: 添加 deleted class ===
                         item.className = 'anime-item' + (entry.deleted ? ' deleted' : '');
-                        // ===========================
 
                         item.innerHTML = `
                             <div class="anime-content">
@@ -742,7 +883,7 @@
                                 <div class="anime-actions">
                                     <button class="plus-one-btn" data-index="${originalIndex}">+1</button>
                                     <button class="edit-btn" data-index="${originalIndex}">改</button>
-                                    <button class="delete-btn" data-index="${originalIndex}">${entry.deleted ? '不删' : '删'}</button>
+                                    <button class="delete-btn" data-index="${originalIndex}">${entry.deleted ? '取消删除' : '删'}</button>
                                 </div>
                             </div>
                         `;
@@ -756,7 +897,7 @@
         }
 
 
-        // --- 4. 弹窗与表单处理 (更新了 deleted 字段) ---
+        // --- 4. 弹窗与表单处理 ---
 
         const animeModal = document.getElementById('animeModal');
         const showAddModalBtn = document.getElementById('showAddModalBtn');
@@ -768,14 +909,14 @@
         const initialUpdatedEpisodeInput = document.getElementById('initialUpdatedEpisode');
         const currentEpisodeInput = document.getElementById('currentEpisode');
         const updateDayOfWeekSelect = document.getElementById('updateDayOfWeek');
-        
-        let currentEditIndex = null; 
+
+        let currentEditIndex = null;
 
         showAddModalBtn.addEventListener('click', () => {
             modalTitle.textContent = '新增番剧';
             animeForm.reset();
             currentEditIndex = null;
-            
+
             totalEpisodesInput.value = 12;
             initialUpdatedEpisodeInput.value = 1;
             currentEpisodeInput.value = 1;
@@ -788,54 +929,53 @@
 
         animeForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            
+
             const title = animeTitleInput.value.trim();
             const totalEpisodes = parseInt(totalEpisodesInput.value) || 0;
             const initialUpdatedEpisode = parseInt(initialUpdatedEpisodeInput.value) || 1;
             let currentEpisode = parseInt(currentEpisodeInput.value) || 1;
             const updateDayOfWeek = parseInt(updateDayOfWeekSelect.value);
 
-            const tempEntry = { 
-                title, totalEpisodes, 
+            const tempEntry = {
+                title, totalEpisodes,
                 currentEpisode: currentEpisode,
-                initialUpdatedEpisode, 
+                initialUpdatedEpisode,
                 updateDayOfWeek,
                 dateAdded: currentEditIndex !== null ? animeData[currentEditIndex].dateAdded : getTodayDateString()
             };
-            
+
             const calculatedUpdatedEp = calculateCurrentUpdatedEpisode(tempEntry);
-            
+
             if (totalEpisodes > 0 && currentEpisode > totalEpisodes) {
                 alert(`正在看的集数 (${currentEpisode}) 不能超过总集数 (${totalEpisodes})！`);
                 return;
             }
             if (currentEpisode > calculatedUpdatedEp) {
-                 alert(`您正在看的集数 (${currentEpisode}) 不能超过当前已更新的集数 (${calculatedUpdatedEp})！`);
-                 return;
+                alert(`您正在看的集数 (${currentEpisode}) 不能超过当前已更新的集数 (${calculatedUpdatedEp})！`);
+                return;
             }
             if (totalEpisodes > 0 && initialUpdatedEpisode > totalEpisodes) {
-                 alert(`源站已更新集数 (${initialUpdatedEpisode}) 不能超过总集数 (${totalEpisodes})！`);
-                 return;
+                alert(`源站已更新集数 (${initialUpdatedEpisode}) 不能超过总集数 (${totalEpisodes})！`);
+                return;
             }
             if (initialUpdatedEpisode < 1) {
-                 alert('源站已更新集数必须至少为 1！');
-                 return;
+                alert('源站已更新集数必须至少为 1！');
+                return;
             }
 
 
-            const newEntry = { 
-                title, 
-                totalEpisodes, 
+            const newEntry = {
+                title,
+                totalEpisodes,
                 initialUpdatedEpisode,
-                currentEpisode, 
+                currentEpisode,
                 updateDayOfWeek,
                 dateAdded: getTodayDateString(),
-                deleted: false // 默认未删除
+                deleted: false
             };
 
             if (currentEditIndex !== null) {
-                // 保持原来的 dateAdded 和 deleted 状态
-                newEntry.dateAdded = animeData[currentEditIndex].dateAdded; 
+                newEntry.dateAdded = animeData[currentEditIndex].dateAdded;
                 newEntry.deleted = animeData[currentEditIndex].deleted;
                 animeData[currentEditIndex] = newEntry;
                 alert(`番剧 [${title}] 已更新！`);
@@ -851,7 +991,7 @@
         });
 
 
-        // --- 5. GitHub 配置弹窗处理 (保持不变) ---
+        // --- 5. GitHub 配置弹窗处理 ---
 
         const githubConfigModal = document.getElementById('githubConfigModal');
         const configForm = document.getElementById('configForm');
@@ -862,20 +1002,20 @@
             if (githubConfig.token) {
                 githubTokenInput.value = githubConfig.token;
             } else {
-                 githubTokenInput.value = '';
+                githubTokenInput.value = '';
             }
             githubConfigModal.style.display = 'flex';
         }
-        
+
         configForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            
+
             const token = githubTokenInput.value.trim();
             if (!token) {
                 alert('GitHub 令牌不能为空！');
                 return;
             }
-            
+
             githubConfig.token = token;
             saveGithubConfig();
             githubConfigModal.style.display = 'none';
@@ -891,32 +1031,29 @@
             const index = target.getAttribute('data-index');
 
             if (target.classList.contains('edit-btn')) {
-                // 编辑逻辑 (保持不变)
                 currentEditIndex = parseInt(index);
                 const entry = animeData[currentEditIndex];
-                
-                // 如果是待删除状态，先提醒取消删除
+
                 if (entry.deleted) {
                     alert(`番剧 "${entry.title}" 已标记为待删除状态，请先点击“取消删除”按钮再进行编辑。`);
                     return;
                 }
-                
+
                 modalTitle.textContent = '编辑番剧信息';
-                
+
                 animeTitleInput.value = entry.title;
                 totalEpisodesInput.value = entry.totalEpisodes;
                 initialUpdatedEpisodeInput.value = entry.initialUpdatedEpisode;
                 currentEpisodeInput.value = entry.currentEpisode;
                 updateDayOfWeekSelect.value = entry.updateDayOfWeek;
-                
+
                 animeModal.style.display = 'flex';
-                
+
             } else if (target.classList.contains('plus-one-btn')) {
-                // +1 逻辑 (保持不变)
                 const targetIndex = parseInt(index);
                 const entry = animeData[targetIndex];
-                
-                if (entry.deleted) return; // 待删除状态不能 +1
+
+                if (entry.deleted) return;
 
                 const calculatedUpdatedEp = calculateCurrentUpdatedEpisode(entry);
 
@@ -925,37 +1062,33 @@
                     return;
                 }
                 if (entry.totalEpisodes > 0 && entry.currentEpisode >= entry.totalEpisodes) {
-                     alert(`恭喜！番剧 [${entry.title}] 已看完！`);
-                     return;
+                    alert(`恭喜！番剧 [${entry.title}] 已看完！`);
+                    return;
                 }
-                
+
                 animeData[targetIndex].currentEpisode += 1;
                 saveToLocalStorage();
                 renderOverview();
-                
+
             } else if (target.classList.contains('delete-btn')) {
-                // === NEW: 软删除逻辑 ===
                 const targetIndex = parseInt(index);
                 const entry = animeData[targetIndex];
 
                 if (entry.deleted) {
                     // 取消删除
                     entry.deleted = false;
-                    alert(`番剧 "${entry.title}" 已恢复正常状态！`);
                 } else {
                     // 标记为待删除
                     entry.deleted = true;
-                    alert(`番剧 "${entry.title}" 已标记为待删除状态 (同步时将永久删除)。`);
                 }
-                
+
                 saveToLocalStorage();
                 renderOverview();
-                // ======================
             }
         });
 
 
-        // --- 7. 通用模态框关闭逻辑 (保持不变) ---
+        // --- 7. 通用模态框关闭逻辑 ---
 
         document.querySelectorAll('.close-btn').forEach(btn => {
             btn.onclick = (e) => {
@@ -968,14 +1101,14 @@
         });
 
 
-        // --- 8. 初始化 (保持不变) ---
+        // --- 8. 初始化 ---
         document.addEventListener('DOMContentLoaded', () => {
             initData();
             renderOverview();
-            
+
             updateTimeAndWeather();
-            setInterval(updateTimeAndWeather, 1000); 
-            
+            setInterval(updateTimeAndWeather, 1000);
+
             document.getElementById('syncBtn').addEventListener('click', syncData);
         });
     </script>
