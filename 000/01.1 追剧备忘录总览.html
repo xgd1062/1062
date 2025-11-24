@@ -150,8 +150,11 @@
             text-decoration: line-through;
         }
 
-        .anime-item.deleted .anime-content h4 {
-            color: var(--danger-color);
+        /* MODIFIED: 确保被删除的链接也被划线 */
+        .anime-item.deleted .anime-content h4,
+        .anime-item.deleted .anime-content h4 a {
+            color: var(--danger-color) !important;
+            text-decoration: line-through;
         }
 
         .anime-item.deleted .delete-btn {
@@ -163,10 +166,27 @@
             margin: 0 0 5px 0;
             color: #495057;
             font-size: 1em;
+            /* 🚀 MODIFIED 1: 仅保留限制容器大小的属性 */
+            overflow: hidden;
+            /* white-space: nowrap; 和 text-overflow: ellipsis; 已移除 */
+        }
+
+        /* NEW: 确保 h4 内部的链接继承样式，但不被划线（除非是删除状态） */
+        .anime-content h4 a {
+            color: inherit;
+            text-decoration: none;
+            display: block;
+            /* 使整个 h4 区域可点击 */
+            /* 🚀 MODIFIED 2: 将省略号属性添加到链接元素上 */
             overflow: hidden;
             white-space: nowrap;
             text-overflow: ellipsis;
         }
+
+        .anime-content h4 a:hover {
+            text-decoration: underline;
+        }
+
 
         /* 进度信息容器：紧凑化 */
         .progress-info {
@@ -394,6 +414,8 @@
                 <label for="animeTitle">番剧名称:</label>
                 <input type="text" id="animeTitle" required>
 
+                <label for="watchLink">观看链接 (URL):</label>
+                <input type="url" id="watchLink" placeholder="例如: https://www.bilibili.com/..." required>
                 <label for="totalEpisodes">总集数 (0 表示未知):</label>
                 <input type="number" id="totalEpisodes" min="0" value="12" required>
 
@@ -466,7 +488,9 @@
             }
             animeData = animeData.map(entry => ({
                 ...entry,
-                deleted: entry.deleted === true
+                deleted: entry.deleted === true,
+                // 确保 watchLink 字段存在，用于向后兼容
+                watchLink: entry.watchLink || ''
             }));
 
             const storedConfig = localStorage.getItem(CONFIG_KEY);
@@ -494,7 +518,7 @@
         }
 
         /**
-         * 自动更新集数核心逻辑 (已根据用户需求修正)
+         * 自动更新集数核心逻辑
          */
         function calculateCurrentUpdatedEpisode(entry) {
             const dateAdded = new Date(entry.dateAdded + 'T00:00:00Z');
@@ -577,6 +601,7 @@
 
         /**
          * 生成 Markdown 内容 (过滤掉待删除记录)
+         * MODIFIED: 更改表格结构，用“观看链接”替换“更新日”
          */
         function generateMarkdown(data) {
             const liveData = data.filter(entry => !entry.deleted);
@@ -602,14 +627,19 @@
                     const dayGroupName = DAY_NAMES[day];
                     markdown += `## ${dayGroupName}更新 (${list.length}部)\n\n`;
 
-                    markdown += '| 名称 | 更新至 | 追番进度 | 总集数 | 更新日 |\n';
+                    // MODIFIED: 新的列头
+                    markdown += '| 名称 | 更新至 | 追番进度 | 总集数 | 观看链接 |\n';
                     markdown += '| :--- | :--- | :--- | :--- | :--- | \n';
 
                     list.forEach(({ entry }) => {
                         const calculatedUpdatedEp = calculateCurrentUpdatedEpisode(entry);
                         const totalText = entry.totalEpisodes > 0 ? entry.totalEpisodes : '??';
 
-                        markdown += `| ${entry.title} | ${calculatedUpdatedEp} | ${entry.currentEpisode} | ${totalText} | ${DAY_NAMES[entry.updateDayOfWeek]} |\n`;
+                        // 确保 watchLink 有效，否则使用 # 占位
+                        const watchUrl = entry.watchLink && entry.watchLink.startsWith('http') ? entry.watchLink : '#';
+
+                        // MODIFIED: 新的列内容
+                        markdown += `| [${entry.title}](${watchUrl}) | ${calculatedUpdatedEp} | ${entry.currentEpisode} | ${totalText} | [点击观看](${watchUrl}) |\n`;
                     });
                     markdown += '\n';
                 }
@@ -619,6 +649,7 @@
 
         /**
          * 解析 Markdown 内容回数据结构 
+         * MODIFIED: 适应新的表格结构
          */
         function parseMarkdownToData(markdownContent) {
             const lines = markdownContent.split('\n');
@@ -636,18 +667,30 @@
                     currentDay = dayNameToIndex[dayMatch[1]];
                 }
 
-                const dataMatch = line.match(/^\| (.+?) \| (\d+) \| (\d+) \| (.+?) \| (.+?) \|$/);
+                // MODIFIED: 新的正则表达式，匹配 5 列数据：
+                // | [标题](链接) | 更新至 | 追番进度 | 总集数 | [点击观看](链接) |
+                // dataMatch[1]: 标题
+                // dataMatch[2]: 链接 (来自标题)
+                // dataMatch[3]: 更新至
+                // dataMatch[4]: 追番进度
+                // dataMatch[5]: 总集数
+                // dataMatch[7]: 链接 (来自点击观看)
+                const dataMatch = line.match(/^\| \[(.+?)\]\((.+?)\) \| (\d+) \| (\d+) \| (.+?) \| \[(.+?)\]\((.+?)\) \|$/);
+
                 if (dataMatch) {
                     const title = dataMatch[1].trim();
-                    const calculatedUpdatedEp = parseInt(dataMatch[2]) || 1;
-                    const currentEpisode = parseInt(dataMatch[3]) || 1;
-                    const totalEpisodesStr = dataMatch[4].trim();
+                    const watchLink = dataMatch[2].trim(); // 从标题的链接中提取
+                    const calculatedUpdatedEp = parseInt(dataMatch[3]) || 1;
+                    const currentEpisode = parseInt(dataMatch[4]) || 1;
+                    const totalEpisodesStr = dataMatch[5].trim();
                     const totalEpisodes = totalEpisodesStr === '??' ? 0 : parseInt(totalEpisodesStr) || 0;
 
                     const remoteEntry = {
                         title: title,
+                        watchLink: watchLink,
                         totalEpisodes: totalEpisodes,
                         currentEpisode: currentEpisode,
+                        // 重点：同步数据中不包含更新日信息，因此解析时保持本地的 updateDayOfWeek
                         updateDayOfWeek: currentDay,
                         dateAdded: getTodayDateString(),
                         initialUpdatedEpisode: calculatedUpdatedEp,
@@ -870,12 +913,19 @@
                             ? Math.min(100, (entry.currentEpisode / entry.totalEpisodes) * 100).toFixed(0)
                             : 0;
 
+                        // 确保链接有效
+                        const watchUrl = entry.watchLink && entry.watchLink.startsWith('http') ? entry.watchLink : '#';
+
                         const item = document.createElement('div');
                         item.className = 'anime-item' + (entry.deleted ? ' deleted' : '');
 
                         item.innerHTML = `
                             <div class="anime-content">
-                                <h4 title="${entry.title}">${entry.title}</h4>
+                                <h4 title="${entry.title}">
+                                    <a href="${watchUrl}" style="color: inherit; text-decoration: none;">
+                                        ${entry.title}
+                                    </a>
+                                </h4>
                             </div>
 
                             <div class="progress-info">
@@ -892,7 +942,7 @@
                                 <div class="anime-actions">
                                     <button class="plus-one-btn" data-index="${originalIndex}">+1</button>
                                     <button class="edit-btn" data-index="${originalIndex}">改</button>
-                                    <button class="delete-btn" data-index="${originalIndex}">${entry.deleted ? '取消删除' : '删'}</button>
+                                    <button class="delete-btn" data-index="${originalIndex}">${entry.deleted ? '不删' : '删'}</button>
                                 </div>
                             </div>
                         `;
@@ -914,6 +964,9 @@
         const modalTitle = document.getElementById('modalTitle');
 
         const animeTitleInput = document.getElementById('animeTitle');
+        // 获取新的 watchLink 字段
+        const watchLinkInput = document.getElementById('watchLink');
+        // END NEW
         const totalEpisodesInput = document.getElementById('totalEpisodes');
         const initialUpdatedEpisodeInput = document.getElementById('initialUpdatedEpisode');
         const currentEpisodeInput = document.getElementById('currentEpisode');
@@ -926,6 +979,9 @@
             animeForm.reset();
             currentEditIndex = null;
 
+            // 设置 watchLink 默认值为空
+            watchLinkInput.value = '';
+            // END NEW
             totalEpisodesInput.value = 12;
             initialUpdatedEpisodeInput.value = 1;
             currentEpisodeInput.value = 1;
@@ -940,13 +996,20 @@
             e.preventDefault();
 
             const title = animeTitleInput.value.trim();
+            // 获取观看链接
+            const watchLink = watchLinkInput.value.trim();
+            // END NEW
             const totalEpisodes = parseInt(totalEpisodesInput.value) || 0;
             const initialUpdatedEpisode = parseInt(initialUpdatedEpisodeInput.value) || 1;
             let currentEpisode = parseInt(currentEpisodeInput.value) || 1;
             const updateDayOfWeek = parseInt(updateDayOfWeekSelect.value);
 
             const tempEntry = {
-                title, totalEpisodes,
+                title,
+                // 包含 watchLink
+                watchLink,
+                // END NEW
+                totalEpisodes,
                 currentEpisode: currentEpisode,
                 initialUpdatedEpisode,
                 updateDayOfWeek,
@@ -975,6 +1038,9 @@
 
             const newEntry = {
                 title,
+                // 包含 watchLink
+                watchLink,
+                // END NEW
                 totalEpisodes,
                 initialUpdatedEpisode,
                 currentEpisode,
@@ -1051,6 +1117,9 @@
                 modalTitle.textContent = '编辑番剧信息';
 
                 animeTitleInput.value = entry.title;
+                // 填充 watchLink
+                watchLinkInput.value = entry.watchLink || '';
+                // END NEW
                 totalEpisodesInput.value = entry.totalEpisodes;
                 initialUpdatedEpisodeInput.value = entry.initialUpdatedEpisode;
                 currentEpisodeInput.value = entry.currentEpisode;
