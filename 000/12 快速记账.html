@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>快速支出记账本 - 当日汇总版</title>
+    <style>
+        :root {
+            --primary-color: #3f51b5;
+            /* Indigo */
+            --secondary-color: #f44336;
+            /* Red (Expense) */
+            --danger-color: #dc3545;
+            /* Darker Red for delete button */
+            --bg-light: #f7f9fc;
+            --card-bg: #ffffff;
+            --text-color: #333;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        }
+
+        body {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 15px;
+            background-color: var(--bg-light);
+            color: var(--text-color);
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            padding: 15px 0 20px;
+            border-bottom: 2px solid #eee;
+        }
+
+        header h1 {
+            color: var(--primary-color);
+            font-size: 1.8em;
+            margin-bottom: 5px;
+        }
+
+        #current-datetime {
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+
+        /* Daily Summary Box (Moved to bottom) */
+        #daily-summary {
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 15px 20px;
+            /* NEW: 调整上边距，与历史列表保持距离 */
+            margin-top: 30px; 
+            margin-bottom: 20px; 
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            text-align: center;
+        }
+
+        #daily-summary h3 {
+            margin: 0 0 5px 0;
+            font-size: 1.1em;
+            opacity: 0.8;
+        }
+
+        #daily-total {
+            font-size: 2.2em;
+            font-weight: bold;
+        }
+
+
+        /* Input Form */
+        .input-card {
+            background-color: var(--card-bg);
+            padding: 20px;
+            /* Adjusted margin */
+            margin-top: 20px; 
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+        }
+
+        #quick-entry-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2em;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            resize: none;
+            transition: border-color 0.3s;
+        }
+
+        #quick-entry-input:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+
+        #submit-btn {
+            width: 100%;
+            padding: 12px;
+            font-size: 1.1em;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #submit-btn:hover {
+            background-color: #303f9f;
+        }
+
+        /* Preview */
+        #preview-box {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #ffebee;
+            /* Light red background for preview */
+            border-radius: 8px;
+            font-size: 0.9em;
+            line-height: 1.5;
+            color: var(--secondary-color);
+            min-height: 40px;
+        }
+
+        #preview-box strong {
+            color: var(--secondary-color);
+        }
+
+        /* History List */
+        .history-section {
+            /* Adjusted margin to be consistent */
+            margin-top: 30px; 
+        }
+
+        .history-section h2 {
+            font-size: 1.4em;
+            color: var(--text-color);
+            border-bottom: 2px dashed #ddd;
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+        }
+
+        #entries-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .entry-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            margin-bottom: 8px;
+            background-color: var(--card-bg);
+            border-left: 5px solid var(--secondary-color);
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .entry-description {
+            flex-grow: 1;
+        }
+
+        .entry-description .desc-text {
+            font-weight: 500;
+        }
+
+        .entry-description .desc-time {
+            display: block;
+            font-size: 0.8em;
+            color: #999;
+        }
+
+        /* 统一动作和金额区域 */
+        .entry-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 120px;
+            justify-content: flex-end;
+        }
+
+        .entry-amount {
+            font-weight: bold;
+            font-size: 1.1em;
+            text-align: right;
+            color: var(--secondary-color);
+            flex-shrink: 0;
+        }
+
+        /* 删除按钮样式 */
+        .delete-entry-btn {
+            background: none;
+            border: 1px solid var(--danger-color);
+            color: var(--danger-color);
+            padding: 4px 8px;
+            font-size: 0.8em;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+            flex-shrink: 0;
+        }
+
+        .delete-entry-btn:hover {
+            background-color: var(--danger-color);
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>💸 快速支出记账</h1>
+        <div id="current-datetime"></div>
+    </header>
+
+    <div class="input-card">
+        <h2>输入 (描述 + 金额)</h2>
+        <form id="accounting-form">
+            <input type="text" id="quick-entry-input" placeholder="例如: 买了咖啡 15" required autocomplete="off">
+
+            <div id="preview-box">输入内容后自动识别...</div>
+
+            <button type="submit" id="submit-btn">记录并保存</button>
+        </form>
+    </div>
+
+    <div class="history-section">
+        <h2>记账历史 (最近20条)</h2>
+        <ul id="entries-list">
+            </ul>
+    </div>
+    
+    <div id="daily-summary">
+        <h3>今日总支出（${currentDate}）</h3>
+        <div id="daily-total">￥0.00</div>
+    </div>
+
+
+    <script>
+        const STORAGE_KEY = 'quickAccountingExpensesOnly';
+        const inputElement = document.getElementById('quick-entry-input');
+        const formElement = document.getElementById('accounting-form');
+        const entriesList = document.getElementById('entries-list');
+        const dateTimeElement = document.getElementById('current-datetime');
+        const previewBox = document.getElementById('preview-box');
+        const dailyTotalElement = document.getElementById('daily-total');
+
+        let entries = [];
+
+        /**
+         * 1. 时间处理函数
+         */
+        function updateDateTime() {
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' });
+            const timeStr = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            dateTimeElement.textContent = `当前时间: ${dateStr} ${timeStr}`;
+            
+            // 更新汇总框的日期显示
+            const summaryHeader = document.querySelector('#daily-summary h3');
+            if (summaryHeader) {
+                summaryHeader.textContent = `今日总支出（${dateStr}）`;
+            }
+        }
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
+
+        /**
+         * 2. 核心：解析输入内容，自动识别金额和描述
+         */
+        function parseInput(input) {
+            const text = input.trim();
+            // 匹配数字 (整数或小数)
+            const amountRegex = /(\d+(\.\d{1,2})?)/;
+            
+            const match = text.match(amountRegex);
+            let amount = 0;
+            let description = text;
+
+            if (match) {
+                // 提取金额字符串并解析为浮点数
+                const amountStr = match[1]; 
+                amount = parseFloat(amountStr);
+
+                // 移除金额部分，剩下的作为描述
+                description = text.replace(match[0], '').trim();
+            }
+            
+            // 如果描述为空，使用去除金额后的原始文本，否则使用'未命名记录'
+            if (description === "") {
+                 const tempDesc = text.replace(match ? match[0] : '', '').trim();
+                 description = tempDesc || '未命名记录';
+            }
+
+            // 强制将金额转换为负数（支出）
+            if (amount > 0) {
+                amount = -amount;
+            } else if (amount === 0) {
+                 if (text !== '') {
+                    description = text; // 即使金额为0，也保留描述
+                 }
+            }
+
+            return {
+                amount: amount,
+                description: description
+            };
+        }
+
+        /**
+         * 3. 数据存储和加载
+         */
+        function loadEntries() {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (stored) {
+                entries = JSON.parse(stored);
+            }
+        }
+
+        function saveEntries() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+        }
+        
+        /**
+         * 4. 计算并渲染当日总支出
+         */
+        function calculateDailyTotal() {
+            // 获取今天的日期字符串 (仅年月日)
+            const todayDateStr = new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' });
+            let dailyTotal = 0;
+
+            entries.forEach(entry => {
+                const entryDate = new Date(entry.timestamp).toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' });
+                
+                // 检查是否为今日记录
+                if (entryDate === todayDateStr) {
+                    dailyTotal += entry.amount;
+                }
+            });
+
+            // dailyTotal 是负数，显示时取绝对值
+            dailyTotalElement.textContent = `￥${Math.abs(dailyTotal).toFixed(2)}`;
+        }
+
+
+        /**
+         * 5. 渲染记账列表 (新增了删除按钮)
+         */
+        function renderEntries() {
+            entriesList.innerHTML = '';
+            
+            // 每次渲染前都重新计算总额
+            calculateDailyTotal();
+
+            let itemRenderedCount = 0;
+            
+            // 遍历整个 entries 数组，使用其原始 index
+            entries.forEach((entry, originalIndex) => {
+                if (itemRenderedCount >= 20) return; // 只渲染前 20 条
+
+                const item = document.createElement('li');
+                
+                item.className = 'entry-item expense';
+                
+                const displayAmount = Math.abs(entry.amount).toFixed(2);
+                
+                // 格式化时间 (只显示时分秒)
+                const timeOnly = new Date(entry.timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+                item.innerHTML = `
+                    <div class="entry-description">
+                        <span class="desc-text">${entry.description}</span>
+                        <span class="desc-time">${timeOnly}</span>
+                    </div>
+                    <div class="entry-actions">
+                        <div class="entry-amount">
+                            -￥${displayAmount}
+                        </div>
+                        <button class="delete-entry-btn" data-index="${originalIndex}">删除</button>
+                    </div>
+                `;
+
+                entriesList.appendChild(item);
+                itemRenderedCount++;
+            });
+            
+            if (entries.length > 20) {
+                 const footer = document.createElement('div');
+                 footer.style.textAlign = 'center';
+                 footer.style.color = '#999';
+                 footer.style.padding = '10px 0';
+                 footer.textContent = `... 已隐藏较早的 ${entries.length - 20} 条记录`;
+                 entriesList.appendChild(footer);
+            }
+
+            if (entries.length === 0) {
+                entriesList.innerHTML = '<p style="text-align:center; color:#999;">暂无记录</p>';
+            }
+        }
+
+        /**
+         * 6. 事件处理：输入框变化时更新预览
+         */
+        inputElement.addEventListener('input', () => {
+            const input = inputElement.value;
+            if (input.trim() === '') {
+                previewBox.innerHTML = '输入内容后自动识别...';
+                return;
+            }
+
+            const parsed = parseInput(input);
+            const amountText = '支出'; 
+            const displayAmount = Math.abs(parsed.amount).toFixed(2);
+
+            previewBox.innerHTML = `
+                <p style="margin: 0;">
+                    <strong>描述:</strong> ${parsed.description}<br>
+                    <strong>金额:</strong> <span style="color: var(--secondary-color);">${amountText} ￥${displayAmount}</span>
+                </p>
+            `;
+        });
+        
+        inputElement.dispatchEvent(new Event('input')); 
+
+
+        /**
+         * 7. 事件处理：表单提交
+         */
+        formElement.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const input = inputElement.value;
+            if (input.trim() === '') {
+                alert('请输入内容！');
+                return;
+            }
+
+            const parsed = parseInput(input);
+            
+            if (parsed.amount === 0 && input.trim() !== parsed.description) {
+                if (input.match(/\d/)) {
+                     // 包含数字但金额为0，允许（记0元支出）
+                } else {
+                    alert('未识别到有效金额，请确保输入中包含数字！');
+                    return;
+                }
+            }
+
+
+            const newEntry = {
+                description: parsed.description,
+                amount: parsed.amount, 
+                timestamp: new Date().toISOString()
+            };
+
+            // 将新记录添加到最前面 (最新的在最上面)
+            entries.unshift(newEntry);
+            saveEntries();
+            renderEntries(); // 重新渲染列表和总额
+
+            // 清空输入框并重置预览
+            inputElement.value = '';
+            inputElement.dispatchEvent(new Event('input')); 
+        });
+
+
+        /**
+         * 8. 事件代理处理删除按钮点击
+         */
+        entriesList.addEventListener('click', (e) => {
+            const target = e.target;
+            
+            if (target.classList.contains('delete-entry-btn')) {
+                const index = parseInt(target.getAttribute('data-index'));
+                
+                if (isNaN(index) || index < 0 || index >= entries.length) {
+                    console.error("Invalid entry index for deletion.");
+                    return;
+                }
+                
+                // 确认删除
+                if (confirm(`确定要删除记录: "${entries[index].description} ￥${Math.abs(entries[index].amount).toFixed(2)}" 吗?`)) {
+                    // 使用 splice 方法删除数组中的元素
+                    entries.splice(index, 1);
+                    
+                    saveEntries();
+                    renderEntries(); // 重新渲染列表和总额
+                }
+            }
+        });
+
+        // 9. 初始化
+        loadEntries();
+        renderEntries();
+
+    </script>
+
+</body>
+
+</html>
