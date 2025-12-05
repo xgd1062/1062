@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>快速支出记账本 - 当日汇总版</title>
+    <title>快速支出记账本 - 当日汇总版 (带历史记录)</title>
     <style>
         :root {
             --primary-color: #3f51b5;
@@ -55,9 +55,8 @@
             background-color: var(--secondary-color);
             color: white;
             padding: 15px 20px;
-            /* NEW: 调整上边距，与历史列表保持距离 */
-            margin-top: 30px; 
-            margin-bottom: 20px; 
+            margin-top: 30px;
+            margin-bottom: 20px;
             border-radius: 12px;
             box-shadow: var(--shadow);
             text-align: center;
@@ -79,8 +78,7 @@
         .input-card {
             background-color: var(--card-bg);
             padding: 20px;
-            /* Adjusted margin */
-            margin-top: 20px; 
+            margin-top: 20px;
             border-radius: 12px;
             box-shadow: var(--shadow);
         }
@@ -136,17 +134,40 @@
 
         /* History List */
         .history-section {
-            /* Adjusted margin to be consistent */
-            margin-top: 30px; 
+            margin-top: 30px;
+        }
+        
+        /* 调整标题与按钮的布局 */
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px dashed #ddd;
+            padding-bottom: 8px;
+            margin-bottom: 15px;
         }
 
         .history-section h2 {
             font-size: 1.4em;
             color: var(--text-color);
-            border-bottom: 2px dashed #ddd;
-            padding-bottom: 8px;
-            margin-bottom: 15px;
+            margin: 0;
         }
+        
+        #view-history-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.3s;
+        }
+
+        #view-history-btn:hover {
+            background-color: #303f9f;
+        }
+
 
         #entries-list {
             list-style: none;
@@ -179,7 +200,6 @@
             color: #999;
         }
 
-        /* 统一动作和金额区域 */
         .entry-actions {
             display: flex;
             align-items: center;
@@ -196,7 +216,6 @@
             flex-shrink: 0;
         }
 
-        /* 删除按钮样式 */
         .delete-entry-btn {
             background: none;
             border: 1px solid var(--danger-color);
@@ -212,6 +231,65 @@
         .delete-entry-btn:hover {
             background-color: var(--danger-color);
             color: white;
+        }
+        
+        /* Modal/Dialog Styles for History */
+        #history-modal {
+            padding: 0;
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            max-width: 90%;
+            max-height: 90vh;
+            overflow: hidden;
+            background-color: var(--bg-light);
+        }
+
+        #history-modal::backdrop {
+            background: rgba(0, 0, 0, 0.5);
+        }
+        
+        .modal-content {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            max-height: 90vh; /* 限制内容高度 */
+        }
+        
+        .modal-content h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+            font-size: 1.5em;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        #history-list {
+            list-style: none;
+            padding: 0;
+            overflow-y: auto; /* 历史列表可滚动 */
+            flex-grow: 1;
+            margin-bottom: 15px;
+        }
+        
+        #history-list .entry-item {
+            border-left-color: #6c757d; /* 历史记录用不同的颜色 */
+        }
+        
+        .history-close-btn {
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s;
+            flex-shrink: 0;
+        }
+        
+        .history-close-btn:hover {
+            background-color: var(--danger-color);
         }
     </style>
 </head>
@@ -235,38 +313,59 @@
     </div>
 
     <div class="history-section">
-        <h2>记账历史 (最近20条)</h2>
+        <div class="history-header">
+            <h2>今日记账历史</h2>
+            <button id="view-history-btn">查看历史记录</button>
+        </div>
         <ul id="entries-list">
             </ul>
     </div>
     
     <div id="daily-summary">
-        <h3>今日总支出（${currentDate}）</h3>
+        <h3>今日总支出</h3>
         <div id="daily-total">￥0.00</div>
     </div>
+    
+    <dialog id="history-modal">
+        <div class="modal-content">
+            <h3>📖 归档历史记录</h3>
+            <ul id="history-list">
+                </ul>
+            <button class="history-close-btn" onclick="closeHistoryModal()">关闭</button>
+        </div>
+    </dialog>
 
 
     <script>
-        const STORAGE_KEY = 'quickAccountingExpensesOnly';
+        const STORAGE_KEY = 'quickAccountingCurrentDayEntries';
+        const HISTORY_STORAGE_KEY = 'quickAccountingArchivedHistory'; 
+        
         const inputElement = document.getElementById('quick-entry-input');
         const formElement = document.getElementById('accounting-form');
         const entriesList = document.getElementById('entries-list');
         const dateTimeElement = document.getElementById('current-datetime');
         const previewBox = document.getElementById('preview-box');
         const dailyTotalElement = document.getElementById('daily-total');
+        const viewHistoryBtn = document.getElementById('view-history-btn');
+        const historyModal = document.getElementById('history-modal');
+        const historyListElement = document.getElementById('history-list'); // 新增历史列表DOM
 
-        let entries = [];
+        let entries = []; // 仅存储今日记录
+        let historyEntries = []; // 存储所有归档的历史记录
 
         /**
          * 1. 时间处理函数
          */
+        function getTodayDateStr() {
+            return new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' });
+        }
+
         function updateDateTime() {
             const now = new Date();
-            const dateStr = now.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' });
+            const dateStr = getTodayDateStr();
             const timeStr = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
             dateTimeElement.textContent = `当前时间: ${dateStr} ${timeStr}`;
             
-            // 更新汇总框的日期显示
             const summaryHeader = document.querySelector('#daily-summary h3');
             if (summaryHeader) {
                 summaryHeader.textContent = `今日总支出（${dateStr}）`;
@@ -280,34 +379,27 @@
          */
         function parseInput(input) {
             const text = input.trim();
-            // 匹配数字 (整数或小数)
             const amountRegex = /(\d+(\.\d{1,2})?)/;
-            
             const match = text.match(amountRegex);
             let amount = 0;
             let description = text;
 
             if (match) {
-                // 提取金额字符串并解析为浮点数
                 const amountStr = match[1]; 
                 amount = parseFloat(amountStr);
-
-                // 移除金额部分，剩下的作为描述
                 description = text.replace(match[0], '').trim();
             }
             
-            // 如果描述为空，使用去除金额后的原始文本，否则使用'未命名记录'
             if (description === "") {
                  const tempDesc = text.replace(match ? match[0] : '', '').trim();
                  description = tempDesc || '未命名记录';
             }
 
-            // 强制将金额转换为负数（支出）
             if (amount > 0) {
                 amount = -amount;
             } else if (amount === 0) {
                  if (text !== '') {
-                    description = text; // 即使金额为0，也保留描述
+                    description = text;
                  }
             }
 
@@ -318,63 +410,94 @@
         }
 
         /**
-         * 3. 数据存储和加载
+         * 3. 数据存储和加载 - 【日终整理逻辑在此】
          */
         function loadEntries() {
-            const stored = localStorage.getItem(STORAGE_KEY);
-            if (stored) {
-                entries = JSON.parse(stored);
+            const todayDateStr = getTodayDateStr();
+            
+            // 1. 加载历史记录
+            const storedHistory = localStorage.getItem(HISTORY_STORAGE_KEY);
+            if (storedHistory) {
+                historyEntries = JSON.parse(storedHistory);
             }
+
+            // 2. 加载当前（当日）记录
+            const storedCurrent = localStorage.getItem(STORAGE_KEY);
+            let loadedEntries = storedCurrent ? JSON.parse(storedCurrent) : [];
+            
+            let entriesToArchive = [];
+            let currentDayEntries = [];
+
+            // 3. 检查并归档非当日记录
+            loadedEntries.forEach(entry => {
+                const entryDate = new Date(entry.timestamp).toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' });
+                
+                if (entryDate !== todayDateStr) {
+                    // 非今日记录，归档
+                    entriesToArchive.push(entry);
+                } else {
+                    // 今日记录，保留
+                    currentDayEntries.push(entry);
+                }
+            });
+
+            // 4. 如果有需要归档的记录，则进行归档操作
+            if (entriesToArchive.length > 0) {
+                historyEntries = [...entriesToArchive, ...historyEntries];
+                entries = currentDayEntries; 
+                saveEntries(); 
+                console.log(`[归档成功] 已将 ${entriesToArchive.length} 条旧记录归档。`);
+            } else {
+                entries = loadedEntries;
+            }
+            
+            // 确保历史按钮文本更新
+            updateHistoryButtonText();
         }
 
         function saveEntries() {
+            // 1. 保存当前（当日）记录
             localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+            // 2. 保存历史记录
+            localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(historyEntries));
+            
+            // 确保历史按钮文本更新
+            updateHistoryButtonText();
+        }
+        
+        function updateHistoryButtonText() {
+            viewHistoryBtn.textContent = historyEntries.length > 0 
+                ? `查看历史记录 (${historyEntries.length} 条)` 
+                : '查看历史记录 (暂无)';
         }
         
         /**
          * 4. 计算并渲染当日总支出
          */
         function calculateDailyTotal() {
-            // 获取今天的日期字符串 (仅年月日)
-            const todayDateStr = new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' });
             let dailyTotal = 0;
-
             entries.forEach(entry => {
-                const entryDate = new Date(entry.timestamp).toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' });
-                
-                // 检查是否为今日记录
-                if (entryDate === todayDateStr) {
-                    dailyTotal += entry.amount;
-                }
+                dailyTotal += entry.amount;
             });
-
-            // dailyTotal 是负数，显示时取绝对值
             dailyTotalElement.textContent = `￥${Math.abs(dailyTotal).toFixed(2)}`;
         }
 
 
         /**
-         * 5. 渲染记账列表 (新增了删除按钮)
+         * 5. 渲染记账列表 (只渲染当日记录)
          */
         function renderEntries() {
             entriesList.innerHTML = '';
-            
-            // 每次渲染前都重新计算总额
             calculateDailyTotal();
 
             let itemRenderedCount = 0;
             
-            // 遍历整个 entries 数组，使用其原始 index
             entries.forEach((entry, originalIndex) => {
-                if (itemRenderedCount >= 20) return; // 只渲染前 20 条
+                if (itemRenderedCount >= 20) return;
 
                 const item = document.createElement('li');
-                
                 item.className = 'entry-item expense';
-                
                 const displayAmount = Math.abs(entry.amount).toFixed(2);
-                
-                // 格式化时间 (只显示时分秒)
                 const timeOnly = new Date(entry.timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
                 item.innerHTML = `
@@ -399,18 +522,77 @@
                  footer.style.textAlign = 'center';
                  footer.style.color = '#999';
                  footer.style.padding = '10px 0';
-                 footer.textContent = `... 已隐藏较早的 ${entries.length - 20} 条记录`;
+                 footer.textContent = `... 已隐藏较早的 ${entries.length - 20} 条今日记录`;
                  entriesList.appendChild(footer);
             }
 
             if (entries.length === 0) {
-                entriesList.innerHTML = '<p style="text-align:center; color:#999;">暂无记录</p>';
+                entriesList.innerHTML = '<p style="text-align:center; color:#999;">暂无今日记录，开始记账吧！</p>';
             }
         }
+        
+        /**
+         * 6. 渲染历史记录列表
+         */
+        function renderHistoryEntries() {
+            historyListElement.innerHTML = '';
+            
+            if (historyEntries.length === 0) {
+                historyListElement.innerHTML = '<p style="text-align:center; color:#6c757d;">暂无历史归档记录。</p>';
+                return;
+            }
+
+            // 遍历所有历史记录
+            historyEntries.forEach((entry, index) => {
+                const item = document.createElement('li');
+                item.className = 'entry-item expense history-entry';
+                
+                const displayAmount = Math.abs(entry.amount).toFixed(2);
+                
+                // 历史记录显示完整日期和时间
+                const fullDateTime = new Date(entry.timestamp).toLocaleDateString('zh-CN', { 
+                    year: 'numeric', month: '2-digit', day: '2-digit', 
+                    hour: '2-digit', minute: '2-digit', second: '2-digit' 
+                });
+
+                item.innerHTML = `
+                    <div class="entry-description">
+                        <span class="desc-text">${entry.description}</span>
+                        <span class="desc-time">${fullDateTime}</span>
+                    </div>
+                    <div class="entry-actions">
+                        <div class="entry-amount">
+                            -￥${displayAmount}
+                        </div>
+                        </div>
+                `;
+
+                historyListElement.appendChild(item);
+            });
+        }
+        
+        /**
+         * 7. 历史记录模态框控制
+         */
+        function openHistoryModal() {
+            renderHistoryEntries(); // 每次打开时重新渲染
+            historyModal.showModal();
+        }
+        
+        function closeHistoryModal() {
+            historyModal.close();
+        }
+        
+        // 将模态框控制函数暴露给全局 (用于 HTML 中的 onclick)
+        window.openHistoryModal = openHistoryModal;
+        window.closeHistoryModal = closeHistoryModal;
 
         /**
-         * 6. 事件处理：输入框变化时更新预览
+         * 8. 事件处理：历史按钮点击
          */
+        viewHistoryBtn.addEventListener('click', openHistoryModal);
+
+        // ... 省略了 inputElement.addEventListener('input') 和 formElement.addEventListener('submit') (与原代码一致) ...
         inputElement.addEventListener('input', () => {
             const input = inputElement.value;
             if (input.trim() === '') {
@@ -431,11 +613,7 @@
         });
         
         inputElement.dispatchEvent(new Event('input')); 
-
-
-        /**
-         * 7. 事件处理：表单提交
-         */
+        
         formElement.addEventListener('submit', (e) => {
             e.preventDefault();
 
@@ -447,13 +625,9 @@
 
             const parsed = parseInput(input);
             
-            if (parsed.amount === 0 && input.trim() !== parsed.description) {
-                if (input.match(/\d/)) {
-                     // 包含数字但金额为0，允许（记0元支出）
-                } else {
-                    alert('未识别到有效金额，请确保输入中包含数字！');
-                    return;
-                }
+            if (parsed.amount === 0 && !input.match(/\d/)) {
+                alert('未识别到有效金额，请确保输入中包含数字！');
+                return;
             }
 
 
@@ -463,19 +637,17 @@
                 timestamp: new Date().toISOString()
             };
 
-            // 将新记录添加到最前面 (最新的在最上面)
             entries.unshift(newEntry);
             saveEntries();
-            renderEntries(); // 重新渲染列表和总额
+            renderEntries(); 
 
-            // 清空输入框并重置预览
             inputElement.value = '';
             inputElement.dispatchEvent(new Event('input')); 
         });
 
 
         /**
-         * 8. 事件代理处理删除按钮点击
+         * 9. 事件代理处理删除按钮点击 (只删除当日记录)
          */
         entriesList.addEventListener('click', (e) => {
             const target = e.target;
@@ -488,20 +660,19 @@
                     return;
                 }
                 
-                // 确认删除
                 if (confirm(`确定要删除记录: "${entries[index].description} ￥${Math.abs(entries[index].amount).toFixed(2)}" 吗?`)) {
-                    // 使用 splice 方法删除数组中的元素
                     entries.splice(index, 1);
                     
                     saveEntries();
-                    renderEntries(); // 重新渲染列表和总额
+                    renderEntries(); 
                 }
             }
         });
 
-        // 9. 初始化
+        // 10. 初始化
         loadEntries();
         renderEntries();
+        updateHistoryButtonText();
 
     </script>
 
