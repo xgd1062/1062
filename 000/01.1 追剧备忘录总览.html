@@ -617,9 +617,13 @@
 
         /**
          * NEW FUNCTION: 更新起算日和起算集数 (仅在手动提交表单或同步时调用)。
+         * @param {Object} entry 追番记录
+         * @param {string} modifiedDateString 指定的修改日期 ('YYYY-MM-DD')
+         * @param {number} currentUpdatedEpisode 指定的最新集数
          */
         function updateCalculationFields(entry, modifiedDateString, currentUpdatedEpisode) {
             const modifiedDate = new Date(modifiedDateString); // 修改日 (午夜)
+            modifiedDate.setHours(0, 0, 0, 0); // 确保日期准确
             const updateDayOfWeek = entry.updateDayOfWeek;
 
             // 计算最近的更新日（包括修改日）
@@ -741,6 +745,7 @@
 
         /**
          * 生成 Markdown 内容 (过滤掉待删除记录)
+         * FIX: 修正了 groupAnimeByDay().reduce is not a function 错误
          */
         function generateMarkdown(data) {
             const liveData = data.filter(entry => !entry.deleted);
@@ -757,19 +762,23 @@
 
             let markdown = `# 🍿 追番进度管理导出 (${timestamp})\n\n`;
 
-            const groupedList = groupAnimeByDay(liveData);
+            // 直接获取 groupAnimeByDay 返回的分组对象
+            // groupAnimeByDay 返回 { '0': [{ entry: entryObj, originalIndex: N }, ...], ... }
+            const groupedData = groupAnimeByDay(liveData);
 
-            Object.keys(groupedList).sort((a, b) => parseInt(a) - parseInt(b)).forEach(dayKey => {
-                const list = groupedList[dayKey].map(item => item.entry);
+
+            Object.keys(groupedData).sort((a, b) => parseInt(a) - parseInt(b)).forEach(dayKey => {
+                // listWithIndex 是分组后的数组，包含 { entry, originalIndex } 对象
+                const listWithIndex = groupedData[dayKey];
                 const dayName = DAY_NAMES[parseInt(dayKey)];
 
-                markdown += `## ${dayName}更新 (${list.length}部)\n\n`;
+                markdown += `## ${dayName}更新 (${listWithIndex.length}部)\n\n`;
 
                 markdown += '| 名称 | 更新至 | 追番进度 | 总集数 | 观看链接 |\n';
                 markdown += '| :--- | :--- | :--- | :--- | :--- |\n';
 
-                list.forEach((entry) => {
-                    // 使用已计算好的 manualUpdatedEpisode
+                listWithIndex.forEach(({ entry }) => { // 注意这里解构出 entry
+                    // 使用 entry 访问实际数据
                     const updatedEp = entry.manualUpdatedEpisode;
                     const totalText = entry.totalEpisodes > 0 ? entry.totalEpisodes : '??';
 
@@ -786,8 +795,9 @@
 
         /**
          * 解析 Markdown 内容回数据结构 
+         * * 【关键修改点 1 & 2】: 传入远程备份日期 remoteBackupDateString 作为起算基准
          */
-        function parseMarkdownToData(markdownContent) {
+        function parseMarkdownToData(markdownContent, remoteBackupDateString) {
             const lines = markdownContent.split('\n');
             const parsedData = [];
             let currentDay = 0;
@@ -825,7 +835,6 @@
                     const updateDayOfWeek = currentDay;
 
                     const today = new Date();
-                    const todayDateString = formatDate(today);
 
                     const remoteEntry = {
                         title: title,
@@ -835,16 +844,16 @@
                         manualUpdatedEpisode: updatedEpisode, // 远程文件中的最新集数作为基准
                         updateDayOfWeek: updateDayOfWeek,
                         deleted: false,
-                        // 初始化计算字段，使用远程数据作为最新基准
-                        lastModifiedDate: todayDateString,
+                        // 占位初始化
+                        lastModifiedDate: remoteBackupDateString,
                         startCalculationEpisode: updatedEpisode,
-                        startCalculationDate: todayDateString,
+                        startCalculationDate: remoteBackupDateString,
                     };
 
-                    // 计算并设置起算日（即：以同步日期和远程集数作为新的起算点）
-                    updateCalculationFields(remoteEntry, todayDateString, updatedEpisode);
+                    // 核心逻辑：使用远程文件的备份日期作为修改日，和远程集数，重新计算起算点
+                    updateCalculationFields(remoteEntry, remoteBackupDateString, updatedEpisode);
 
-                    // 重新计算 manualUpdatedEpisode，因为远程集数可能是昨天设置的
+                    // 核心逻辑：根据这个基于备份日期的起算点，使用**当前日期**计算出最新集数
                     remoteEntry.manualUpdatedEpisode = calculateUpdatedEpisode(remoteEntry, today);
 
                     // 确保追番集数不超限
@@ -862,8 +871,9 @@
 
         /**
          * 双向同步时的合并和删除处理逻辑 (保留远程独有数据)
+         * * 【关键修改点 3】: 传入远程备份日期 remoteBackupDateString
          */
-        function processRemoteAndDelete(remoteData, localData) {
+        function processRemoteAndDelete(remoteData, localData, remoteBackupDateString) {
             const localLiveRecords = localData.filter(item => !item.deleted);
             const localDeletedTitles = new Set(localData
                 .filter(item => item.deleted)
@@ -877,35 +887,37 @@
             const merged = [];
             const processedTitles = new Set();
             const today = new Date();
-            const todayDateString = formatDate(today);
 
             // 1. 处理远程记录：保留远程独有的，更新与本地匹配的
             remoteLiveRecords.forEach(remoteEntry => {
                 const localEntry = localLiveRecords.find(item => item.title === remoteEntry.title);
-                const remoteBaseEpisode = remoteEntry.manualUpdatedEpisode;
+                const remoteBaseEpisode = remoteEntry.manualUpdatedEpisode; // 远程文件中的集数 (已是基于当前日期的计算值)
 
                 if (!localEntry) {
-                    // 远程独有记录：直接添加
+                    // 远程独有记录：直接添加 (remoteEntry 在 parseMarkdownToData 中已被基于当前日期计算过)
                     merged.push(remoteEntry);
                     processedTitles.add(remoteEntry.title);
                 } else {
-                    // 记录都存在：以远程数据为准更新
+                    // 记录都存在：以远程数据为准更新基础信息
                     localEntry.currentEpisode = remoteEntry.currentEpisode;
                     localEntry.totalEpisodes = remoteEntry.totalEpisodes;
                     localEntry.watchLink = remoteEntry.watchLink;
                     localEntry.updateDayOfWeek = remoteEntry.updateDayOfWeek;
 
-                    // 核心逻辑：如果远程记录的集数与本地当前的计算集数不一致，则以远程集数作为新的起算基准
+                    // 此时 localEntry.manualUpdatedEpisode 是本地计算的最新值 (基于其原有的 startCalculationDate)
+                    // remoteBaseEpisode 是刚刚从远程解析并计算得到的最新值 (基于远程备份日期，再计算到今天的最新值)
+
+                    // 核心冲突逻辑：如果远程记录的集数与本地当前的计算集数不一致，则以远程集数作为新的起算基准
                     if (localEntry.manualUpdatedEpisode !== remoteBaseEpisode) {
 
                         // 1. 设置新的基准集数
                         localEntry.manualUpdatedEpisode = remoteBaseEpisode;
 
-                        // 2. 根据远程集数和同步日期，重新计算起算基准点
-                        updateCalculationFields(localEntry, todayDateString, remoteBaseEpisode);
+                        // 2. 根据远程集数和**远程备份日期**，重新计算起算基准点
+                        updateCalculationFields(localEntry, remoteBackupDateString, remoteBaseEpisode);
                     }
 
-                    // 3. 再次进行自动计算，确保本地显示最新集数
+                    // 3. 再次进行自动计算，确保本地显示最新集数 (此步确保一致性)
                     const finalUpdatedEp = calculateUpdatedEpisode(localEntry, today);
                     localEntry.manualUpdatedEpisode = finalUpdatedEp;
 
@@ -918,7 +930,7 @@
                 }
             });
 
-            // 2. 添加本地独有记录
+            // 2. 添加本地独有记录 (并确保其 manualUpdatedEpisode 已是最新计算值)
             localLiveRecords.forEach(localEntry => {
                 if (!processedTitles.has(localEntry.title)) {
                     merged.push(localEntry);
@@ -950,6 +962,7 @@
                 const contentData = await response.json();
 
                 if (contentData.content && contentData.sha) {
+                    // 原始代码中的 Base64 解码方式
                     const fileContent = decodeURIComponent(escape(atob(contentData.content)));
                     return { content: fileContent, sha: contentData.sha };
                 }
@@ -965,6 +978,7 @@
         async function uploadFileToGithub(config, content, sha) {
             const url = `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}`;
 
+            // 原始代码中的 Base64 编码方式
             const base64Content = btoa(unescape(encodeURIComponent(content)));
 
             const payload = {
@@ -1017,6 +1031,7 @@
 
                 // 2. 确保所有本地记录的 manualUpdatedEpisode 都是最新的计算值
                 const today = new Date();
+                const todayDateString = formatDate(today);
                 animeData.forEach(entry => {
                     const calculatedEp = calculateUpdatedEpisode(entry, today);
                     entry.manualUpdatedEpisode = calculatedEp;
@@ -1024,6 +1039,10 @@
                     if (entry.currentEpisode > calculatedEp) {
                         entry.currentEpisode = calculatedEp;
                     }
+
+                    // 强制更新起算点：使用当前的计算值作为基准，以当前日期作为修改日
+                    updateCalculationFields(entry, todayDateString, calculatedEp);
+
                 });
 
                 // 3. 过滤出未删除的本地数据 (本地状态决定了云端最终状态)
@@ -1048,7 +1067,7 @@
 
 
         /**
-         * 原有的双向同步逻辑
+         * 原有的双向同步逻辑 (同步入口，修改为提取备份日期)
          */
         async function syncData() {
             if (!githubConfig.token) {
@@ -1061,13 +1080,16 @@
             syncBtn.textContent = '同步中...';
             syncBtn.disabled = true;
 
+            const today = new Date();
+            const todayDateString = formatDate(today);
+
             try {
                 const { content: remoteContent, sha } = await fetchFileFromGithub(githubConfig);
                 let contentToUpload = '';
                 let newSha = sha;
 
+
                 // 1. 确保所有本地记录的 manualUpdatedEpisode 都是最新的计算值，以供导出或合并
-                const today = new Date();
                 animeData.forEach(entry => {
                     const calculatedEp = calculateUpdatedEpisode(entry, today);
                     entry.manualUpdatedEpisode = calculatedEp;
@@ -1078,19 +1100,40 @@
 
                 if (remoteContent && remoteContent.trim().length > 0) {
                     console.log('云端文件存在，进行删除处理和合并...');
-                    const remoteData = parseMarkdownToData(remoteContent);
 
-                    // 合并数据
-                    const mergedData = processRemoteAndDelete(remoteData, animeData);
+                    // 提取备份日期
+                    let remoteBackupDateString = todayDateString; // 默认使用今天
+                    // 匹配文件头，例如：# 🍿 追番进度管理导出 (2025/12/05 23:42:00)
+                    const headerMatch = remoteContent.split('\n')[0].match(/# 🍿 追番进度管理导出 \((.+?)\)/);
+                    if (headerMatch && headerMatch[1]) {
+                        const datetimeString = headerMatch[1].trim();
+                        // 提取 YYYY/MM/DD 部分
+                        const datePartMatch = datetimeString.match(/(\d{4}\/\d{2}\/\d{2})/);
+                        if (datePartMatch) {
+                            remoteBackupDateString = datePartMatch[1].replace(/\//g, '-'); // 转换为 YYYY-MM-DD
+                        }
+                    }
+
+                    // 2. 解析远程数据 (将备份日期传入)
+                    const remoteData = parseMarkdownToData(remoteContent, remoteBackupDateString);
+
+                    // 3. 合并数据 (将备份日期传入)
+                    const mergedData = processRemoteAndDelete(remoteData, animeData, remoteBackupDateString);
 
                     animeData = mergedData;
                     saveToLocalStorage();
                     renderOverview();
 
+                    // 4. 生成要上传的内容
                     contentToUpload = generateMarkdown(mergedData);
                     alert('双向同步成功：已处理删除标记，下载云端记录并与本地记录合并，合并后的数据已保存到本地并重新上传！');
                 } else {
                     console.log('云端文件不存在或为空，直接上传本地数据...');
+
+                    // 首次上传，强制更新本地记录的起算点为当前最新计算值和今天
+                    animeData.forEach(entry => {
+                        updateCalculationFields(entry, todayDateString, entry.manualUpdatedEpisode);
+                    });
 
                     const localLiveData = animeData.filter(entry => !entry.deleted);
                     animeData = localLiveData;
@@ -1131,6 +1174,7 @@
                 const day = (todayIndex - i + 7) % 7;
                 order.push(day);
             }
+            // 结果是 [今天, 昨天, 前天, ..., 明天] 的顺序
             return order;
         }
 
@@ -1147,6 +1191,7 @@
 
             const groupedData = groupAnimeByDay(animeData);
 
+            // NEW: 调整顺序以让“今天更新”在最前面
             const displayDayOrder = getDisplayDayOrder(todayDayIndex);
 
             displayDayOrder.forEach((day, index) => {
@@ -1183,7 +1228,7 @@
                         // 更新数据模型中的 manualUpdatedEpisode 和 currentEpisode（用于下次刷新/同步）
                         entry.manualUpdatedEpisode = calculatedUpdatedEp;
                         if (entry.currentEpisode > calculatedUpdatedEp) {
-                            entry.currentEpisode = calculatedUpdatedEp;
+                            entry.currentEpisode = calculatedEp;
                         }
 
                         const updatedEp = calculatedUpdatedEp;
@@ -1278,7 +1323,10 @@
         function updateManualEpisodeLabel(targetDayOfWeek) {
             const dateDisplay = document.getElementById('updateDateDisplay');
             if (dateDisplay) {
-                const dateString = calculateLastUpdateDate(targetDayOfWeek);
+                const dateObj = calculateLastUpdateDateObject(targetDayOfWeek);
+                const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                const day = String(dateObj.getDate()).padStart(2, '0');
+                const dateString = `${month}-${day}`;
                 dateDisplay.textContent = dateString;
             }
         }
@@ -1398,7 +1446,17 @@
                 return;
             }
 
+            const path = githubRepoPathInput.value.trim().split('/');
+            if (path.length !== 3) {
+                alert('同步地址格式不正确，应为：用户名/仓库名/文件名');
+                return;
+            }
+
             githubConfig.token = token;
+            githubConfig.owner = path[0];
+            githubConfig.repo = path[1];
+            githubConfig.path = path[2];
+
             saveGithubConfig();
             githubConfigModal.style.display = 'none';
 
