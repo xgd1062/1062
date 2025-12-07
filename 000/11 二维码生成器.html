@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>极简二维码生成器</title>
+    <title>极简二维码生成器 - 增强版</title>
 
     <style>
         /* 全局重置与字体 */
@@ -17,7 +17,6 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            /* 漂亮的渐变背景 */
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -34,7 +33,6 @@
             border-radius: 20px;
             padding: 40px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-            /* 深度投影 */
             transition: transform 0.3s ease;
         }
 
@@ -50,12 +48,11 @@
 
         h1 span {
             color: #667eea;
-            /* 标题强调色 */
         }
 
         /* 输入框区域 */
         .input-group {
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
 
         label {
@@ -75,7 +72,6 @@
             background-color: #f7fafc;
             font-size: 16px;
             resize: none;
-            /* 禁止拖动大小 */
             outline: none;
             transition: all 0.3s ease;
         }
@@ -86,15 +82,16 @@
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
-        textarea::placeholder {
-            color: #a0aec0;
+        /* 按钮组 */
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 25px;
         }
 
-        /* 按钮样式 */
         button {
-            width: 100%;
+            flex: 1;
             padding: 14px;
-            background: linear-gradient(to right, #667eea, #764ba2);
             color: white;
             border: none;
             border-radius: 12px;
@@ -102,13 +99,21 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
+        }
+
+        #generateBtn {
+            background: linear-gradient(to right, #667eea, #764ba2);
             box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3);
+        }
+
+        #downloadBtn {
+            background: #2d3748;
+            display: none; /* 初始隐藏，生成后显示 */
         }
 
         button:hover {
             transform: translateY(-2px);
-            /* 悬浮上移 */
-            box-shadow: 0 7px 14px rgba(102, 126, 234, 0.4);
+            opacity: 0.9;
         }
 
         button:active {
@@ -117,7 +122,7 @@
 
         /* 二维码展示区域 */
         .qr-wrapper {
-            margin-top: 30px;
+            margin-top: 10px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -136,7 +141,6 @@
             position: relative;
         }
 
-        /* 生成成功后的样式变化 */
         .qr-frame.active {
             border: 2px solid #e2e8f0;
             background-color: #fff;
@@ -147,25 +151,17 @@
             color: #a0aec0;
             font-size: 14px;
             text-align: center;
-            pointer-events: none;
         }
 
         /* 二维码淡入动画 */
-        #qrcodeContainer img,
-        #qrcodeContainer canvas {
+        #qrcodeContainer img {
             animation: fadeIn 0.5s ease-out forwards;
+            display: block;
         }
 
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: scale(0.9);
-            }
-
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
         }
 
         .footer {
@@ -187,7 +183,10 @@
             <textarea id="contentInput" placeholder="输入网址、文本或任何你想生成的内容..."></textarea>
         </div>
 
-        <button onclick="clickToGenerate()">✨ 生成二维码</button>
+        <div class="button-group">
+            <button id="generateBtn" onclick="clickToGenerate()">✨ 生成二维码</button>
+            <button id="downloadBtn" onclick="downloadQR()">💾 保存图片</button>
+        </div>
 
         <div class="qr-wrapper">
             <div id="qrFrame" class="qr-frame">
@@ -195,43 +194,76 @@
                     <p class="placeholder-text">二维码将显示在这里</p>
                 </div>
             </div>
-            <div class="footer">无需联网 · 本地生成</div>
+            <div class="footer">无需联网 · 本地生成 · 支持下载</div>
         </div>
     </div>
 
-    <script>
-        function clickToGenerate() {
-            var input = document.getElementById("contentInput");
-            var container = document.getElementById("qrcodeContainer");
-            var frame = document.getElementById("qrFrame");
-            var text = input.value;
+    <script src="./qrcode.min.js"></script>
 
-            // 检查空值
-            if (!text || text.trim() === "") {
-                // 简单的震动反馈动画（可选）
-                input.style.borderColor = "#ff4d4f";
-                setTimeout(() => input.style.borderColor = "#e2e8f0", 500);
+    <script>
+        // 获取页面元素
+        const contentInput = document.getElementById("contentInput");
+        const container = document.getElementById("qrcodeContainer");
+        const frame = document.getElementById("qrFrame");
+        const dlBtn = document.getElementById("downloadBtn");
+
+        // 监听输入，清除错误状态
+        contentInput.addEventListener('input', () => {
+            if (contentInput.value.trim() !== "") {
+                contentInput.style.borderColor = "#667eea";
+            }
+        });
+
+        // 核心生成函数
+        function clickToGenerate() {
+            const text = contentInput.value.trim();
+
+            // 1. 空值校验
+            if (!text) {
+                contentInput.style.borderColor = "#ff4d4f";
+                contentInput.placeholder = "内容不能为空！";
+                setTimeout(() => {
+                    contentInput.style.borderColor = "#e2e8f0";
+                    contentInput.placeholder = "输入网址、文本或任何你想生成的内容...";
+                }, 1500);
                 return;
             }
 
-            // 1. 清空容器
+            // 2. 环境重置
             container.innerHTML = "";
-
-            // 2. 改变外框样式（去掉虚线，变成实线背景）
             frame.classList.add("active");
 
-            // 3. 生成二维码
-            new QRCode(container, {
-                text: text,
-                width: 240, // 稍微调小一点以适应边框
-                height: 240,
-                colorDark: "#000000",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.H
-            });
+            // 3. 调用 QRCode 库生成
+            try {
+                new QRCode(container, {
+                    text: text,
+                    width: 240,
+                    height: 240,
+                    colorDark: "#2d3748",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.M // 容错率M
+                });
+
+                // 4. 生成成功后显示下载按钮
+                dlBtn.style.display = "block";
+            } catch (err) {
+                alert("生成失败，请检查输入内容是否过长");
+            }
+        }
+
+        // 核心下载函数
+        function downloadQR() {
+            const img = container.querySelector("img");
+            if (!img) return alert("请先生成二维码");
+
+            const link = document.createElement("a");
+            link.href = img.src; // QRCode 生成的是 Base64 图片地址
+            link.download = "QRCode_" + new Date().getTime() + ".png";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
     </script>
 </body>
-<script src="https://cdn.jsdelivr.net/npm/davidshimjs-qrcodejs@0.0.2/qrcode.min.js"></script>
 
 </html>
