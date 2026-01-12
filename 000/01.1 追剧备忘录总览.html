@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>追番进度管理 - 同步管理版</title>
+    <title>追番进度管理 - 优化同步版</title>
 
     <style>
         :root {
@@ -100,7 +100,6 @@
             background-color: #1e88e5;
         }
 
-        /* 每日分组容器 */
         .day-group {
             margin-bottom: 25px;
             padding: 10px;
@@ -236,11 +235,21 @@
             transition: background-color 0.1s;
         }
 
-        .plus-one-btn { background-color: var(--success-color); color: white; }
-        .edit-btn { background-color: var(--secondary-color); color: white; }
-        .delete-btn { background-color: var(--danger-color); color: white; }
+        .plus-one-btn {
+            background-color: var(--success-color);
+            color: white;
+        }
 
-        /* 弹窗部分 */
+        .edit-btn {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .delete-btn {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
         .modal {
             display: none;
             position: fixed;
@@ -267,7 +276,6 @@
             overflow-y: auto;
         }
 
-        /* 同步管理特有样式 */
         .sync-quick-actions {
             background: #f8f9fa;
             padding: 15px;
@@ -298,7 +306,10 @@
             right: 20px;
         }
 
-        .close-btn:hover { color: #000; cursor: pointer; }
+        .close-btn:hover {
+            color: #000;
+            cursor: pointer;
+        }
 
         #animeForm label,
         #configForm label {
@@ -333,12 +344,31 @@
         }
 
         @media (max-width: 500px) {
-            .header { padding: 15px; flex-direction: column; }
-            .datetime-info { display: none; }
-            .header-right { flex-direction: column; width: 100%; }
-            .action-btn { width: 100%; }
-            .anime-item { width: 100%; }
-            .sync-quick-actions .btn-group { flex-direction: column; }
+            .header {
+                padding: 15px;
+                flex-direction: column;
+            }
+
+            .datetime-info {
+                display: none;
+            }
+
+            .header-right {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .action-btn {
+                width: 100%;
+            }
+
+            .anime-item {
+                width: 100%;
+            }
+
+            .sync-quick-actions .btn-group {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
@@ -348,7 +378,8 @@
         <h1>🍿 追番进度管理</h1>
         <div class="header-right">
             <div id="datetime-info" class="datetime-info">
-                <p id="current-time">加载中...</p>
+                <p id="current-time" onclick="window.open('https://time.is', '_blank')" style="cursor: pointer;"
+                    title="点击查看精确时间">加载中...</p>
             </div>
             <button id="manageSyncBtn" class="action-btn">同步管理</button>
             <button id="pushBtn" class="action-btn">推送本地数据</button>
@@ -398,10 +429,13 @@
             <div class="sync-quick-actions">
                 <p style="margin:0; font-size: 0.9em; color: #666; font-weight: bold;">从云端同步到本地：</p>
                 <div class="btn-group">
-                    <button id="downloadOverwriteBtn" class="action-btn" style="background-color: var(--danger-color); color: white;">下载并覆盖</button>
-                    <button id="downloadMergeBtn" class="action-btn" style="background-color: var(--info-color); color: white;">下载并合并</button>
+                    <button id="downloadOverwriteBtn" class="action-btn"
+                        style="background-color: var(--danger-color); color: white;">下载并覆盖</button>
+                    <button id="downloadMergeBtn" class="action-btn"
+                        style="background-color: var(--info-color); color: white;">下载并合并</button>
                 </div>
-                <p style="font-size: 0.75em; color: #888; margin: 8px 0 0 0;">* 覆盖：删除本地，完全同步云端。<br>* 合并：将云端数据与本地现有记录混合。</p>
+                <p style="font-size: 0.75em; color: #888; margin: 8px 0 0 0;">* 覆盖：删除本地，完全同步云端。<br>* 合并：将云端数据与本地现有记录混合。
+                </p>
             </div>
 
             <form id="configForm">
@@ -409,13 +443,13 @@
                 <input type="password" id="githubToken" placeholder="需要 repo 权限的令牌" required>
                 <label for="githubRepoPath">同步地址:</label>
                 <input type="text" id="githubRepoPath" readonly value="xgd1062/1062/看番记录.md">
-                <button type="submit" style="background-color: #2196f3;">保存并执行双向同步</button>
+                <button type="submit" style="background-color: #2196f3;">保存配置</button>
             </form>
         </div>
     </div>
 
     <script>
-        // --- 1. 数据模型与核心逻辑 (继承原逻辑) ---
+        // --- [JS 逻辑保持不变] ---
         const LS_KEY = 'animeTrackerWatchingOnlyV2';
         const CONFIG_KEY = 'githubSyncConfig';
         const DAY_NAMES = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
@@ -521,8 +555,6 @@
         function saveToLocalStorage() { localStorage.setItem(LS_KEY, JSON.stringify(animeData)); }
         function saveGithubConfig() { localStorage.setItem(CONFIG_KEY, JSON.stringify(githubConfig)); }
 
-        // --- 2. GitHub API 与同步逻辑 ---
-
         function generateMarkdown(data) {
             const liveData = data.filter(entry => !entry.deleted);
             if (liveData.length === 0) return `# 🍿 追番进度管理导出\n\n**无追番记录**\n\n`;
@@ -612,15 +644,13 @@
         async function uploadFileToGithub(config, content, sha) {
             const url = `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}`;
             const payload = {
-                message: `Sync: ${new Date().toLocaleString()}`,
+                message: `Push: ${new Date().toLocaleString()}`,
                 content: btoa(unescape(encodeURIComponent(content))),
                 sha: sha
             };
             const response = await fetch(url, { method: 'PUT', headers: { 'Authorization': `token ${config.token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
             if (!response.ok) throw new Error("上传失败");
         }
-
-        // --- 3. 新增的独立下载逻辑 ---
 
         async function handleDownloadOnly(isOverwrite) {
             if (!githubConfig.token) { alert('请先输入 GitHub 令牌并保存！'); return; }
@@ -659,53 +689,34 @@
             }
         }
 
-        async function syncData() {
-            if (!githubConfig.token) { showConfigModal(); return; }
-            const syncBtn = configForm.querySelector('button[type="submit"]');
-            syncBtn.textContent = '同步中...';
-            syncBtn.disabled = true;
-            try {
-                const { content: remoteContent, sha } = await fetchFileFromGithub(githubConfig);
-                const todayStr = formatDate(new Date());
-                let finalData;
-
-                if (remoteContent) {
-                    let backupDate = todayStr;
-                    const headerMatch = remoteContent.split('\n')[0].match(/\((\d{4}\/\d{2}\/\d{2})/);
-                    if (headerMatch) backupDate = headerMatch[1].replace(/\//g, '-');
-                    const remoteData = parseMarkdownToData(remoteContent, backupDate);
-                    finalData = processRemoteAndDelete(remoteData, animeData, backupDate);
-                } else {
-                    animeData.forEach(e => updateCalculationFields(e, todayStr, e.manualUpdatedEpisode));
-                    finalData = animeData.filter(e => !e.deleted);
-                }
-
-                animeData = finalData;
-                saveToLocalStorage();
-                renderOverview();
-                await uploadFileToGithub(githubConfig, generateMarkdown(finalData), sha);
-                alert('双向同步成功！');
-                githubConfigModal.style.display = 'none';
-            } catch (e) { alert(`同步失败: ${e.message}`); }
-            finally { syncBtn.textContent = '保存并执行双向同步'; syncBtn.disabled = false; }
-        }
-
         async function pushLocalToCloud() {
-            if (!githubConfig.token) { showConfigModal(); return; }
+            if (!githubConfig.token) {
+                alert('请先设置 GitHub Token！');
+                document.getElementById('manageSyncBtn').click();
+                return;
+            }
             const btn = document.getElementById('pushBtn');
+            const originalText = btn.textContent;
             btn.textContent = '推送中...';
+            btn.disabled = true;
+
             try {
                 const { sha } = await fetchFileFromGithub(githubConfig);
                 const todayStr = formatDate(new Date());
-                animeData.forEach(e => updateCalculationFields(e, todayStr, e.manualUpdatedEpisode));
                 const liveData = animeData.filter(e => !e.deleted);
+                liveData.forEach(e => updateCalculationFields(e, todayStr, e.manualUpdatedEpisode));
                 await uploadFileToGithub(githubConfig, generateMarkdown(liveData), sha);
-                alert('推送成功！');
-            } catch (e) { alert(e.message); }
-            finally { btn.textContent = '推送本地数据'; }
+                animeData = liveData;
+                saveToLocalStorage();
+                renderOverview();
+                alert('推送成功！标记为删除的项目已从本地彻底移除。');
+            } catch (e) {
+                alert(`推送失败: ${e.message}`);
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
         }
-
-        // --- 4. UI 渲染与事件代理 ---
 
         function groupAnimeByDay(data) {
             const grouped = {};
@@ -720,7 +731,7 @@
         function renderOverview() {
             const container = document.getElementById('overview-container');
             container.innerHTML = '';
-            if (animeData.length === 0) { container.innerHTML = '<p style="text-align:center;color:#999;">暂无数据</p>'; return; }
+            if (animeData.length === 0) { container.innerHTML = '<p style="text-align:center;color:#999;margin-top:50px;">暂无数据，请新增番剧或从云端下载</p>'; return; }
 
             const today = new Date().getDay();
             const order = [];
@@ -758,7 +769,7 @@
                         <div class="action-row"><div class="anime-actions">
                             <button class="plus-one-btn" data-index="${originalIndex}">+1</button>
                             <button class="edit-btn" data-index="${originalIndex}">改</button>
-                            <button class="delete-btn" data-index="${originalIndex}">${entry.deleted ? '不删' : '删'}</button>
+                            <button class="delete-btn" data-index="${originalIndex}">${entry.deleted ? '撤销' : '删'}</button>
                         </div></div>
                     `;
                     row.appendChild(item);
@@ -768,8 +779,6 @@
             });
             saveToLocalStorage();
         }
-
-        // --- 5. 事件监听 ---
 
         const animeModal = document.getElementById('animeModal');
         const githubConfigModal = document.getElementById('githubConfigModal');
@@ -788,7 +797,8 @@
             e.preventDefault();
             githubConfig.token = document.getElementById('githubToken').value.trim();
             saveGithubConfig();
-            syncData();
+            alert('配置已保存！');
+            githubConfigModal.style.display = 'none';
         });
 
         document.getElementById('pushBtn').addEventListener('click', pushLocalToCloud);
@@ -864,10 +874,11 @@
 
         function updateTime() {
             const now = new Date();
-            document.getElementById('current-time').textContent = `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 ${DAY_NAMES[now.getDay()]} ${now.toLocaleTimeString()}`;
+            document.getElementById('current-time').textContent = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 ${DAY_NAMES[now.getDay()]} ${now.toLocaleTimeString()}`;
         }
 
         window.onload = () => { initData(); renderOverview(); updateTime(); setInterval(updateTime, 1000); };
     </script>
 </body>
+
 </html>
