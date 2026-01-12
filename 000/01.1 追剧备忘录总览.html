@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>追番进度管理 - 自动更新版 (按更新日分组)</title>
+    <title>追番进度管理 - 同步管理版</title>
 
     <style>
         :root {
@@ -12,7 +12,7 @@
             --secondary-color: #6c757d;
             --success-color: #28a745;
             --danger-color: #dc3545;
-            --info-color: #007bff;
+            --info-color: #17a2b8;
             --bg-light: #f4f7f9;
             --card-bg: #ffffff;
             --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
@@ -33,7 +33,6 @@
             color: #333;
         }
 
-        /* 头部样式调整 */
         .header {
             display: flex;
             justify-content: space-between;
@@ -49,30 +48,22 @@
 
         .header h1 {
             margin: 0;
-            /* 确保标题不会被挤压 */
             flex-shrink: 0;
         }
 
-        /* 头部右侧容器 */
         .header-right {
             display: flex;
             align-items: center;
-            /* MODIFIED: 减小按钮之间的间距 */
             gap: 8px;
             flex-wrap: wrap;
-            /* 确保右侧内容在空间不足时可以换行 */
             justify-content: flex-end;
-            /* 关键：确保右侧内容向右对齐 */
         }
 
-        /* 时间信息区域 */
         .datetime-info {
             text-align: right;
             line-height: 1.3;
-            /* MODIFIED: 减小字体大小，使其更紧凑 */
             font-size: 0.8em;
             opacity: 0.9;
-            /* 确保时间信息在按钮之前 */
             order: -1;
         }
 
@@ -81,20 +72,15 @@
             white-space: nowrap;
         }
 
-
-        /* 按钮样式 */
         .action-btn,
         button:not(.anime-actions button) {
-            /* MODIFIED: 减小按钮内边距 */
             padding: 7px 14px;
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            /* MODIFIED: 减小字体大小 */
             font-size: 14px;
             transition: background-color 0.3s, transform 0.1s;
             flex-shrink: 0;
-            /* 适当减小最小宽度，但保证中文可读 */
             min-width: 70px;
         }
 
@@ -103,18 +89,16 @@
             color: var(--watching-color);
         }
 
-        /* 调整同步/推送按钮的颜色 */
-        #syncBtn,
+        #manageSyncBtn,
         #pushBtn {
             background-color: #2196f3;
             color: white;
         }
 
-        #syncBtn:hover,
+        #manageSyncBtn:hover,
         #pushBtn:hover {
             background-color: #1e88e5;
         }
-
 
         /* 每日分组容器 */
         .day-group {
@@ -133,7 +117,6 @@
             font-size: 1.3em;
         }
 
-        /* 卡片排列行 - PC 左对齐 */
         .anime-row {
             display: flex;
             flex-wrap: wrap;
@@ -142,7 +125,6 @@
             justify-content: flex-start;
         }
 
-        /* 单个番剧卡片 */
         .anime-item {
             width: 154px;
             max-width: 100%;
@@ -157,7 +139,6 @@
             transition: all 0.3s ease;
         }
 
-        /* 待删除状态样式 */
         .anime-item.deleted {
             opacity: 0.5;
             background-color: #ffeeee;
@@ -165,17 +146,11 @@
             text-decoration: line-through;
         }
 
-        /* 确保被删除的链接也被划线 */
         .anime-item.deleted .anime-content h4,
         .anime-item.deleted .anime-content h4 a {
             color: var(--danger-color) !important;
             text-decoration: line-through;
         }
-
-        .anime-item.deleted .delete-btn {
-            background-color: var(--secondary-color) !important;
-        }
-
 
         .anime-content h4 {
             margin: 0 0 5px 0;
@@ -184,7 +159,6 @@
             overflow: hidden;
         }
 
-        /* NEW: 确保 h4 内部的链接继承样式 */
         .anime-content h4 a {
             color: inherit;
             text-decoration: none;
@@ -198,8 +172,6 @@
             text-decoration: underline;
         }
 
-
-        /* 进度信息容器：紧凑化 */
         .progress-info {
             font-size: 0.8em;
             color: var(--secondary-color);
@@ -211,10 +183,12 @@
             line-height: 1.2;
         }
 
-        /* 进度条 */
         .progress-bar {
             height: 6px;
             margin-bottom: 5px;
+            background-color: #e9ecef;
+            border-radius: 3px;
+            overflow: hidden;
         }
 
         .progress-fill {
@@ -229,11 +203,10 @@
         }
 
         .user-episode-display {
-            color: var(--info-color);
+            color: #007bff;
             font-weight: bold;
         }
 
-        /* 动作行：只包含按钮 */
         .action-row {
             display: flex;
             flex-direction: row;
@@ -244,7 +217,6 @@
             border-top: 1px dashed #eee;
         }
 
-        /* 按钮容器：平均分配空间 */
         .anime-actions {
             display: flex;
             width: 100%;
@@ -264,21 +236,9 @@
             transition: background-color 0.1s;
         }
 
-        .plus-one-btn {
-            background-color: var(--success-color);
-            color: white;
-        }
-
-        .edit-btn {
-            background-color: var(--secondary-color);
-            color: white;
-        }
-
-        .delete-btn {
-            background-color: var(--danger-color);
-            color: white;
-        }
-
+        .plus-one-btn { background-color: var(--success-color); color: white; }
+        .edit-btn { background-color: var(--secondary-color); color: white; }
+        .delete-btn { background-color: var(--danger-color); color: white; }
 
         /* 弹窗部分 */
         .modal {
@@ -307,6 +267,27 @@
             overflow-y: auto;
         }
 
+        /* 同步管理特有样式 */
+        .sync-quick-actions {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #eee;
+        }
+
+        .sync-quick-actions .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .sync-quick-actions button {
+            flex: 1;
+            min-width: 0;
+            font-weight: bold;
+        }
+
         .close-btn {
             color: #aaa;
             float: right;
@@ -317,10 +298,7 @@
             right: 20px;
         }
 
-        .close-btn:hover {
-            color: #000;
-            cursor: pointer;
-        }
+        .close-btn:hover { color: #000; cursor: pointer; }
 
         #animeForm label,
         #configForm label {
@@ -340,9 +318,8 @@
             font-size: 16px;
         }
 
-        /* NEW: 针对日期+集数标签，增加一点样式区分 */
         #updateDateDisplay {
-            color: var(--info-color);
+            color: #007bff;
             font-weight: bold;
             margin-right: 3px;
         }
@@ -355,56 +332,13 @@
             padding: 12px;
         }
 
-
-        /* === 移动端媒体查询：确保移动端仍能正确显示 === */
         @media (max-width: 500px) {
-            body {
-                padding: 10px;
-            }
-
-            .header {
-                padding: 15px;
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .header h1 {
-                font-size: 1.5em;
-                margin-bottom: 10px;
-                text-align: center;
-            }
-
-            /* 在移动端隐藏时间信息，为按钮腾出空间 */
-            .datetime-info {
-                display: none;
-            }
-
-            .header-right {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 8px;
-                width: 100%;
-            }
-
-            .action-btn,
-            button:not(.anime-actions button) {
-                width: 100%;
-            }
-
-            /* 卡片布局改为单列，并拉伸以充满宽度 */
-            .anime-item {
-                width: 100%;
-                max-width: 100%;
-            }
-
-            .anime-row {
-                gap: 10px;
-                justify-content: stretch;
-            }
-
-            .day-group {
-                padding: 5px;
-            }
+            .header { padding: 15px; flex-direction: column; }
+            .datetime-info { display: none; }
+            .header-right { flex-direction: column; width: 100%; }
+            .action-btn { width: 100%; }
+            .anime-item { width: 100%; }
+            .sync-quick-actions .btn-group { flex-direction: column; }
         }
     </style>
 </head>
@@ -416,7 +350,7 @@
             <div id="datetime-info" class="datetime-info">
                 <p id="current-time">加载中...</p>
             </div>
-            <button id="syncBtn" class="action-btn">双向同步数据</button>
+            <button id="manageSyncBtn" class="action-btn">同步管理</button>
             <button id="pushBtn" class="action-btn">推送本地数据</button>
             <button id="showAddModalBtn" class="action-btn">新增番剧</button>
         </div>
@@ -433,21 +367,14 @@
             <form id="animeForm">
                 <label for="animeTitle">番剧名称:</label>
                 <input type="text" id="animeTitle" required>
-
                 <label for="watchLink">观看链接 (URL):</label>
                 <input type="url" id="watchLink" placeholder="例如: https://www.bilibili.com/...">
-
                 <label for="totalEpisodes">总集数 (0 表示未知):</label>
                 <input type="number" id="totalEpisodes" min="0" value="12" required>
-
-                <label for="manualUpdatedEpisode">
-                    <span id="updateDateDisplay">日期</span>+源站最新集数:
-                </label>
+                <label for="manualUpdatedEpisode"><span id="updateDateDisplay">日期</span>+源站最新集数:</label>
                 <input type="number" id="manualUpdatedEpisode" min="1" value="1" required>
-
                 <label for="currentEpisode">您正在看第几集:</label>
                 <input type="number" id="currentEpisode" min="1" value="1" required>
-
                 <label for="updateDayOfWeek">每周更新日:</label>
                 <select id="updateDayOfWeek" required>
                     <option value="0">周日</option>
@@ -458,7 +385,6 @@
                     <option value="5">周五</option>
                     <option value="6">周六</option>
                 </select>
-
                 <button type="submit" id="saveAnimeBtn">保存</button>
             </form>
         </div>
@@ -467,27 +393,29 @@
     <div id="githubConfigModal" class="modal">
         <div class="modal-content">
             <span class="close-btn config-close-btn">&times;</span>
-            <h2>GitHub 同步配置</h2>
+            <h2>同步管理</h2>
+
+            <div class="sync-quick-actions">
+                <p style="margin:0; font-size: 0.9em; color: #666; font-weight: bold;">从云端同步到本地：</p>
+                <div class="btn-group">
+                    <button id="downloadOverwriteBtn" class="action-btn" style="background-color: var(--danger-color); color: white;">下载并覆盖</button>
+                    <button id="downloadMergeBtn" class="action-btn" style="background-color: var(--info-color); color: white;">下载并合并</button>
+                </div>
+                <p style="font-size: 0.75em; color: #888; margin: 8px 0 0 0;">* 覆盖：删除本地，完全同步云端。<br>* 合并：将云端数据与本地现有记录混合。</p>
+            </div>
+
             <form id="configForm">
                 <label for="githubToken">GitHub 个人访问令牌 (Token):</label>
                 <input type="password" id="githubToken" placeholder="需要 repo 权限的令牌" required>
-
-                <label for="githubRepoPath">同步地址 (用户名/仓库名/文件名):</label>
+                <label for="githubRepoPath">同步地址:</label>
                 <input type="text" id="githubRepoPath" readonly value="xgd1062/1062/看番记录.md">
-
-                <button type="submit">保存并同步</button>
-                <p style="font-size: 0.8em; margin-top: 15px; color: #666;">
-                    * 令牌仅存储在您的本地浏览器中。<br>
-                    * 请确保令牌拥有访问该仓库的权限。<br>
-                    * **注意：** 在本地 HTML 中直接调用 GitHub API 可能<span style="font-weight: bold;">会遇到 CORS 限制</span>。
-                </p>
+                <button type="submit" style="background-color: #2196f3;">保存并执行双向同步</button>
             </form>
         </div>
     </div>
 
-
     <script>
-        // --- 1. 数据模型与存储/核心工具函数 ---
+        // --- 1. 数据模型与核心逻辑 (继承原逻辑) ---
         const LS_KEY = 'animeTrackerWatchingOnlyV2';
         const CONFIG_KEY = 'githubSyncConfig';
         const DAY_NAMES = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
@@ -503,11 +431,6 @@
             sha: null
         };
 
-        /**
-         * 格式化 Date 对象为 'YYYY-MM-DD' 字符串。
-         * @param {Date} date
-         * @returns {string}
-         */
         function formatDate(date) {
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -515,1053 +438,436 @@
             return `${year}-${month}-${day}`;
         }
 
-        /**
-         * 计算最近的更新日期 (包括今天)，返回 Date 对象 (时间为午夜)。
-         * @param {number} targetDayOfWeek 0 (Sun) to 6 (Sat)
-         * @param {Date} dateToCheck 基准日期，默认为当前日期
-         * @returns {Date} 计算出的最近更新日期 (午夜)
-         */
         function calculateLastUpdateDateObject(targetDayOfWeek, dateToCheck = new Date()) {
             const now = new Date(dateToCheck);
-            now.setHours(0, 0, 0, 0); // 设置为午夜
-            const todayDay = now.getDay(); // 0 (Sun) - 6 (Sat)
-
-            // 计算需要回溯的天数 (0 to 6)
+            now.setHours(0, 0, 0, 0);
+            const todayDay = now.getDay();
             const daysToGoBack = (todayDay - targetDayOfWeek + 7) % 7;
-
             const updateDate = new Date(now);
             updateDate.setDate(now.getDate() - daysToGoBack);
             return updateDate;
         }
 
-        /**
-         * 计算最近的更新日期 (包括今天)，返回 MM-DD 字符串。
-         * 用于表单标签显示。
-         */
-        function calculateLastUpdateDate(targetDayOfWeek) {
-            const dateObj = calculateLastUpdateDateObject(targetDayOfWeek);
-            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-            const day = String(dateObj.getDate()).padStart(2, '0');
-            return `${month}-${day}`;
-        }
-
-        /**
-         * 计算从起算日期到当前日期之间，已经过去了多少个更新日（周）。
-         * @param {Date} startDate 起算日期 (午夜)
-         * @param {Date} currentDate 当前日期 (午夜)
-         * @param {number} updateDayOfWeek 每周更新日
-         * @returns {number} 已经过去的更新次数（周数）
-         */
         function calculateWeeksElapsed(startDate, currentDate, updateDayOfWeek) {
             const startMidnight = new Date(startDate.getTime());
             startMidnight.setHours(0, 0, 0, 0);
-
             const currentMidnight = new Date(currentDate.getTime());
             currentMidnight.setHours(0, 0, 0, 0);
-
-            if (currentMidnight.getTime() <= startMidnight.getTime()) {
-                return 0; // 尚未到达起算日
-            }
-
-            // 1. 找到第一个位于 startMidnight *之后* 的更新日
+            if (currentMidnight.getTime() <= startMidnight.getTime()) return 0;
             let firstUpdateDate = new Date(startMidnight);
             const startDay = startMidnight.getDay();
             const dayDiff = (updateDayOfWeek - startDay + 7) % 7;
-
             firstUpdateDate.setDate(startMidnight.getDate() + dayDiff);
-
-            // 如果计算出的 firstUpdateDate 等于 startMidnight，说明起算日当天就是更新日
-            // 且起算集数已经包含了这一集，所以我们需要从下一周开始计算。
             if (firstUpdateDate.getTime() === startMidnight.getTime()) {
                 firstUpdateDate.setDate(firstUpdateDate.getDate() + 7);
             }
-
             let count = 0;
             let tempDate = firstUpdateDate;
-
-            // 2. 统计从 firstUpdateDate 到 currentMidnight 之间有多少周
             while (tempDate.getTime() <= currentMidnight.getTime()) {
                 count++;
-                tempDate.setDate(tempDate.getDate() + 7); // 跳过一周
+                tempDate.setDate(tempDate.getDate() + 7);
             }
-
             return count;
         }
 
-
-        /**
-         * 核心：根据起算点自动计算当前应该更新到的集数。
-         */
         function calculateUpdatedEpisode(entry, currentDate = new Date()) {
-            // 如果数据不完整或已删除，则使用存储的 manualUpdatedEpisode (已是计算后的最新值)
             if (!entry.startCalculationDate || !entry.startCalculationEpisode || entry.deleted) {
-                return entry.manualUpdatedEpisode || entry.initialUpdatedEpisode || 1; // 兼容旧字段
+                return entry.manualUpdatedEpisode || 1;
             }
-
             const startDate = new Date(entry.startCalculationDate);
-
-            // 1. 计算周数
             const weeksElapsed = calculateWeeksElapsed(startDate, currentDate, entry.updateDayOfWeek);
-
-            // 2. 计算新集数
             let newEpisode = entry.startCalculationEpisode + weeksElapsed;
-
-            // 3. 限制集数不超过总集数
-            if (entry.totalEpisodes > 0) {
-                newEpisode = Math.min(newEpisode, entry.totalEpisodes);
-            }
-
-            // 确保至少为 1
+            if (entry.totalEpisodes > 0) newEpisode = Math.min(newEpisode, entry.totalEpisodes);
             return Math.max(1, newEpisode);
         }
 
-        /**
-         * NEW FUNCTION: 更新起算日和起算集数 (仅在手动提交表单或同步时调用)。
-         * @param {Object} entry 追番记录
-         * @param {string} modifiedDateString 指定的修改日期 ('YYYY-MM-DD')
-         * @param {number} currentUpdatedEpisode 指定的最新集数
-         */
         function updateCalculationFields(entry, modifiedDateString, currentUpdatedEpisode) {
-            const modifiedDate = new Date(modifiedDateString); // 修改日 (午夜)
-            modifiedDate.setHours(0, 0, 0, 0); // 确保日期准确
-            const updateDayOfWeek = entry.updateDayOfWeek;
-
-            // 计算最近的更新日（包括修改日）
-            const targetUpdateDateObj = calculateLastUpdateDateObject(updateDayOfWeek, modifiedDate);
-            const targetUpdateDateString = formatDate(targetUpdateDateObj);
-
-            // 保存修改日
+            const modifiedDate = new Date(modifiedDateString);
+            modifiedDate.setHours(0, 0, 0, 0);
+            const targetUpdateDateObj = calculateLastUpdateDateObject(entry.updateDayOfWeek, modifiedDate);
             entry.lastModifiedDate = modifiedDateString;
-
-            // 根据用户逻辑，起算日始终为最近的更新日
-            // 且起算集数为用户在表单中输入的最新集数。
-            entry.startCalculationDate = targetUpdateDateString;
+            entry.startCalculationDate = formatDate(targetUpdateDateObj);
             entry.startCalculationEpisode = currentUpdatedEpisode;
-
-            // 同时将用户输入的集数作为 manualUpdatedEpisode 的临时基准，
-            // 渲染时会根据它重新计算最新的 manualUpdatedEpisode。
             entry.manualUpdatedEpisode = currentUpdatedEpisode;
         }
 
         function initData() {
             const storedData = localStorage.getItem(LS_KEY);
-            if (storedData) {
-                animeData = JSON.parse(storedData);
-            }
-
+            if (storedData) animeData = JSON.parse(storedData);
             const todayDateString = formatDate(new Date());
 
-            // 兼容旧数据，并初始化新的字段
             animeData = animeData.map(entry => {
-                // 统一使用 manualUpdatedEpisode 作为基准集数
-                const baseUpdatedEp = entry.manualUpdatedEpisode || entry.initialUpdatedEpisode || 1;
+                const baseUpdatedEp = entry.manualUpdatedEpisode || 1;
                 const updateDay = entry.updateDayOfWeek !== undefined ? parseInt(entry.updateDayOfWeek) : new Date().getDay();
-
                 const baseEntry = {
                     ...entry,
                     deleted: entry.deleted === true,
                     watchLink: entry.watchLink || '',
-                    // manualUpdatedEpisode 存储的将是上一次计算/手动设定的基准值
                     manualUpdatedEpisode: baseUpdatedEp,
                     updateDayOfWeek: updateDay,
-
-                    // NEW FIELDS: 如果不存在，使用今天的日期和 manualUpdatedEpisode 作为初始值
                     lastModifiedDate: entry.lastModifiedDate || todayDateString,
                     startCalculationEpisode: entry.startCalculationEpisode || baseUpdatedEp,
-                    startCalculationDate: entry.startCalculationDate || formatDate(calculateLastUpdateDateObject(updateDay)),
-
-                    // 清除旧字段
-                    dateAdded: undefined,
-                    initialUpdatedEpisode: undefined
+                    startCalculationDate: entry.startCalculationDate || formatDate(calculateLastUpdateDateObject(updateDay))
                 };
-
-                // 初次加载时，根据起算点计算出当前的集数，更新 manualUpdatedEpisode
                 baseEntry.manualUpdatedEpisode = calculateUpdatedEpisode(baseEntry);
-
-                // 确保用户追番进度不超过最新集数
-                if (baseEntry.currentEpisode > baseEntry.manualUpdatedEpisode) {
-                    baseEntry.currentEpisode = baseEntry.manualUpdatedEpisode;
-                }
-
+                if (baseEntry.currentEpisode > baseEntry.manualUpdatedEpisode) baseEntry.currentEpisode = baseEntry.manualUpdatedEpisode;
                 return baseEntry;
             }).filter(entry => entry.title);
 
             const storedConfig = localStorage.getItem(CONFIG_KEY);
-            if (storedConfig) {
-                githubConfig = JSON.parse(storedConfig);
-            } else {
-                githubConfig = DEFAULT_REPO_CONFIG;
-            }
+            githubConfig = storedConfig ? JSON.parse(storedConfig) : DEFAULT_REPO_CONFIG;
         }
 
-        function saveToLocalStorage() {
-            localStorage.setItem(LS_KEY, JSON.stringify(animeData));
-        }
+        function saveToLocalStorage() { localStorage.setItem(LS_KEY, JSON.stringify(animeData)); }
+        function saveGithubConfig() { localStorage.setItem(CONFIG_KEY, JSON.stringify(githubConfig)); }
 
-        function saveGithubConfig() {
-            localStorage.setItem(CONFIG_KEY, JSON.stringify(githubConfig));
-        }
+        // --- 2. GitHub API 与同步逻辑 ---
 
-        /**
-         * 按更新日分组 (保持不变)
-         */
-        function groupAnimeByDay(data) {
-            const grouped = {};
-            const sortedData = [...data].sort((a, b) => {
-                if (a.updateDayOfWeek !== b.updateDayOfWeek) {
-                    return a.updateDayOfWeek - b.updateDayOfWeek;
-                }
-                return a.title.localeCompare(b.title, 'zh-CN');
-            });
-
-            sortedData.forEach((entry) => {
-                const dayKey = entry.updateDayOfWeek.toString();
-                if (!grouped[dayKey]) {
-                    grouped[dayKey] = [];
-                }
-                grouped[dayKey].push({ entry, originalIndex: animeData.findIndex(item => item === entry) });
-            });
-
-            return grouped;
-        }
-
-        /**
-         * 更新时间显示
-         */
-        function updateTimeAndWeather() {
-            const now = new Date();
-            const dayOfWeek = DAY_NAMES[now.getDay()];
-            const timeString = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            const dateString = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日`;
-
-            const timeElement = document.getElementById('current-time');
-            if (timeElement) {
-                // 始终更新时间，依赖 CSS 媒体查询隐藏元素
-                timeElement.innerHTML = `${dateString} ${dayOfWeek} ${timeString}`;
-            }
-        }
-
-        // --- 2. GitHub API 及同步/推送逻辑 ---
-
-        /**
-         * 生成 Markdown 内容 (过滤掉待删除记录)
-         * FIX: 修正了 groupAnimeByDay().reduce is not a function 错误
-         */
         function generateMarkdown(data) {
             const liveData = data.filter(entry => !entry.deleted);
-
-            if (liveData.length === 0) {
-                return `# 🍿 追番进度管理导出\n\n**无追番记录**\n\n`;
-            }
-
-            const now = new Date();
-            const timestamp = now.toLocaleString('zh-CN', {
-                year: 'numeric', month: '2-digit', day: '2-digit',
-                hour: '2-digit', minute: '2-digit', second: '2-digit'
-            });
-
+            if (liveData.length === 0) return `# 🍿 追番进度管理导出\n\n**无追番记录**\n\n`;
+            const timestamp = new Date().toLocaleString('zh-CN');
             let markdown = `# 🍿 追番进度管理导出 (${timestamp})\n\n`;
-
-            // 直接获取 groupAnimeByDay 返回的分组对象
-            // groupAnimeByDay 返回 { '0': [{ entry: entryObj, originalIndex: N }, ...], ... }
             const groupedData = groupAnimeByDay(liveData);
 
-
-            Object.keys(groupedData).sort((a, b) => parseInt(a) - parseInt(b)).forEach(dayKey => {
-                // listWithIndex 是分组后的数组，包含 { entry, originalIndex } 对象
+            Object.keys(groupedData).sort((a, b) => a - b).forEach(dayKey => {
                 const listWithIndex = groupedData[dayKey];
-                const dayName = DAY_NAMES[parseInt(dayKey)];
-
-                markdown += `## ${dayName}更新 (${listWithIndex.length}部)\n\n`;
-
-                markdown += '| 名称 | 更新至 | 追番进度 | 总集数 | 观看链接 |\n';
-                markdown += '| :--- | :--- | :--- | :--- | :--- |\n';
-
-                listWithIndex.forEach(({ entry }) => { // 注意这里解构出 entry
-                    // 使用 entry 访问实际数据
-                    const updatedEp = entry.manualUpdatedEpisode;
-                    const totalText = entry.totalEpisodes > 0 ? entry.totalEpisodes : '??';
-
-                    const watchUrl = entry.watchLink && entry.watchLink.startsWith('http') ? entry.watchLink : '#';
+                markdown += `## ${DAY_NAMES[dayKey]}更新 (${listWithIndex.length}部)\n\n`;
+                markdown += '| 名称 | 更新至 | 追番进度 | 总集数 | 观看链接 |\n| :--- | :--- | :--- | :--- | :--- |\n';
+                listWithIndex.forEach(({ entry }) => {
+                    const watchUrl = entry.watchLink?.startsWith('http') ? entry.watchLink : '#';
                     const linkText = entry.watchLink ? '[点击观看]' : '无链接';
-
-                    markdown += `| [${entry.title}](${watchUrl}) | ${updatedEp} | ${entry.currentEpisode} | ${totalText} | ${linkText} |\n`;
+                    markdown += `| [${entry.title}](${watchUrl}) | ${entry.manualUpdatedEpisode} | ${entry.currentEpisode} | ${entry.totalEpisodes || '??'} | ${linkText} |\n`;
                 });
                 markdown += '\n';
             });
-
             return markdown;
         }
 
-        /**
-         * 解析 Markdown 内容回数据结构 
-         * * 【关键修改点 1 & 2】: 传入远程备份日期 remoteBackupDateString 作为起算基准
-         */
         function parseMarkdownToData(markdownContent, remoteBackupDateString) {
             const lines = markdownContent.split('\n');
             const parsedData = [];
             let currentDay = 0;
 
-            const dayNameToIndex = DAY_NAMES.reduce((acc, name, index) => {
-                // 移除“更新”二字进行匹配
-                acc[name + '更新'] = index;
-                return acc;
-            }, {});
-
             lines.forEach(line => {
-                const dayMatch = line.match(/^## (.+)\s\(.+部\)/);
-                if (dayMatch && dayMatch[1]) {
-                    // 尝试匹配去除 "更新" 的日名
-                    const fullDayName = dayMatch[1].replace('更新', '');
-                    for (const name in dayNameToIndex) {
-                        if (name.startsWith(fullDayName)) {
-                            currentDay = dayNameToIndex[name];
-                            break;
-                        }
-                    }
-                }
+                const dayMatch = line.match(/^## (.+?)更新/);
+                if (dayMatch) currentDay = DAY_NAMES.indexOf(dayMatch[1]);
 
-                // 匹配 5 列数据：| [标题](链接) | 更新至 | 追番进度 | 总集数 | [点击观看](链接) | 或 | [标题](链接) | 更新至 | 追番进度 | 总集数 | 无链接 |
-                const dataMatch = line.match(/^\| \[(.+?)\]\((.+?)\) \| (\d+) \| (\d+) \| (.+?) \| \[(.+?)\]\((.+?)\) \|$/) ||
-                    line.match(/^\| \[(.+?)\]\((.+?)\) \| (\d+) \| (\d+) \| (.+?) \| (.+?) \|$/);
-
+                const dataMatch = line.match(/^\| \[(.+?)\]\((.+?)\) \| (\d+) \| (\d+) \| (.+?) \|/);
                 if (dataMatch) {
                     const title = dataMatch[1].trim();
-                    const watchLink = dataMatch[2].trim() === '#' ? '' : dataMatch[2].trim();
-                    const updatedEpisode = parseInt(dataMatch[3]) || 1; // 远程文件中的最新集数 (作为新的基准)
-                    const currentEpisode = parseInt(dataMatch[4]) || 1;
-                    const totalEpisodesStr = dataMatch[5].trim();
-                    const totalEpisodes = totalEpisodesStr === '??' ? 0 : parseInt(totalEpisodesStr) || 0;
-                    const updateDayOfWeek = currentDay;
+                    const watchLink = dataMatch[2] === '#' ? '' : dataMatch[2];
+                    const updatedEp = parseInt(dataMatch[3]);
+                    const currentEp = parseInt(dataMatch[4]);
+                    const totalEp = dataMatch[5].trim() === '??' ? 0 : parseInt(dataMatch[5]);
 
-                    const today = new Date();
-
-                    const remoteEntry = {
-                        title: title,
-                        watchLink: watchLink,
-                        totalEpisodes: totalEpisodes,
-                        currentEpisode: currentEpisode,
-                        manualUpdatedEpisode: updatedEpisode, // 远程文件中的最新集数作为基准
-                        updateDayOfWeek: updateDayOfWeek,
-                        deleted: false,
-                        // 占位初始化
-                        lastModifiedDate: remoteBackupDateString,
-                        startCalculationEpisode: updatedEpisode,
-                        startCalculationDate: remoteBackupDateString,
+                    const entry = {
+                        title, watchLink, totalEpisodes: totalEp, currentEpisode: currentEp,
+                        updateDayOfWeek: currentDay, deleted: false
                     };
-
-                    // 核心逻辑：使用远程文件的备份日期作为修改日，和远程集数，重新计算起算点
-                    updateCalculationFields(remoteEntry, remoteBackupDateString, updatedEpisode);
-
-                    // 核心逻辑：根据这个基于备份日期的起算点，使用**当前日期**计算出最新集数
-                    remoteEntry.manualUpdatedEpisode = calculateUpdatedEpisode(remoteEntry, today);
-
-                    // 确保追番集数不超限
-                    if (remoteEntry.currentEpisode > remoteEntry.manualUpdatedEpisode) {
-                        remoteEntry.currentEpisode = remoteEntry.manualUpdatedEpisode;
-                    }
-
-                    parsedData.push(remoteEntry);
+                    updateCalculationFields(entry, remoteBackupDateString, updatedEp);
+                    entry.manualUpdatedEpisode = calculateUpdatedEpisode(entry, new Date());
+                    parsedData.push(entry);
                 }
             });
-
             return parsedData;
         }
 
-
-        /**
-         * 双向同步时的合并和删除处理逻辑 (保留远程独有数据)
-         * * 【关键修改点 3】: 传入远程备份日期 remoteBackupDateString
-         */
         function processRemoteAndDelete(remoteData, localData, remoteBackupDateString) {
-            const localLiveRecords = localData.filter(item => !item.deleted);
-            const localDeletedTitles = new Set(localData
-                .filter(item => item.deleted)
-                .map(item => item.title));
-
-            // 远程数据中，排除掉本地已标记删除的记录
-            const remoteLiveRecords = remoteData.filter(remoteEntry => {
-                return !localDeletedTitles.has(remoteEntry.title);
-            });
-
+            const localDeletedTitles = new Set(localData.filter(item => item.deleted).map(item => item.title));
             const merged = [];
             const processedTitles = new Set();
-            const today = new Date();
 
-            // 1. 处理远程记录：保留远程独有的，更新与本地匹配的
-            remoteLiveRecords.forEach(remoteEntry => {
-                const localEntry = localLiveRecords.find(item => item.title === remoteEntry.title);
-                const remoteBaseEpisode = remoteEntry.manualUpdatedEpisode; // 远程文件中的集数 (已是基于当前日期的计算值)
-
+            remoteData.filter(re => !localDeletedTitles.has(re.title)).forEach(remoteEntry => {
+                const localEntry = localData.find(le => le.title === remoteEntry.title && !le.deleted);
                 if (!localEntry) {
-                    // 远程独有记录：直接添加 (remoteEntry 在 parseMarkdownToData 中已被基于当前日期计算过)
                     merged.push(remoteEntry);
-                    processedTitles.add(remoteEntry.title);
                 } else {
-                    // 记录都存在：以远程数据为准更新基础信息
                     localEntry.currentEpisode = remoteEntry.currentEpisode;
                     localEntry.totalEpisodes = remoteEntry.totalEpisodes;
                     localEntry.watchLink = remoteEntry.watchLink;
                     localEntry.updateDayOfWeek = remoteEntry.updateDayOfWeek;
-
-                    // 此时 localEntry.manualUpdatedEpisode 是本地计算的最新值 (基于其原有的 startCalculationDate)
-                    // remoteBaseEpisode 是刚刚从远程解析并计算得到的最新值 (基于远程备份日期，再计算到今天的最新值)
-
-                    // 核心冲突逻辑：如果远程记录的集数与本地当前的计算集数不一致，则以远程集数作为新的起算基准
-                    if (localEntry.manualUpdatedEpisode !== remoteBaseEpisode) {
-
-                        // 1. 设置新的基准集数
-                        localEntry.manualUpdatedEpisode = remoteBaseEpisode;
-
-                        // 2. 根据远程集数和**远程备份日期**，重新计算起算基准点
-                        updateCalculationFields(localEntry, remoteBackupDateString, remoteBaseEpisode);
+                    if (localEntry.manualUpdatedEpisode !== remoteEntry.manualUpdatedEpisode) {
+                        updateCalculationFields(localEntry, remoteBackupDateString, remoteEntry.manualUpdatedEpisode);
                     }
-
-                    // 3. 再次进行自动计算，确保本地显示最新集数 (此步确保一致性)
-                    const finalUpdatedEp = calculateUpdatedEpisode(localEntry, today);
-                    localEntry.manualUpdatedEpisode = finalUpdatedEp;
-
-                    // 4. 限制用户追番集数
-                    if (localEntry.currentEpisode > finalUpdatedEp) {
-                        localEntry.currentEpisode = finalUpdatedEp;
-                    }
-                    merged.push(localEntry);
-                    processedTitles.add(localEntry.title);
-                }
-            });
-
-            // 2. 添加本地独有记录 (并确保其 manualUpdatedEpisode 已是最新计算值)
-            localLiveRecords.forEach(localEntry => {
-                if (!processedTitles.has(localEntry.title)) {
+                    localEntry.manualUpdatedEpisode = calculateUpdatedEpisode(localEntry, new Date());
                     merged.push(localEntry);
                 }
+                processedTitles.add(remoteEntry.title);
             });
 
+            localData.forEach(le => { if (!le.deleted && !processedTitles.has(le.title)) merged.push(le); });
             return merged;
         }
 
         async function fetchFileFromGithub(config) {
             const url = `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}`;
-            try {
-                const response = await fetch(url, {
-                    headers: {
-                        'Authorization': `token ${config.token}`,
-                        'Accept': 'application/vnd.github.v3+json'
-                    }
-                });
-
-                if (response.status === 404) {
-                    return { content: null, sha: null };
-                }
-
-                if (!response.ok) {
-                    const errorJson = await response.json().catch(() => ({ message: response.statusText }));
-                    throw new Error(`GitHub Fetch Error: ${response.status} - ${errorJson.message || 'Unknown API Error'}`);
-                }
-
-                const contentData = await response.json();
-
-                if (contentData.content && contentData.sha) {
-                    // 原始代码中的 Base64 解码方式
-                    const fileContent = decodeURIComponent(escape(atob(contentData.content)));
-                    return { content: fileContent, sha: contentData.sha };
-                }
-
-                return { content: null, sha: null };
-
-            } catch (error) {
-                console.error("GitHub Fetch failed:", error);
-                throw new Error(`获取 GitHub 文件失败: ${error.message || error}`);
-            }
+            const response = await fetch(url, { headers: { 'Authorization': `token ${config.token}`, 'Accept': 'application/vnd.github.v3+json' } });
+            if (response.status === 404) return { content: null, sha: null };
+            if (!response.ok) throw new Error(`GitHub 错误: ${response.status}`);
+            const data = await response.json();
+            return { content: decodeURIComponent(escape(atob(data.content))), sha: data.sha };
         }
 
         async function uploadFileToGithub(config, content, sha) {
             const url = `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}`;
-
-            // 原始代码中的 Base64 编码方式
-            const base64Content = btoa(unescape(encodeURIComponent(content)));
-
             const payload = {
-                message: sha ? `Sync: Update watch list via local app at ${new Date().toLocaleString('zh-CN')}` : `Sync: Initial upload of watch list via local app`,
-                content: base64Content,
+                message: `Sync: ${new Date().toLocaleString()}`,
+                content: btoa(unescape(encodeURIComponent(content))),
                 sha: sha
             };
+            const response = await fetch(url, { method: 'PUT', headers: { 'Authorization': `token ${config.token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            if (!response.ok) throw new Error("上传失败");
+        }
+
+        // --- 3. 新增的独立下载逻辑 ---
+
+        async function handleDownloadOnly(isOverwrite) {
+            if (!githubConfig.token) { alert('请先输入 GitHub 令牌并保存！'); return; }
+            if (isOverwrite && !confirm('警告：下载覆盖将删除所有本地记录！是否继续？')) return;
+
+            const btn = isOverwrite ? document.getElementById('downloadOverwriteBtn') : document.getElementById('downloadMergeBtn');
+            const originalText = btn.textContent;
+            btn.textContent = '下载中...';
+            btn.disabled = true;
 
             try {
-                const response = await fetch(url, {
-                    method: 'PUT',
-                    headers: {
-                        'Authorization': `token ${config.token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(payload)
-                });
+                const { content, sha } = await fetchFileFromGithub(githubConfig);
+                if (!content) throw new Error('云端文件不存在');
 
-                if (!response.ok) {
-                    const errorJson = await response.json();
-                    throw new Error(`GitHub Upload Error: ${response.status} - ${errorJson.message || '未知错误'}`);
+                let backupDate = formatDate(new Date());
+                const headerMatch = content.split('\n')[0].match(/\((\d{4}\/\d{2}\/\d{2})/);
+                if (headerMatch) backupDate = headerMatch[1].replace(/\//g, '-');
+
+                const remoteData = parseMarkdownToData(content, backupDate);
+
+                if (isOverwrite) {
+                    animeData = remoteData;
+                } else {
+                    animeData = processRemoteAndDelete(remoteData, animeData, backupDate);
                 }
 
-                const result = await response.json();
-                return result;
-
-            } catch (error) {
-                console.error("GitHub Upload failed:", error);
-                throw new Error(`上传 GitHub 文件失败: ${error.message}`);
-            }
-        }
-
-        /**
-         * NEW FUNCTION: 将本地数据强制推送覆盖到云端
-         */
-        async function pushLocalToCloud() {
-            if (!githubConfig.token) {
-                showConfigModal();
-                return;
-            }
-
-            const pushBtn = document.getElementById('pushBtn');
-            const originalText = pushBtn.textContent;
-            pushBtn.textContent = '推送中...';
-            pushBtn.disabled = true;
-
-            try {
-                // 1. 获取远程文件的 SHA (用于版本控制)
-                const { sha } = await fetchFileFromGithub(githubConfig);
-
-                // 2. 确保所有本地记录的 manualUpdatedEpisode 都是最新的计算值
-                const today = new Date();
-                const todayDateString = formatDate(today);
-                animeData.forEach(entry => {
-                    const calculatedEp = calculateUpdatedEpisode(entry, today);
-                    entry.manualUpdatedEpisode = calculatedEp;
-                    // 确保用户观看进度不超过最新集数
-                    if (entry.currentEpisode > calculatedEp) {
-                        entry.currentEpisode = calculatedEp;
-                    }
-
-                    // 强制更新起算点：使用当前的计算值作为基准，以当前日期作为修改日
-                    updateCalculationFields(entry, todayDateString, calculatedEp);
-
-                });
-
-                // 3. 过滤出未删除的本地数据 (本地状态决定了云端最终状态)
-                const localLiveData = animeData.filter(entry => !entry.deleted);
-
-                // 4. 将本地数据转换成 Markdown
-                const contentToUpload = generateMarkdown(localLiveData);
-
-                // 5. 上传至 GitHub (使用获取到的 SHA)
-                await uploadFileToGithub(githubConfig, contentToUpload, sha);
-
-                alert('推送成功：本地数据已覆盖云端文件！');
-
-            } catch (error) {
-                alert(`推送失败：${error.message}`);
-                console.error(error);
+                saveToLocalStorage();
+                renderOverview();
+                alert(isOverwrite ? '覆盖成功！' : '合并成功！');
+                githubConfigModal.style.display = 'none';
+            } catch (e) {
+                alert(`操作失败: ${e.message}`);
             } finally {
-                pushBtn.textContent = originalText;
-                pushBtn.disabled = false;
+                btn.textContent = originalText;
+                btn.disabled = false;
             }
         }
 
-
-        /**
-         * 原有的双向同步逻辑 (同步入口，修改为提取备份日期)
-         */
         async function syncData() {
-            if (!githubConfig.token) {
-                showConfigModal();
-                return;
-            }
-
-            const syncBtn = document.getElementById('syncBtn');
-            const originalText = syncBtn.textContent;
+            if (!githubConfig.token) { showConfigModal(); return; }
+            const syncBtn = configForm.querySelector('button[type="submit"]');
             syncBtn.textContent = '同步中...';
             syncBtn.disabled = true;
-
-            const today = new Date();
-            const todayDateString = formatDate(today);
-
             try {
                 const { content: remoteContent, sha } = await fetchFileFromGithub(githubConfig);
-                let contentToUpload = '';
-                let newSha = sha;
+                const todayStr = formatDate(new Date());
+                let finalData;
 
-
-                // 1. 确保所有本地记录的 manualUpdatedEpisode 都是最新的计算值，以供导出或合并
-                animeData.forEach(entry => {
-                    const calculatedEp = calculateUpdatedEpisode(entry, today);
-                    entry.manualUpdatedEpisode = calculatedEp;
-                    if (entry.currentEpisode > calculatedEp) {
-                        entry.currentEpisode = calculatedEp;
-                    }
-                });
-
-                if (remoteContent && remoteContent.trim().length > 0) {
-                    console.log('云端文件存在，进行删除处理和合并...');
-
-                    // 提取备份日期
-                    let remoteBackupDateString = todayDateString; // 默认使用今天
-                    // 匹配文件头，例如：# 🍿 追番进度管理导出 (2025/12/05 23:42:00)
-                    const headerMatch = remoteContent.split('\n')[0].match(/# 🍿 追番进度管理导出 \((.+?)\)/);
-                    if (headerMatch && headerMatch[1]) {
-                        const datetimeString = headerMatch[1].trim();
-                        // 提取 YYYY/MM/DD 部分
-                        const datePartMatch = datetimeString.match(/(\d{4}\/\d{2}\/\d{2})/);
-                        if (datePartMatch) {
-                            remoteBackupDateString = datePartMatch[1].replace(/\//g, '-'); // 转换为 YYYY-MM-DD
-                        }
-                    }
-
-                    // 2. 解析远程数据 (将备份日期传入)
-                    const remoteData = parseMarkdownToData(remoteContent, remoteBackupDateString);
-
-                    // 3. 合并数据 (将备份日期传入)
-                    const mergedData = processRemoteAndDelete(remoteData, animeData, remoteBackupDateString);
-
-                    animeData = mergedData;
-                    saveToLocalStorage();
-                    renderOverview();
-
-                    // 4. 生成要上传的内容
-                    contentToUpload = generateMarkdown(mergedData);
-                    alert('双向同步成功：已处理删除标记，下载云端记录并与本地记录合并，合并后的数据已保存到本地并重新上传！');
+                if (remoteContent) {
+                    let backupDate = todayStr;
+                    const headerMatch = remoteContent.split('\n')[0].match(/\((\d{4}\/\d{2}\/\d{2})/);
+                    if (headerMatch) backupDate = headerMatch[1].replace(/\//g, '-');
+                    const remoteData = parseMarkdownToData(remoteContent, backupDate);
+                    finalData = processRemoteAndDelete(remoteData, animeData, backupDate);
                 } else {
-                    console.log('云端文件不存在或为空，直接上传本地数据...');
-
-                    // 首次上传，强制更新本地记录的起算点为当前最新计算值和今天
-                    animeData.forEach(entry => {
-                        updateCalculationFields(entry, todayDateString, entry.manualUpdatedEpisode);
-                    });
-
-                    const localLiveData = animeData.filter(entry => !entry.deleted);
-                    animeData = localLiveData;
-                    saveToLocalStorage();
-                    renderOverview();
-
-                    contentToUpload = generateMarkdown(localLiveData);
-                    newSha = null;
-                    alert('双向同步成功：首次上传本地数据到 GitHub！');
+                    animeData.forEach(e => updateCalculationFields(e, todayStr, e.manualUpdatedEpisode));
+                    finalData = animeData.filter(e => !e.deleted);
                 }
 
-                await uploadFileToGithub(githubConfig, contentToUpload, newSha);
-
-            } catch (error) {
-                alert(`双向同步失败：${error.message}`);
-                console.error(error);
-            } finally {
-                syncBtn.textContent = originalText;
-                syncBtn.disabled = false;
-            }
+                animeData = finalData;
+                saveToLocalStorage();
+                renderOverview();
+                await uploadFileToGithub(githubConfig, generateMarkdown(finalData), sha);
+                alert('双向同步成功！');
+                githubConfigModal.style.display = 'none';
+            } catch (e) { alert(`同步失败: ${e.message}`); }
+            finally { syncBtn.textContent = '保存并执行双向同步'; syncBtn.disabled = false; }
         }
 
+        async function pushLocalToCloud() {
+            if (!githubConfig.token) { showConfigModal(); return; }
+            const btn = document.getElementById('pushBtn');
+            btn.textContent = '推送中...';
+            try {
+                const { sha } = await fetchFileFromGithub(githubConfig);
+                const todayStr = formatDate(new Date());
+                animeData.forEach(e => updateCalculationFields(e, todayStr, e.manualUpdatedEpisode));
+                const liveData = animeData.filter(e => !e.deleted);
+                await uploadFileToGithub(githubConfig, generateMarkdown(liveData), sha);
+                alert('推送成功！');
+            } catch (e) { alert(e.message); }
+            finally { btn.textContent = '推送本地数据'; }
+        }
 
-        // --- 3. 渲染视图 ---
-        const overviewContainer = document.getElementById('overview-container');
+        // --- 4. UI 渲染与事件代理 ---
 
-        /**
-         * 生成按 (今天, 昨天, 前天, ..., 明天, 后天) 排序的星期索引列表。
-         */
-        function getDisplayDayOrder(todayIndex) {
-            const order = [];
-            // 1. Today
-            order.push(todayIndex);
-
-            // 2. Past days, moving backwards (i=1 to 6)
-            for (let i = 1; i <= 6; i++) {
-                // Calculate day index going backwards 
-                const day = (todayIndex - i + 7) % 7;
-                order.push(day);
-            }
-            // 结果是 [今天, 昨天, 前天, ..., 明天] 的顺序
-            return order;
+        function groupAnimeByDay(data) {
+            const grouped = {};
+            data.forEach(entry => {
+                const day = entry.updateDayOfWeek;
+                if (!grouped[day]) grouped[day] = [];
+                grouped[day].push({ entry, originalIndex: animeData.indexOf(entry) });
+            });
+            return grouped;
         }
 
         function renderOverview() {
-            overviewContainer.innerHTML = '';
+            const container = document.getElementById('overview-container');
+            container.innerHTML = '';
+            if (animeData.length === 0) { container.innerHTML = '<p style="text-align:center;color:#999;">暂无数据</p>'; return; }
 
-            if (animeData.length === 0) {
-                overviewContainer.innerHTML = '<p style="text-align:center; color:#999;">暂无追番记录，点击“新增番剧”开始追番吧！</p>';
-                return;
-            }
+            const today = new Date().getDay();
+            const order = [];
+            for (let i = 0; i < 7; i++) order.push((today - i + 7) % 7);
 
-            const today = new Date();
-            const todayDayIndex = today.getDay(); // 获取今天的星期几 (0-6)
+            const grouped = groupAnimeByDay(animeData);
+            order.forEach((day, idx) => {
+                const list = grouped[day];
+                if (!list || list.length === 0) return;
 
-            const groupedData = groupAnimeByDay(animeData);
+                const section = document.createElement('div');
+                section.className = 'day-group';
+                let label = DAY_NAMES[day];
+                if (idx === 0) label += ' (今天)';
+                else if (idx === 1) label += ' (昨天)';
+                else if (idx === 6) label += ' (明天)';
 
-            // NEW: 调整顺序以让“今天更新”在最前面
-            const displayDayOrder = getDisplayDayOrder(todayDayIndex);
+                section.innerHTML = `<h3>${label}更新 (${list.length}部)</h3>`;
+                const row = document.createElement('div');
+                row.className = 'anime-row';
 
-            displayDayOrder.forEach((day, index) => {
-                const list = groupedData[day];
-
-                if (list && list.length > 0) {
-                    let dayGroupName;
-
-                    // 根据在排序数组中的位置确定显示名称
-                    if (index === 0) {
-                        dayGroupName = DAY_NAMES[day] + ' (今天)';
-                    } else if (index === 1) {
-                        dayGroupName = DAY_NAMES[day] + ' (昨天)';
-                    } else if (index === 6) {
-                        // index 6 对应 (today + 1) % 7，也就是明天
-                        dayGroupName = DAY_NAMES[day] + ' (明天)';
-                    } else {
-                        // index 2, 3, 4, 5：显示正常的周几名称
-                        dayGroupName = DAY_NAMES[day];
-                    }
-
-
-                    const dayGroup = document.createElement('div');
-                    dayGroup.className = 'day-group';
-                    dayGroup.innerHTML = `<h3>${dayGroupName}更新 (${list.length}部)</h3>`;
-
-                    const animeRow = document.createElement('div');
-                    animeRow.className = 'anime-row';
-
-                    list.forEach(({ entry, originalIndex }) => {
-                        // NEW: 在渲染前实时计算最新集数
-                        const calculatedUpdatedEp = calculateUpdatedEpisode(entry, today);
-
-                        // 更新数据模型中的 manualUpdatedEpisode 和 currentEpisode（用于下次刷新/同步）
-                        entry.manualUpdatedEpisode = calculatedUpdatedEp;
-                        if (entry.currentEpisode > calculatedUpdatedEp) {
-                            entry.currentEpisode = calculatedEp;
-                        }
-
-                        const updatedEp = calculatedUpdatedEp;
-                        const totalText = entry.totalEpisodes > 0 ? entry.totalEpisodes : '??';
-                        const progressPercentage = entry.totalEpisodes > 0
-                            ? Math.min(100, (entry.currentEpisode / entry.totalEpisodes) * 100).toFixed(0)
-                            : 0;
-
-                        const watchUrl = entry.watchLink && entry.watchLink.startsWith('http') ? entry.watchLink : '#';
-
-                        const item = document.createElement('div');
-                        item.className = 'anime-item' + (entry.deleted ? ' deleted' : '');
-
-                        item.innerHTML = `
-                            <div class="anime-content">
-                                <h4 title="${entry.title}">
-                                    <a href="${watchUrl}" target="_blank" style="color: inherit; text-decoration: none;">
-                                        ${entry.title}
-                                    </a>
-                                </h4>
-                            </div>
-
-                            <div class="progress-info">
-                                <p>总集数: ${totalText}</p>
-                                <p>更新至: <span class="updated-episode-display">${updatedEp}</span></p>
-                                <p>您在看: <span class="user-episode-display">${entry.currentEpisode}</span></p>
-                            </div>
-
-                            <div class="progress-bar">
-                                <div class="progress-fill" style="width: ${progressPercentage > 100 ? 100 : progressPercentage}%;"></div>
-                            </div>
-                            
-                            <div class="action-row">
-                                <div class="anime-actions">
-                                    <button class="plus-one-btn" data-index="${originalIndex}">+1</button>
-                                    <button class="edit-btn" data-index="${originalIndex}">改</button>
-                                    <button class="delete-btn" data-index="${originalIndex}">${entry.deleted ? '不删' : '删'}</button>
-                                </div>
-                            </div>
-                        `;
-                        animeRow.appendChild(item);
-                    });
-
-                    dayGroup.appendChild(animeRow);
-                    overviewContainer.appendChild(dayGroup);
-                }
+                list.forEach(({ entry, originalIndex }) => {
+                    entry.manualUpdatedEpisode = calculateUpdatedEpisode(entry);
+                    const progress = entry.totalEpisodes > 0 ? (entry.currentEpisode / entry.totalEpisodes * 100) : 0;
+                    const item = document.createElement('div');
+                    item.className = 'anime-item' + (entry.deleted ? ' deleted' : '');
+                    item.innerHTML = `
+                        <div class="anime-content"><h4 title="${entry.title}"><a href="${entry.watchLink || '#'}" target="_blank">${entry.title}</a></h4></div>
+                        <div class="progress-info">
+                            <p>总集数: ${entry.totalEpisodes || '??'}</p>
+                            <p>更新至: <span class="updated-episode-display">${entry.manualUpdatedEpisode}</span></p>
+                            <p>您在看: <span class="user-episode-display">${entry.currentEpisode}</span></p>
+                        </div>
+                        <div class="progress-bar"><div class="progress-fill" style="width:${Math.min(100, progress)}%"></div></div>
+                        <div class="action-row"><div class="anime-actions">
+                            <button class="plus-one-btn" data-index="${originalIndex}">+1</button>
+                            <button class="edit-btn" data-index="${originalIndex}">改</button>
+                            <button class="delete-btn" data-index="${originalIndex}">${entry.deleted ? '不删' : '删'}</button>
+                        </div></div>
+                    `;
+                    row.appendChild(item);
+                });
+                section.appendChild(row);
+                container.appendChild(section);
             });
-
-            // 每次渲染后保存最新的状态
             saveToLocalStorage();
         }
 
-
-        // --- 4. 弹窗与表单处理 ---
+        // --- 5. 事件监听 ---
 
         const animeModal = document.getElementById('animeModal');
-        const showAddModalBtn = document.getElementById('showAddModalBtn');
-        const animeForm = document.getElementById('animeForm');
-        const modalTitle = document.getElementById('modalTitle');
-
-        const animeTitleInput = document.getElementById('animeTitle');
-        const watchLinkInput = document.getElementById('watchLink');
-        const totalEpisodesInput = document.getElementById('totalEpisodes');
-        const manualUpdatedEpisodeInput = document.getElementById('manualUpdatedEpisode');
-        const currentEpisodeInput = document.getElementById('currentEpisode');
-        const updateDayOfWeekSelect = document.getElementById('updateDayOfWeek');
-
+        const githubConfigModal = document.getElementById('githubConfigModal');
+        const configForm = document.getElementById('configForm');
         let currentEditIndex = null;
 
-        showAddModalBtn.addEventListener('click', () => {
-            modalTitle.textContent = '新增番剧';
-            animeForm.reset();
+        document.getElementById('manageSyncBtn').addEventListener('click', () => {
+            document.getElementById('githubToken').value = githubConfig.token || '';
+            githubConfigModal.style.display = 'flex';
+        });
+
+        document.getElementById('downloadOverwriteBtn').addEventListener('click', () => handleDownloadOnly(true));
+        document.getElementById('downloadMergeBtn').addEventListener('click', () => handleDownloadOnly(false));
+
+        configForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            githubConfig.token = document.getElementById('githubToken').value.trim();
+            saveGithubConfig();
+            syncData();
+        });
+
+        document.getElementById('pushBtn').addEventListener('click', pushLocalToCloud);
+
+        document.getElementById('showAddModalBtn').addEventListener('click', () => {
             currentEditIndex = null;
-
-            watchLinkInput.value = '';
-            totalEpisodesInput.value = 12;
-            manualUpdatedEpisodeInput.value = 1;
-            currentEpisodeInput.value = 1;
-
-            const defaultDay = new Date().getDay();
-            updateDayOfWeekSelect.value = defaultDay;
-            updateManualEpisodeLabel(defaultDay);
-
+            document.getElementById('animeForm').reset();
+            document.getElementById('modalTitle').textContent = '新增番剧';
+            document.getElementById('updateDayOfWeek').value = new Date().getDay();
+            updateManualEpisodeLabel(new Date().getDay());
             animeModal.style.display = 'flex';
         });
 
-        // 监听更新日选择框的变化，实时更新日期标签
-        updateDayOfWeekSelect.addEventListener('change', (e) => {
-            updateManualEpisodeLabel(parseInt(e.target.value));
-        });
-
-        function updateManualEpisodeLabel(targetDayOfWeek) {
-            const dateDisplay = document.getElementById('updateDateDisplay');
-            if (dateDisplay) {
-                const dateObj = calculateLastUpdateDateObject(targetDayOfWeek);
-                const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-                const day = String(dateObj.getDate()).padStart(2, '0');
-                const dateString = `${month}-${day}`;
-                dateDisplay.textContent = dateString;
-            }
+        function updateManualEpisodeLabel(day) {
+            const dateObj = calculateLastUpdateDateObject(day);
+            document.getElementById('updateDateDisplay').textContent = `${dateObj.getMonth() + 1}-${dateObj.getDate()}`;
         }
 
-        animeForm.addEventListener('submit', (e) => {
+        document.getElementById('updateDayOfWeek').addEventListener('change', (e) => updateManualEpisodeLabel(e.target.value));
+
+        document.getElementById('animeForm').addEventListener('submit', (e) => {
             e.preventDefault();
-
-            const title = animeTitleInput.value.trim();
-            const watchLink = watchLinkInput.value.trim();
-            const totalEpisodes = parseInt(totalEpisodesInput.value) || 0;
-            // 获取用户手动输入的集数，作为新的起算集数基准
-            const manualUpdatedEpisode = parseInt(manualUpdatedEpisodeInput.value) || 1;
-            let currentEpisode = parseInt(currentEpisodeInput.value) || 1;
-            const updateDayOfWeek = parseInt(updateDayOfWeekSelect.value);
-
-            const today = new Date();
-            const todayDateString = formatDate(today);
-
-            if (totalEpisodes > 0 && currentEpisode > totalEpisodes) {
-                alert(`正在看的集数 (${currentEpisode}) 不能超过总集数 (${totalEpisodes})！`);
-                return;
-            }
-            // 校验使用用户输入的基准集数
-            if (currentEpisode > manualUpdatedEpisode) {
-                alert(`您正在看的集数 (${currentEpisode}) 不能超过当前已设置的集数 (${manualUpdatedEpisode})！`);
-                return;
-            }
-            if (totalEpisodes > 0 && manualUpdatedEpisode > totalEpisodes) {
-                alert(`源站最新集数 (${manualUpdatedEpisode}) 不能超过总集数 (${totalEpisodes})！`);
-                return;
-            }
-            if (manualUpdatedEpisode < 1) {
-                alert('源站最新集数必须至少为 1！');
-                return;
-            }
-
-            // 构建新的 Entry 对象
-            const newEntry = {
-                title,
-                watchLink,
-                totalEpisodes,
-                currentEpisode,
-                updateDayOfWeek,
-                deleted: false,
-
-                // 初始化/更新计算字段，并设置 manualUpdatedEpisode 的基准值
-                lastModifiedDate: todayDateString,
-                startCalculationEpisode: manualUpdatedEpisode,
-                startCalculationDate: todayDateString,
-                manualUpdatedEpisode: manualUpdatedEpisode, // 暂存用户输入的基准值
+            const entry = {
+                title: document.getElementById('animeTitle').value,
+                watchLink: document.getElementById('watchLink').value,
+                totalEpisodes: parseInt(document.getElementById('totalEpisodes').value),
+                currentEpisode: parseInt(document.getElementById('currentEpisode').value),
+                updateDayOfWeek: parseInt(document.getElementById('updateDayOfWeek').value),
+                deleted: false
             };
+            const manualEp = parseInt(document.getElementById('manualUpdatedEpisode').value);
+            updateCalculationFields(entry, formatDate(new Date()), manualEp);
 
-            // 核心逻辑：计算并设置起算日和起算集数
-            updateCalculationFields(newEntry, todayDateString, manualUpdatedEpisode);
-
-            // 重新计算并更新 manualUpdatedEpisode 的最新值
-            newEntry.manualUpdatedEpisode = calculateUpdatedEpisode(newEntry, today);
-
-            // 再次限制 currentEpisode
-            if (newEntry.currentEpisode > newEntry.manualUpdatedEpisode) {
-                newEntry.currentEpisode = newEntry.manualUpdatedEpisode;
-            }
-
-            if (currentEditIndex !== null) {
-                // 如果是修改操作
-                newEntry.deleted = animeData[currentEditIndex].deleted;
-                // 如果用户没有在表单中修改 currentEpisode，则保持原有值
-                if (currentEpisodeInput.value === animeData[currentEditIndex].currentEpisode.toString()) {
-                    newEntry.currentEpisode = animeData[currentEditIndex].currentEpisode;
-                }
-
-                // 再次限制 currentEpisode（以防用户只改了更新集数，但忘记修改追番集数）
-                if (newEntry.currentEpisode > newEntry.manualUpdatedEpisode) {
-                    newEntry.currentEpisode = newEntry.manualUpdatedEpisode;
-                }
-
-                animeData[currentEditIndex] = newEntry;
-                alert(`番剧 [${title}] 已更新！`);
-            } else {
-                // 新增操作
-                animeData.push(newEntry);
-                alert(`番剧 [${title}] 已成功添加！`);
-            }
+            if (currentEditIndex !== null) animeData[currentEditIndex] = entry;
+            else animeData.push(entry);
 
             saveToLocalStorage();
             renderOverview();
             animeModal.style.display = 'none';
-            currentEditIndex = null;
         });
 
+        document.getElementById('overview-container').addEventListener('click', (e) => {
+            const idx = e.target.dataset.index;
+            if (!idx) return;
+            const entry = animeData[idx];
 
-        // --- 5. GitHub 配置弹窗处理 ---
-
-        const githubConfigModal = document.getElementById('githubConfigModal');
-        const configForm = document.getElementById('configForm');
-        const githubTokenInput = document.getElementById('githubToken');
-        const githubRepoPathInput = document.getElementById('githubRepoPath');
-
-        function showConfigModal() {
-            if (githubConfig.token) {
-                githubTokenInput.value = githubConfig.token;
-            } else {
-                githubTokenInput.value = '';
+            if (e.target.classList.contains('plus-one-btn')) {
+                if (entry.currentEpisode < entry.manualUpdatedEpisode) {
+                    entry.currentEpisode++;
+                    renderOverview();
+                } else alert('已追平更新！');
+            } else if (e.target.classList.contains('delete-btn')) {
+                entry.deleted = !entry.deleted;
+                renderOverview();
+            } else if (e.target.classList.contains('edit-btn')) {
+                currentEditIndex = idx;
+                document.getElementById('modalTitle').textContent = '编辑番剧';
+                document.getElementById('animeTitle').value = entry.title;
+                document.getElementById('watchLink').value = entry.watchLink;
+                document.getElementById('totalEpisodes').value = entry.totalEpisodes;
+                document.getElementById('manualUpdatedEpisode').value = entry.manualUpdatedEpisode;
+                document.getElementById('currentEpisode').value = entry.currentEpisode;
+                document.getElementById('updateDayOfWeek').value = entry.updateDayOfWeek;
+                updateManualEpisodeLabel(entry.updateDayOfWeek);
+                animeModal.style.display = 'flex';
             }
-            githubConfigModal.style.display = 'flex';
+        });
+
+        document.querySelectorAll('.close-btn').forEach(b => b.onclick = () => {
+            animeModal.style.display = 'none';
+            githubConfigModal.style.display = 'none';
+        });
+
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('current-time').textContent = `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 ${DAY_NAMES[now.getDay()]} ${now.toLocaleTimeString()}`;
         }
 
-        document.getElementById('syncBtn').addEventListener('click', syncData);
-        document.getElementById('pushBtn').addEventListener('click', pushLocalToCloud);
-
-        configForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-
-            const token = githubTokenInput.value.trim();
-            if (!token) {
-                alert('GitHub 令牌不能为空！');
-                return;
-            }
-
-            const path = githubRepoPathInput.value.trim().split('/');
-            if (path.length !== 3) {
-                alert('同步地址格式不正确，应为：用户名/仓库名/文件名');
-                return;
-            }
-
-            githubConfig.token = token;
-            githubConfig.owner = path[0];
-            githubConfig.repo = path[1];
-            githubConfig.path = path[2];
-
-            saveGithubConfig();
-            githubConfigModal.style.display = 'none';
-
-            // 默认继续执行双向同步
-            syncData();
-        });
-
-
-        // --- 6. 事件代理 (删除逻辑修改) ---
-
-        overviewContainer.addEventListener('click', (e) => {
-            const target = e.target;
-            const index = target.getAttribute('data-index');
-
-            if (target.classList.contains('edit-btn')) {
-                currentEditIndex = parseInt(index);
-                const entry = animeData[currentEditIndex];
-
-                if (entry.deleted) {
-                    alert(`番剧 "${entry.title}" 已标记为待删除状态，请先点击“取消删除”按钮再进行编辑。`);
-                    return;
-                }
-
-                modalTitle.textContent = '编辑番剧信息';
-
-                // 渲染时 manualUpdatedEpisode 已经是最新计算值，将其显示在输入框中
-                const latestEp = entry.manualUpdatedEpisode;
-
-                animeTitleInput.value = entry.title;
-                watchLinkInput.value = entry.watchLink || '';
-                totalEpisodesInput.value = entry.totalEpisodes;
-                manualUpdatedEpisodeInput.value = latestEp;
-                currentEpisodeInput.value = entry.currentEpisode;
-                updateDayOfWeekSelect.value = entry.updateDayOfWeek;
-
-                // MODIFIED: 更新日期标签
-                updateManualEpisodeLabel(entry.updateDayOfWeek);
-
-                animeModal.style.display = 'flex';
-
-            } else if (target.classList.contains('plus-one-btn')) {
-                const targetIndex = parseInt(index);
-                const entry = animeData[targetIndex];
-
-                if (entry.deleted) return;
-
-                const updatedEp = entry.manualUpdatedEpisode; // 使用当前计算的最新值
-
-                if (entry.currentEpisode >= updatedEp) {
-                    alert(`当前您看的集数已追平最新更新集数 (${updatedEp})，请手动修改“日期+源站最新集数”后再 +1！`);
-                    return;
-                }
-                if (entry.totalEpisodes > 0 && entry.currentEpisode >= entry.totalEpisodes) {
-                    alert(`恭喜！番剧 [${entry.title}] 已看完！`);
-                    return;
-                }
-
-                animeData[targetIndex].currentEpisode += 1;
-                saveToLocalStorage();
-                renderOverview();
-
-            } else if (target.classList.contains('delete-btn')) {
-                const targetIndex = parseInt(index);
-                const entry = animeData[targetIndex];
-
-                if (entry.deleted) {
-                    // 取消删除
-                    entry.deleted = false;
-                } else {
-                    // 标记为待删除
-                    entry.deleted = true;
-                }
-
-                saveToLocalStorage();
-                renderOverview();
-            }
-        });
-
-
-        // --- 7. 通用模态框关闭逻辑 ---
-
-        document.querySelectorAll('.close-btn').forEach(btn => {
-            btn.onclick = (e) => {
-                const modal = e.target.closest('.modal');
-                if (modal) {
-                    modal.style.display = 'none';
-                    currentEditIndex = null;
-                }
-            };
-        });
-
-
-        // --- 8. 初始化 ---
-        document.addEventListener('DOMContentLoaded', () => {
-            initData();
-            renderOverview();
-
-            updateTimeAndWeather();
-            // 每秒更新时间
-            setInterval(updateTimeAndWeather, 1000);
-
-            // 初始化表单日期显示 (针对新增/初次打开)
-            updateManualEpisodeLabel(new Date().getDay());
-        });
+        window.onload = () => { initData(); renderOverview(); updateTime(); setInterval(updateTime, 1000); };
     </script>
 </body>
-
 </html>
