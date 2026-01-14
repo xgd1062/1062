@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>诗意工具箱 - 终极云同步版</title>
+    <title>诗意工具箱 - 稳定同步版</title>
     <style>
         :root {
             --primary: #a78bfa;
@@ -24,14 +24,13 @@
         }
 
         body {
-            font-family: 'Segoe UI', 'PingFang SC', sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             background: radial-gradient(circle at top right, #1e293b, #0f172a);
             color: var(--text-main);
             min-height: 100vh;
             padding: 40px 20px;
         }
 
-        /* 布局留白 */
         .container {
             max-width: 1200px;
             margin: 0 auto;
@@ -94,7 +93,7 @@
             border-color: var(--primary);
         }
 
-        /* 顶部功能区：固定占位并排 */
+        /* 顶部占位 */
         .top-row {
             display: flex;
             gap: 25px;
@@ -140,7 +139,17 @@
             gap: 20px;
         }
 
-        /* 卡片设计 */
+        @media (max-width: 900px) {
+            .tool-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .top-row {
+                flex-direction: column;
+            }
+        }
+
+        /* 卡片 */
         .tool-card {
             background: var(--card-bg);
             border-radius: 16px;
@@ -235,7 +244,7 @@
             font-size: 0.75rem;
         }
 
-        /* 弹窗 */
+        /* 设置弹窗 */
         #configModal {
             position: fixed;
             top: 50%;
@@ -250,7 +259,6 @@
             box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
         }
 
-        /* 底部条 */
         .admin-bar {
             position: fixed;
             bottom: 30px;
@@ -325,13 +333,13 @@
             <div class="top-column">
                 <div class="section-label">⭐ 我的收藏</div>
                 <div id="favGrid" class="top-grid">
-                    <div class="empty-hint">暂无收藏内容</div>
+                    <div class="empty-hint">暂无收藏</div>
                 </div>
             </div>
             <div class="top-column">
                 <div class="section-label">🕒 最近使用</div>
                 <div id="hisGrid" class="top-grid">
-                    <div class="empty-hint">暂无历史记录</div>
+                    <div class="empty-hint">暂无记录</div>
                 </div>
             </div>
         </div>
@@ -345,26 +353,26 @@
     </div>
 
     <div id="configModal" class="hidden">
-        <h3 style="margin-bottom:20px; color:var(--primary); text-align:center;">GitHub 云同步配置</h3>
+        <h3 style="margin-bottom:20px; color:var(--primary); text-align:center;">GitHub 同步配置</h3>
         <div class="edit-group">
             <span class="edit-label">令牌:</span>
-            <input id="ghToken" class="edit-input" type="password" placeholder="GitHub Token (repo权限)">
+            <input id="ghToken" class="edit-input" type="password" placeholder="ghp_xxxxxxxxxxxx">
         </div>
         <div class="edit-group">
             <span class="edit-label">地址:</span>
             <input id="ghRepo" class="edit-input" placeholder="xgd1062/1062">
         </div>
         <div style="display:flex; gap:10px; margin-top:20px;">
-            <button class="btn-main" style="background:var(--primary); flex:1;" onclick="saveConfig()">保存配置</button>
+            <button class="btn-main" style="background:var(--primary); flex:1;" onclick="saveConfig()">应用并刷新</button>
             <button class="btn-main" style="background:#4b5563; flex:1;" onclick="toggleModal()">关闭</button>
         </div>
     </div>
 
     <div class="admin-bar">
-        <button class="btn-main btn-gh" onclick="toggleModal()">⚙️ 设置同步</button>
+        <button class="btn-main btn-gh" onclick="toggleModal()">⚙️ 同步设置</button>
         <button id="editBtn" class="btn-main btn-edit" onclick="toggleEditMode()">管理数据</button>
-        <button id="addBtn" class="btn-main btn-add" onclick="addNewTool()">+ 新增工具</button>
-        <button id="saveBtn" class="btn-main btn-save" onclick="saveAllData()">保存并同步</button>
+        <button id="addBtn" class="btn-main btn-add" onclick="addNewTool()">+ 新增</button>
+        <button id="saveBtn" class="btn-main btn-save" onclick="saveAllData()">保存并云同步</button>
     </div>
 
     <script>
@@ -377,9 +385,9 @@
         document.addEventListener('DOMContentLoaded', async () => {
             await fetchFromGitHub();
             if (allTools.length === 0) {
-                const local = localStorage.getItem('poet_tools_v11');
+                const local = localStorage.getItem('poet_tools_final');
                 allTools = local ? JSON.parse(local) : [
-                    { id: 1, title: "追剧备忘录", icon: "🎬", link: "./000/01.1 追剧备忘录总览.html", category: "生活", desc: "记录追剧进度。", fav: true }
+                    { id: 1, title: "示例工具", icon: "🛠️", link: "#", category: "默认", desc: "请配置 GitHub 以同步数据。", fav: true }
                 ];
             }
             renderAll();
@@ -387,27 +395,33 @@
             document.getElementById('searchInput').oninput = () => renderAll();
         });
 
-        // --- 云同步逻辑 ---
+        // --- 加强版同步逻辑 ---
         async function fetchFromGitHub() {
             const token = localStorage.getItem('gh_token');
             const repoPath = localStorage.getItem('gh_repo') || DEFAULT_REPO;
             const statusEl = document.getElementById('syncStatus');
-            if (!token) return;
+            if (!token || token.length < 5) return;
 
-            statusEl.innerText = "(正在同步云端...)";
+            statusEl.innerText = "(云端同步中...)";
             const [owner, repo] = repoPath.split('/');
             const url = `https://api.github.com/repos/${owner}/${repo}/contents/${FILE_NAME}`;
 
             try {
                 const res = await fetch(url, {
-                    headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3.raw' }
+                    headers: { 'Authorization': `token ${token}`, 'Cache-Control': 'no-cache' }
                 });
                 if (res.ok) {
-                    allTools = await res.json();
-                    localStorage.setItem('poet_tools_v11', JSON.stringify(allTools));
-                    statusEl.innerText = "(云端同步就绪)";
+                    const data = await res.json();
+                    // GitHub 返回的是 Base64，需解码中文
+                    const content = decodeURIComponent(escape(atob(data.content)));
+                    allTools = JSON.parse(content);
+                    localStorage.setItem('poet_tools_final', JSON.stringify(allTools));
+                    statusEl.innerText = "(云端数据已加载)";
                 }
-            } catch (e) { statusEl.innerText = "(离线访问中)"; }
+            } catch (e) {
+                statusEl.innerText = "(同步失败: 检查 Token 或网络)";
+                console.error(e);
+            }
         }
 
         async function syncToGitHub(data) {
@@ -419,29 +433,55 @@
             const url = `https://api.github.com/repos/${owner}/${repo}/contents/${FILE_NAME}`;
 
             try {
+                // 1. 获取最新的 SHA（必须步骤，否则 GitHub 报错 409 冲突）
                 let sha = '';
-                const getRes = await fetch(url, { headers: { 'Authorization': `token ${token}` } });
-                if (getRes.ok) { sha = (await getRes.json()).sha; }
+                const getRes = await fetch(url, {
+                    headers: { 'Authorization': `token ${token}`, 'Cache-Control': 'no-cache' }
+                });
+                if (getRes.ok) {
+                    const existingFile = await getRes.json();
+                    sha = existingFile.sha;
+                }
 
-                const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
+                // 2. 编码内容（支持中文）
+                const jsonStr = JSON.stringify(data, null, 2);
+                const content = btoa(unescape(encodeURIComponent(jsonStr)));
+
+                // 3. 推送更新
                 const putRes = await fetch(url, {
                     method: 'PUT',
-                    headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: 'Cloud Sync Update', content, sha })
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: `Update Tools: ${new Date().toLocaleString()}`,
+                        content: content,
+                        sha: sha
+                    })
                 });
-                if (!putRes.ok) alert('同步至 GitHub 失败，请检查 Token 权限');
-            } catch (e) { alert('网络同步出错'); }
+
+                if (putRes.ok) {
+                    return true;
+                } else {
+                    const errData = await putRes.json();
+                    console.error('GitHub API Error:', errData);
+                    throw new Error(errData.message);
+                }
+            } catch (e) {
+                alert('同步失败: ' + e.message + '\n请检查 Token 权限(需勾选 repo)及网络。');
+                return false;
+            }
         }
 
-        // --- 渲染逻辑 ---
+        // --- 核心渲染与交互 ---
         function renderGrid(containerId, data) {
             const grid = document.getElementById(containerId);
             grid.innerHTML = '';
             data.forEach((tool) => {
                 const idx = allTools.findIndex(t => t.id === tool.id);
                 const card = document.createElement(isEditing ? 'div' : 'a');
-                card.className = `tool-card ${isEditing ? 'editing-mode' : ''}`;
-
+                card.className = `tool-card`;
                 if (!isEditing) {
                     card.href = tool.link;
                     if (tool.link.startsWith('http')) card.target = "_blank";
@@ -455,12 +495,12 @@
                 ${!isEditing ? `<div class="star-btn ${tool.fav ? 'active' : ''}" onclick="event.preventDefault();toggleFav(${tool.id})">★</div>` : ''}
                 ${isEditing ? `
                     <div style="margin-top:5px">
-                        <div class="edit-group"><span class="edit-label">图标:</span><input class="edit-input" placeholder="Emoji" value="${tool.icon || ''}" onchange="updateData(${idx},'icon',this.value)"></div>
+                        <div class="edit-group"><span class="edit-label">图标:</span><input class="edit-input" value="${tool.icon || ''}" onchange="updateData(${idx},'icon',this.value)"></div>
                         <div class="edit-group"><span class="edit-label">名称:</span><input class="edit-input" value="${tool.title}" onchange="updateData(${idx},'title',this.value)"></div>
                         <div class="edit-group"><span class="edit-label">链接:</span><input class="edit-input" value="${tool.link}" onchange="updateData(${idx},'link',this.value)"></div>
                         <div class="edit-group"><span class="edit-label">分类:</span><input class="edit-input" list="categoryList" value="${tool.category}" onchange="updateData(${idx},'category',this.value)"></div>
                         <div class="edit-group"><span class="edit-label">描述:</span><input class="edit-input" value="${tool.desc}" onchange="updateData(${idx},'desc',this.value)"></div>
-                        <button class="btn-main" style="background:#f43f5e; width:100%; padding:2px; font-size:0.7rem; margin-top:4px" onclick="removeTool(${idx})">删除</button>
+                        <button class="btn-main" style="background:#f43f5e; width:100%; padding:2px; font-size:0.7rem; margin-top:4px" onclick="removeTool(${idx})">删除卡片</button>
                     </div>
                 ` : `
                     <h3>${tool.icon || '🛠️'} ${tool.title}</h3>
@@ -472,57 +512,58 @@
             });
         }
 
-        // --- 核心操作 ---
-        function toggleFav(id) {
-            const t = allTools.find(x => x.id === id);
-            if (t) t.fav = !t.fav;
-            renderAll();
-        }
-
-        function recordHistory(id) {
-            let his = JSON.parse(localStorage.getItem('tool_his_v11') || '[]');
-            his = [id, ...his.filter(x => x !== id)].slice(0, 2);
-            localStorage.setItem('tool_his_v11', JSON.stringify(his));
-        }
-
-        function updateData(idx, f, v) { allTools[idx][f] = v; }
-        function removeTool(idx) { if (confirm('删除此卡片？')) { allTools.splice(idx, 1); renderAll(); } }
-
-        function addNewTool() {
-            allTools.unshift({ id: Date.now(), title: "新工具", icon: "🛠️", link: "#", category: "默认", desc: "点击编辑描述", fav: false });
-            renderAll();
-        }
-
         function toggleEditMode() {
             isEditing = !isEditing;
-            document.getElementById('editBtn').innerText = isEditing ? '完成编辑' : '管理数据';
+            document.getElementById('editBtn').innerText = isEditing ? '退出管理' : '管理数据';
             ['saveBtn', 'addBtn'].forEach(id => document.getElementById(id).style.display = isEditing ? 'block' : 'none');
             renderAll();
         }
 
         async function saveAllData() {
-            localStorage.setItem('poet_tools_v11', JSON.stringify(allTools));
-            await syncToGitHub(allTools);
-            alert('数据已成功保存并上传云端！');
-            toggleEditMode();
-            initCategories();
-        }
+            const saveBtn = document.getElementById('saveBtn');
+            saveBtn.innerText = "同步中...";
+            saveBtn.disabled = true;
 
-        function toggleModal() {
-            const modal = document.getElementById('configModal');
-            modal.classList.toggle('hidden');
-            if (!modal.classList.contains('hidden')) {
-                document.getElementById('ghToken').value = localStorage.getItem('gh_token') || '';
-                document.getElementById('ghRepo').value = localStorage.getItem('gh_repo') || DEFAULT_REPO;
+            const success = await syncToGitHub(allTools);
+
+            if (success) {
+                localStorage.setItem('poet_tools_final', JSON.stringify(allTools));
+                alert('数据已成功保存并上传 GitHub。');
+                toggleEditMode();
+                initCategories();
             }
+
+            saveBtn.innerText = "保存并云同步";
+            saveBtn.disabled = false;
         }
 
+        // --- 基础辅助功能 ---
+        function toggleFav(id) {
+            const t = allTools.find(x => x.id === id);
+            if (t) t.fav = !t.fav;
+            renderAll();
+        }
+        function recordHistory(id) {
+            let his = JSON.parse(localStorage.getItem('tool_his_final') || '[]');
+            his = [id, ...his.filter(x => x !== id)].slice(0, 2);
+            localStorage.setItem('tool_his_final', JSON.stringify(his));
+        }
+        function updateData(idx, f, v) { allTools[idx][f] = v; }
+        function removeTool(idx) { if (confirm('确认删除？')) { allTools.splice(idx, 1); renderAll(); } }
+        function addNewTool() {
+            allTools.unshift({ id: Date.now(), title: "新工具", icon: "🛠️", link: "#", category: "默认", desc: "点击编辑...", fav: false });
+            renderAll();
+        }
+        function toggleModal() {
+            document.getElementById('configModal').classList.toggle('hidden');
+            document.getElementById('ghToken').value = localStorage.getItem('gh_token') || '';
+            document.getElementById('ghRepo').value = localStorage.getItem('gh_repo') || DEFAULT_REPO;
+        }
         function saveConfig() {
-            localStorage.setItem('gh_token', document.getElementById('ghToken').value);
-            localStorage.setItem('gh_repo', document.getElementById('ghRepo').value || DEFAULT_REPO);
+            localStorage.setItem('gh_token', document.getElementById('ghToken').value.trim());
+            localStorage.setItem('gh_repo', document.getElementById('ghRepo').value.trim() || DEFAULT_REPO);
             location.reload();
         }
-
         function initCategories() {
             const bar = document.getElementById('categoryBar');
             const list = document.getElementById('categoryList');
@@ -530,26 +571,22 @@
             bar.innerHTML = ['全部', ...cats].map(c => `<button class="cat-btn ${c === currentCat ? 'active' : ''}" onclick="filterCat('${c}')">${c}</button>`).join('');
             list.innerHTML = cats.map(c => `<option value="${c}">`).join('');
         }
-
         function filterCat(cat) { currentCat = cat; renderAll(); initCategories(); }
-
         function renderAll() {
             const filter = document.getElementById('searchInput').value.toLowerCase();
             renderGrid('toolGrid', allTools.filter(t => (currentCat === '全部' || t.category === currentCat) && (t.title.toLowerCase().includes(filter) || t.desc.toLowerCase().includes(filter))));
             const favs = allTools.filter(t => t.fav).slice(0, 2);
-            const hisIds = JSON.parse(localStorage.getItem('tool_his_v11') || '[]');
+            const hisIds = JSON.parse(localStorage.getItem('tool_his_final') || '[]');
             const hisTools = hisIds.map(id => allTools.find(t => t.id === id)).filter(Boolean).slice(0, 2);
             updateTopGrid('favGrid', favs, '暂无收藏');
             updateTopGrid('hisGrid', hisTools, '暂无记录');
             document.getElementById('topSection').style.display = (isEditing || filter) ? 'none' : 'flex';
         }
-
         function updateTopGrid(id, data, msg) {
             const grid = document.getElementById(id);
             if (data.length === 0) grid.innerHTML = `<div class="empty-hint">${msg}</div>`;
             else renderGrid(id, data);
         }
-
         function bindDrag(el, idx) {
             el.ondragstart = (e) => { e.dataTransfer.setData('idx', idx); el.classList.add('dragging'); };
             el.ondragend = () => el.classList.remove('dragging');
