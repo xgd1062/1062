@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>诗意工具箱 - 极简完美版</title>
+    <title>诗意工具箱 - 极简精致版</title>
     <style>
         :root {
             --primary: #a78bfa;
@@ -103,29 +103,29 @@
         .top-column {
             flex: 1;
             background: var(--empty-bg);
-            padding: 20px;
+            padding: 15px;
             border-radius: 20px;
             border: 1px dashed rgba(255, 255, 255, 0.05);
-            min-height: 160px;
+            min-height: 150px;
         }
 
         .top-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
+            gap: 12px;
         }
 
         .empty-hint {
             grid-column: span 2;
             text-align: center;
             color: rgba(255, 255, 255, 0.1);
-            font-size: 0.8rem;
-            padding-top: 30px;
+            font-size: 0.85rem;
+            padding-top: 35px;
         }
 
         .section-label {
             margin-bottom: 15px;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             color: var(--primary);
             font-weight: bold;
             display: flex;
@@ -135,34 +135,38 @@
 
         .tool-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 20px;
         }
 
+        /* 卡片固定高度 120px */
         .tool-card {
             background: var(--card-bg);
             border-radius: 16px;
             border: 1px solid var(--border);
-            padding: 22px;
-            transition: 0.3s;
+            padding: 18px;
+            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             position: relative;
             text-decoration: none;
             color: inherit;
             display: flex;
             flex-direction: column;
-            -webkit-backdrop-filter: blur(10px);
-            backdrop-filter: blur(10px);
-            height: 100%;
-            min-height: 140px;
+            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(12px);
+            height: 120px;
+            overflow: hidden;
         }
 
         .tool-card:hover:not(.editing-mode) {
             transform: translateY(-5px);
             border-color: var(--primary);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
         }
 
         .editing-mode {
             cursor: move;
+            height: auto !important;
+            min-height: 120px;
         }
 
         .editing-mode input,
@@ -170,11 +174,37 @@
             cursor: text;
         }
 
+        /* 标题单行截断逻辑 */
+        .tool-card h3 {
+            color: #fff;
+            font-size: 1.1rem;
+            margin-bottom: 6px;
+            display: block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding-right: 30px;
+            font-weight: 700;
+            width: 100%;
+        }
+
+        /* 描述文字限制2行 */
+        .tool-card p {
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            margin-bottom: 0;
+        }
+
         .star-btn {
             position: absolute;
-            top: 10px;
-            right: 10px;
-            font-size: 1.4rem;
+            top: 15px;
+            right: 15px;
+            font-size: 1.3rem;
             cursor: pointer;
             color: #4b5563;
             transition: 0.3s;
@@ -191,36 +221,20 @@
             position: absolute;
             bottom: 0;
             right: 0;
-            padding: 3px 10px;
+            padding: 2px 10px;
             font-size: 0.65rem;
-            background: rgba(167, 139, 250, 0.1);
+            background: rgba(167, 139, 250, 0.15);
             color: var(--primary);
             border-top-left-radius: 10px;
             border-left: 1px solid var(--border);
             border-top: 1px solid var(--border);
         }
 
-        .tool-card h3 {
-            color: #fff;
-            font-size: 1rem;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding-right: 35px;
-        }
-
-        .tool-card p {
-            color: var(--text-dim);
-            font-size: 0.8rem;
-            line-height: 1.5;
-            margin-bottom: 10px;
-        }
-
+        /* 编辑表单样式 */
         .edit-group {
             display: flex;
             align-items: center;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             gap: 8px;
         }
 
@@ -233,10 +247,10 @@
 
         .edit-input {
             flex: 1;
-            background: rgba(0, 0, 0, 0.3);
+            background: rgba(0, 0, 0, 0.4);
             border: 1px solid var(--border);
             color: #fff;
-            padding: 5px 8px;
+            padding: 4px 8px;
             border-radius: 5px;
             outline: none;
             font-size: 0.75rem;
@@ -306,12 +320,13 @@
         }
 
         .dragging {
-            opacity: 0.3;
+            opacity: 0.2;
             transform: scale(0.95);
         }
 
         .drag-over {
             border: 2px solid var(--primary);
+            background: rgba(167, 139, 250, 0.05);
         }
     </style>
 </head>
@@ -322,7 +337,7 @@
         <header>
             <h1 class="poem-title">欲善其事，必先利其器</h1>
             <div class="controls">
-                <input type="text" id="searchInput" placeholder="搜索工具...">
+                <input type="text" id="searchInput" placeholder="搜索关键词...">
                 <div class="category-bar" id="categoryBar"></div>
             </div>
         </header>
@@ -331,19 +346,19 @@
             <div class="top-column">
                 <div class="section-label">⭐ 我的收藏</div>
                 <div id="favGrid" class="top-grid">
-                    <div class="empty-hint">暂无收藏内容</div>
+                    <div class="empty-hint">暂无收藏</div>
                 </div>
             </div>
             <div class="top-column">
                 <div class="section-label">🕒 最近使用</div>
                 <div id="hisGrid" class="top-grid">
-                    <div class="empty-hint">暂无历史记录</div>
+                    <div class="empty-hint">暂无记录</div>
                 </div>
             </div>
         </div>
 
         <div class="section-label">🚀 全部工具 <span id="syncStatus"
-                style="font-size:0.7rem; margin-left:10px; font-weight:normal; opacity:0.5;"></span></div>
+                style="font-size:0.7rem; margin-left:12px; font-weight:normal; opacity:0.5;"></span></div>
         <div id="toolGrid" class="tool-grid"></div>
 
         <datalist id="categoryList"></datalist>
@@ -357,12 +372,12 @@
             <input id="ghToken" class="edit-input" type="password" placeholder="ghp_xxxx">
         </div>
         <div class="edit-group">
-            <span class="edit-label">地址:</span>
+            <span class="edit-label">库名:</span>
             <input id="ghRepo" class="edit-input" placeholder="xgd1062/1062">
         </div>
         <div style="display:flex; gap:10px; margin-top:20px;">
             <button class="btn-main" style="background:var(--primary); flex:1;" onclick="saveConfig()">保存并刷新</button>
-            <button class="btn-main" style="background:#4b5563; flex:1;" onclick="toggleModal()">关闭</button>
+            <button class="btn-main" style="background:#4b5563; flex:1;" onclick="toggleModal()">取消</button>
         </div>
     </div>
 
@@ -412,9 +427,9 @@
                     const content = decodeURIComponent(escape(atob(data.content)));
                     allTools = JSON.parse(content);
                     localStorage.setItem(STORAGE_KEY, JSON.stringify(allTools));
-                    statusEl.innerText = "(云端同步就绪)";
+                    statusEl.innerText = "(云端同步已完成)";
                 }
-            } catch (e) { statusEl.innerText = "(离线访问)"; }
+            } catch (e) { statusEl.innerText = "(离线工作模式)"; }
         }
 
         async function syncToGitHub(data, silent = false) {
@@ -442,10 +457,10 @@
                 });
                 if (putRes.ok && !silent) alert('同步成功！');
                 return putRes.ok;
-            } catch (e) { if (!silent) alert('同步出错'); return false; }
+            } catch (e) { if (!silent) alert('保存出错'); return false; }
         }
 
-        // --- 渲染逻辑 ---
+        // --- 界面渲染 ---
         function renderGrid(containerId, data) {
             const grid = document.getElementById(containerId);
             grid.innerHTML = '';
@@ -472,7 +487,7 @@
                         <button class="btn-main" style="background:#f43f5e; width:100%; padding:2px; font-size:0.7rem; margin-top:4px" onclick="removeTool(${idx})">删除</button>
                     </div>
                 ` : `
-                    <h3>${tool.icon || '🛠️'} ${tool.title}</h3>
+                    <h3 title="${tool.title}">${tool.icon || '🛠️'} ${tool.title}</h3>
                     <p>${tool.desc}</p>
                     <div class="card-tag">${tool.category}</div>
                 `}
@@ -529,7 +544,20 @@
         function removeTool(idx) { if (confirm('确认删除？')) { allTools.splice(idx, 1); renderAll(); } }
 
         function addNewTool() {
-            allTools.unshift({ id: Date.now(), title: "新工具", icon: "🛠️", link: "#", category: "默认", desc: "点击编辑", fav: false });
+            // 逻辑：如果当前选中的是“全部”，则新工具分类为“默认”；
+            // 如果选中了具体分类（如“开发”），则新工具自动归类到“开发”。
+            const newCategory = currentCat === '全部' ? "默认" : currentCat;
+
+            allTools.unshift({
+                id: Date.now(),
+                title: "新工具",
+                icon: "🚀",
+                link: "#",
+                category: newCategory,
+                desc: "点击编辑内容",
+                fav: false
+            });
+
             renderAll();
         }
 
@@ -541,13 +569,10 @@
             if (!isEditing) initCategories();
         }
 
-        // --- 修改：同步后自动退出编辑 ---
         async function saveAllData() {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(allTools));
             const ok = await syncToGitHub(allTools);
-            if (ok && isEditing) {
-                toggleEditMode(); // 同步成功后自动切换回预览模式
-            }
+            if (ok && isEditing) toggleEditMode(); // 同步成功后自动退出编辑
         }
 
         function toggleModal() { document.getElementById('configModal').classList.toggle('hidden'); }
