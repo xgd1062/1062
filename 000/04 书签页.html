@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bookmark Pro - 安全增强版</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root { --primary-blue: #3b82f6; }
+    
+    /* 卡片基础样式 */
+    .bookmark-card { 
+      transition: all .2s ease; 
+      cursor: pointer; 
+      position: relative; 
+      padding: 1rem; 
+      border-radius: 0.75rem; 
+      background: white; 
+      border: 1px solid #eee; 
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04); 
+      height: 100%; 
+      display: flex; 
+      flex-direction: column; 
+      gap: 0.5rem; 
+      /* 关键：防止 flex 子项溢出 */
+      min-width: 0; 
+    }
+    .bookmark-card:hover { 
+      transform: translateY(-2px); 
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08); 
+      border-color: var(--primary-blue); 
+    }
+    
+    /* 头部布局 */
+    .card-header { 
+      display: flex; 
+      align-items: center; 
+      gap: 0.75rem; 
+      width: 100%; 
+    }
+    .favicon-container { 
+      width: 20px; 
+      height: 20px; 
+      flex-shrink: 0; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+    }
+    .bookmark-title { 
+      font-size: 1rem; 
+      font-weight: 600; 
+      color: #111827; 
+      white-space: nowrap; 
+      overflow: hidden; 
+      text-overflow: ellipsis; 
+      flex-grow: 1; 
+      /* 关键：配合 min-width:0 实现截断 */
+      min-width: 0;
+    }
+    
+    /* 布局与导航 */
+    header { position: fixed; top: 0; left: 0; right: 0; z-index: 50; background: white; border-bottom: 1px solid #eee; }
+    .category-tabs-container { 
+      position: sticky; top: 72px; z-index: 40; background: #f9fafb; 
+      padding: 0.75rem 1rem; margin: 74px auto 1rem; max-width: 1200px; 
+      border-radius: 0.75rem; display: flex; align-items: center; gap: 0.5rem; 
+      overflow-x: auto; scrollbar-width: none; 
+    }
+    .category-tabs-container::-webkit-scrollbar { display: none; }
+    
+    /* 模态框 */
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 100; opacity: 0; visibility: hidden; transition: all 0.2s; }
+    .modal.show { opacity: 1; visibility: visible; }
+    
+    /* 按钮组 */
+    .action-btn { opacity: 0; transition: opacity 0.2s; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 4px; }
+    .action-btn:hover { background-color: #f3f4f6; }
+    .bookmark-card:hover .action-btn { opacity: 1; }
+
+    /* 分类标签样式 */
+    .cat-btn { display: flex; align-items: center; gap: 6px; padding-right: 8px; transition: all 0.2s; }
+    .cat-delete-btn { 
+      width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; 
+      font-size: 10px; line-height: 1; opacity: 0.6; cursor: pointer;
+    }
+    .cat-delete-btn:hover { background-color: rgba(0,0,0,0.2); opacity: 1; color: white; }
+    
+    /* 选中状态下的删除按钮更明显 */
+    .cat-btn.active .cat-delete-btn:hover { background-color: rgba(255,255,255,0.3); }
+  </style>
+</head>
+
+<body class="bg-gray-50 text-gray-900">
+  <header>
+    <div class="max-w-[1200px] mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-2 select-none">
+        <span class="text-2xl">🛡️</span>
+        <h1 class="text-xl font-bold tracking-tight">Bookmark Pro</h1>
+      </div>
+      <div class="flex-1 max-w-md">
+        <input type="text" id="search-input" placeholder="搜索书签 (全局)..." class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500/20 outline-none transition-shadow">
+      </div>
+      <div class="flex items-center gap-2 text-sm">
+        <button id="import-btn" class="px-3 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">导入</button>
+        <button id="export-btn" class="px-3 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">导出</button>
+        
+        <button id="deduplicate-btn" class="px-3 py-2 bg-yellow-50 text-yellow-700 border border-yellow-200 rounded-lg hover:bg-yellow-100 transition-colors">去重</button>
+        <button id="sync-github-btn" class="px-3 py-2 bg-green-50 text-green-700 border border-green-200 rounded-lg hover:bg-green-100 transition-colors">同步 GitHub</button>
+        <button id="push-github-btn" class="px-3 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors">上传 GitHub</button>
+        <button id="add-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold transition-colors shadow-sm">添加书签</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="category-tabs-container" id="category-tabs-container">
+    <div id="tabs-list" class="flex gap-2"></div>
+    <button id="open-cat-modal" class="ml-auto text-sm font-bold text-blue-600 px-3 py-2 rounded-lg hover:bg-blue-50 whitespace-nowrap">+ 分类</button>
+  </div>
+
+  <main class="max-w-[1200px] mx-auto px-4 pb-12">
+    <div id="bookmarks-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+    <div id="empty-state" class="hidden text-center py-20 text-gray-400">
+      <p>暂无书签，请点击右上角添加或导入</p>
+    </div>
+  </main>
+
+  <div id="bookmark-modal" class="modal" onclick="if(event.target==this) closeModal('bookmark-modal')">
+    <div class="bg-white p-6 rounded-xl w-[90%] max-w-md shadow-2xl transform transition-all">
+      <h3 id="modal-title" class="text-lg font-bold mb-4">书签信息</h3>
+      <input type="hidden" id="edit-id">
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs text-gray-500 mb-1 ml-1">标题</label>
+          <input type="text" id="bookmark-name" class="w-full border p-2.5 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none" placeholder="例如: Google">
+        </div>
+        <div>
+          <label class="block text-xs text-gray-500 mb-1 ml-1">网址</label>
+          <input type="text" id="bookmark-url" class="w-full border p-2.5 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none" placeholder="https://...">
+        </div>
+        <div>
+           <label class="block text-xs text-gray-500 mb-1 ml-1">分类</label>
+           <select id="bookmark-category" class="w-full border p-2.5 rounded-lg outline-none bg-white"></select>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 mt-6">
+        <button onclick="closeModal('bookmark-modal')" class="px-4 py-2 border rounded-lg hover:bg-gray-50 text-sm">取消</button>
+        <button id="save-bookmark" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm shadow-sm">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="cat-modal" class="modal" onclick="if(event.target==this) closeModal('cat-modal')">
+    <div class="bg-white p-6 rounded-xl w-[90%] max-w-xs shadow-2xl">
+      <h3 class="text-lg font-bold mb-4">新增分类</h3>
+      <input type="text" id="new-cat-name" class="w-full border p-2.5 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-center" placeholder="分类名称">
+      <div class="flex justify-end gap-2 mt-6">
+        <button onclick="closeModal('cat-modal')" class="px-3 py-1.5 text-sm border rounded-lg hover:bg-gray-50">取消</button>
+        <button id="save-new-cat" class="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="github-modal" class="modal" onclick="if(event.target==this) closeModal('github-modal')">
+    <div class="bg-white p-6 rounded-xl w-[90%] max-w-md shadow-2xl">
+      <h3 class="text-lg font-bold mb-4 border-b pb-2">GitHub 同步设置</h3>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs text-gray-500 mb-1 ml-1 font-semibold uppercase">Token (令牌)</label>
+          <input type="password" id="gh-token" class="w-full border p-2.5 rounded-lg focus:border-blue-500 outline-none" placeholder="ghp_xxxxxxxxxxxx">
+        </div>
+        <div>
+          <label class="block text-xs text-gray-500 mb-1 ml-1 font-semibold uppercase">完整文件地址</label>
+          <input type="text" id="gh-full-path" class="w-full border p-2.5 rounded-lg focus:border-blue-500 outline-none" value="xgd1062/1062/000/11书签.json">
+          <p class="text-[10px] text-gray-400 mt-1 leading-relaxed">地址格式: 用户名/仓库名/文件夹/文件名.json</p>
+        </div>
+      </div>
+      <p id="gh-error-hint" class="text-red-500 text-xs mt-3 hidden"></p>
+      <div class="flex justify-end gap-2 mt-6">
+        <button onclick="closeModal('github-modal')" class="px-4 py-2 border rounded-lg hover:bg-gray-50 text-sm">取消</button>
+        <button id="save-github-config" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm shadow-sm">保存配置</button>
+      </div>
+    </div>
+  </div>
+  <input type="file" id="file-selector" accept=".html" class="hidden">
+
+  <script>
+    // --- 1. 数据初始化与迁移 ---
+    let bookmarks = JSON.parse(localStorage.getItem('bookmarks')) || [];
+    let customCats = JSON.parse(localStorage.getItem('custom_categories')) || {};
+
+    // 确保有 "未分类"，并修复历史数据
+    if (!customCats.uncategorized) {
+      customCats = { uncategorized: '未分类', ...customCats };
+      localStorage.setItem('custom_categories', JSON.stringify(customCats));
+    }
+
+    let currentCategory = 'all';
+    let searchQuery = '';
+
+    // --- 2. 核心渲染逻辑 (DOM操作代替innerHTML) ---
+    function renderBookmarks() {
+      const grid = document.getElementById('bookmarks-grid');
+      const emptyState = document.getElementById('empty-state');
+      grid.innerHTML = '';
+      
+      const isSearchActive = searchQuery.length > 0;
+
+      // 过滤逻辑：如果有搜索词，忽略分类限制；否则遵守分类
+      const filtered = bookmarks.filter(b => {
+        const matchesSearch = b.name.toLowerCase().includes(searchQuery) || b.url.toLowerCase().includes(searchQuery);
+        const matchesCat = currentCategory === 'all' || b.category === currentCategory;
+        return isSearchActive ? matchesSearch : (matchesCat && matchesSearch);
+      });
+
+      if (filtered.length === 0) {
+        emptyState.classList.remove('hidden');
+      } else {
+        emptyState.classList.add('hidden');
+      }
+
+      // 默认 SVG 图标 (灰色地球)，用于加载失败时
+      const defaultIcon = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9'/%3E%3C/svg%3E`;
+
+      filtered.forEach(b => {
+        // 使用 document.createElement 防止 XSS
+        const card = document.createElement('div');
+        card.className = 'bookmark-card';
+        
+        // 点击打开链接
+        card.addEventListener('click', () => {
+             try {
+                 const validUrl = new URL(b.url);
+                 window.open(validUrl.href, '_blank');
+             } catch(e) { alert('URL 无效'); }
+        });
+
+        // 获取 hostname 尝试加载图标
+        let hostname = 'unknown';
+        try { hostname = new URL(b.url).hostname; } catch(e) {}
+
+        // --- 构建 Header ---
+        const header = document.createElement('div');
+        header.className = 'card-header';
+
+        const favContainer = document.createElement('div');
+        favContainer.className = 'favicon-container';
+        const img = document.createElement('img');
+        img.width = 16; img.height = 16;
+        img.src = `https://www.google.com/s2/favicons?domain=${hostname}&sz=32`;
+        img.onerror = () => { img.src = defaultIcon; };
+        favContainer.appendChild(img);
+
+        const title = document.createElement('h3');
+        title.className = 'bookmark-title';
+        title.textContent = b.name; // 安全赋值
+
+        const btnGroup = document.createElement('div');
+        btnGroup.className = 'flex gap-1 items-center ml-auto'; // ml-auto 确保按钮靠右
+
+        const editBtn = document.createElement('button');
+        editBtn.className = 'action-btn text-gray-400 hover:text-blue-600';
+        editBtn.textContent = '✎';
+        editBtn.onclick = (e) => { e.stopPropagation(); openEditModal(b.id); };
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'action-btn text-gray-400 hover:text-red-500';
+        delBtn.textContent = '✕'; // 使用 unicode x
+        delBtn.onclick = (e) => { e.stopPropagation(); deleteBookmark(b.id); };
+
+        btnGroup.append(editBtn, delBtn);
+        header.append(favContainer, title, btnGroup);
+
+        // --- 构建 URL 文本 ---
+        const urlText = document.createElement('p');
+        urlText.className = 'text-xs text-gray-400 truncate w-full';
+        urlText.textContent = b.url; // 安全赋值
+
+        card.append(header, urlText);
+        grid.appendChild(card);
+      });
+    }
+
+    function renderCats() {
+      const list = document.getElementById('tabs-list');
+      list.innerHTML = '';
+
+      // 渲染 "全部"
+      const allBtn = createCatButton('all', '全部', false);
+      list.appendChild(allBtn);
+
+      // 渲染其余分类
+      Object.entries(customCats).forEach(([key, name]) => {
+        const canDelete = key !== 'uncategorized'; // 未分类不可删除
+        list.appendChild(createCatButton(key, name, canDelete));
+      });
+    }
+
+    function createCatButton(key, name, canDelete) {
+      const btn = document.createElement('div'); // 外层用 div 方便布局
+      const isActive = currentCategory === key;
+      btn.className = `cat-btn px-4 py-2 rounded-full text-sm cursor-pointer select-none ${isActive ? 'bg-blue-600 text-white active' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`;
+      
+      const span = document.createElement('span');
+      span.textContent = name;
+      span.onclick = () => setCategory(key);
+      btn.appendChild(span);
+
+      if (canDelete) {
+        const del = document.createElement('span');
+        del.className = 'cat-delete-btn';
+        del.textContent = '✕';
+        del.onclick = (e) => {
+          e.stopPropagation();
+          confirmDeleteCat(key);
+        };
+        btn.appendChild(del);
+      } else {
+        // 为了保持文字居中视觉平衡，可以用 padding，这里简单处理点击事件
+        btn.onclick = () => setCategory(key);
+      }
+      return btn;
+    }
+
+    // --- 3. 健壮的导入逻辑 (递归) ---
+    document.getElementById('import-btn').onclick = () => document.getElementById('file-selector').click();
+    document.getElementById('file-selector').onchange = (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(event.target.result, 'text/html');
+        
+        // 递归遍历 DOM 树
+        function traverse(element, catId) {
+            const children = Array.from(element.children);
+            children.forEach(node => {
+                // Netscape 格式通常是: DT -> H3 (Folder Name) + DL (Folder Content)
+                // 有些浏览器导出是 DT -> H3, 下一个兄弟节点是 DL
+                
+                if (node.tagName === 'DT') {
+                    const h3 = node.querySelector('h3');
+                    const dl = node.querySelector('dl');
+                    const a = node.querySelector('a');
+
+                    if (h3) {
+                        // 发现文件夹
+                        const folderName = h3.textContent.trim();
+                        let newCatId = Object.keys(customCats).find(k => customCats[k] === folderName);
+                        if (!newCatId) {
+                            newCatId = generateId('cat_');
+                            customCats[newCatId] = folderName;
+                        }
+                        
+                        // 寻找内容：可能是子 DL，或者是下一个兄弟 DL
+                        if (dl) {
+                            traverse(dl, newCatId);
+                        } else {
+                             // 尝试查找兄弟节点 (Chrome 格式有时如此)
+                             let nextSibling = node.nextElementSibling;
+                             if(nextSibling && nextSibling.tagName === 'DD') {
+                                 let innerDL = nextSibling.querySelector('dl');
+                                 if(innerDL) traverse(innerDL, newCatId);
+                             }
+                        }
+                    } else if (a) {
+                        // 发现书签
+                        bookmarks.push({
+                            id: generateId('id_'),
+                            name: a.textContent.trim(),
+                            url: a.href,
+                            category: catId
+                        });
+                    }
+                } else if (node.tagName === 'DL') {
+                    // 直接嵌套的 DL
+                    traverse(node, catId);
+                }
+            });
+        }
+
+        // 尝试找到根 DL
+        const rootDL = doc.querySelector('dl');
+        if (rootDL) {
+            traverse(rootDL, 'uncategorized');
+            saveData();
+            alert(`导入成功！共 ${bookmarks.length} 个书签。`);
+            location.reload();
+        } else {
+            alert('无法识别的文件格式，请确保是浏览器导出的 HTML 书签文件。');
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = ''; // 重置 input
+    };
+
+    // --- 4. 导出逻辑 ---
+    document.getElementById('export-btn').onclick = () => {
+      let html = `<!DOCTYPE NETSCAPE-Bookmark-file-1>\n\n<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">\n<TITLE>Bookmarks</TITLE>\n<H1>Bookmarks</H1>\n<DL><p>\n`;
+      
+      // 先处理未分类
+      const uncategorized = bookmarks.filter(b => b.category === 'uncategorized');
+      uncategorized.forEach(b => {
+          html += `    <DT><A HREF="${b.url}">${b.name}</A>\n`;
+      });
+
+      // 处理其他分类
+      Object.entries(customCats).forEach(([key, name]) => {
+        if (key === 'uncategorized') return;
+        const catBks = bookmarks.filter(b => b.category === key);
+        if (catBks.length > 0) {
+            html += `    <DT><H3>${name}</H3>\n    <DL><p>\n`;
+            catBks.forEach(b => {
+                html += `        <DT><A HREF="${b.url}">${b.name}</A>\n`;
+            });
+            html += `    </DL><p>\n`;
+        }
+      });
+      
+      html += `</DL><p>`;
+      const blob = new Blob([html], { type: 'text/html' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `bookmarks_${new Date().toISOString().slice(0,10)}.html`;
+      a.click();
+    };
+
+    // --- 5. 辅助功能与事件 ---
+    function generateId(prefix) {
+        if (window.crypto && window.crypto.randomUUID) {
+            return prefix + window.crypto.randomUUID();
+        }
+        return prefix + Date.now() + Math.random().toString(36).substring(2);
+    }
+
+    function setCategory(cat) { 
+        currentCategory = cat; 
+        renderCats(); 
+        renderBookmarks(); 
+    }
+    
+    function saveData() {
+        localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
+        localStorage.setItem('custom_categories', JSON.stringify(customCats));
+    }
+
+    function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+    // 保存书签（新增或编辑）
+    document.getElementById('save-bookmark').onclick = () => {
+      const nameInput = document.getElementById('bookmark-name');
+      const urlInput = document.getElementById('bookmark-url');
+      const catInput = document.getElementById('bookmark-category');
+      const editId = document.getElementById('edit-id').value;
+
+      const name = nameInput.value.trim();
+      let url = urlInput.value.trim();
+      const cat = catInput.value;
+
+      if (!name || !url) { alert('请填写完整信息'); return; }
+
+      // URL 自动补全与验证
+      if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+      try { new URL(url); } catch(e) { alert('请输入有效的网址'); return; }
+
+      if (editId) {
+        const b = bookmarks.find(i => i.id === editId);
+        if (b) { Object.assign(b, { name, url, category: cat }); }
+      } else {
+        bookmarks.push({ id: generateId('id_'), name, url, category: cat });
+      }
+      
+      saveData();
+      renderBookmarks();
+      closeModal('bookmark-modal');
+    };
+
+    document.getElementById('add-btn').onclick = () => {
+      document.getElementById('modal-title').textContent = '新增书签';
+      document.getElementById('edit-id').value = '';
+      document.getElementById('bookmark-name').value = '';
+      document.getElementById('bookmark-url').value = '';
+      
+      const sel = document.getElementById('bookmark-category');
+      const targetCat = (currentCategory === 'all') ? 'uncategorized' : currentCategory;
+      
+      sel.innerHTML = Object.entries(customCats)
+        .map(([k,v]) => `<option value="${k}" ${k === targetCat ? 'selected' : ''}>${v}</option>`)
+        .join('');
+        
+      document.getElementById('bookmark-modal').classList.add('show');
+      setTimeout(() => document.getElementById('bookmark-name').focus(), 100);
+    };
+
+    // 新增分类
+    document.getElementById('open-cat-modal').onclick = () => {
+      document.getElementById('new-cat-name').value = '';
+      document.getElementById('cat-modal').classList.add('show');
+      setTimeout(() => document.getElementById('new-cat-name').focus(), 100);
+    };
+
+    document.getElementById('save-new-cat').onclick = () => {
+      const n = document.getElementById('new-cat-name').value.trim();
+      if(!n) return;
+      if (Object.values(customCats).includes(n)) { alert('分类名已存在'); return; }
+      
+      const newId = generateId('cat_');
+      customCats[newId] = n;
+      saveData();
+      
+      // 自动切换到新分类
+      setCategory(newId);
+      closeModal('cat-modal');
+    };
+
+    function openEditModal(id) {
+      const b = bookmarks.find(i => i.id === id);
+      if (!b) return;
+      document.getElementById('modal-title').textContent = '编辑书签';
+      document.getElementById('edit-id').value = id;
+      document.getElementById('bookmark-name').value = b.name;
+      document.getElementById('bookmark-url').value = b.url;
+      
+      const sel = document.getElementById('bookmark-category');
+      sel.innerHTML = Object.entries(customCats)
+        .map(([k,v]) => `<option value="${k}" ${k===b.category?'selected':''}>${v}</option>`)
+        .join('');
+        
+      document.getElementById('bookmark-modal').classList.add('show');
+    }
+
+    function deleteBookmark(id) {
+      if(confirm('确定删除此书签吗？')) { 
+          bookmarks = bookmarks.filter(i => i.id !== id); 
+          saveData(); 
+          renderBookmarks(); 
+      }
+    }
+
+    function confirmDeleteCat(key) {
+      const count = bookmarks.filter(b => b.category === key).length;
+      const msg = count > 0 
+        ? `删除分类 "${customCats[key]}"？\n该分类下的 ${count} 个书签将移至 "未分类"。` 
+        : `删除分类 "${customCats[key]}"？`;
+        
+      if(confirm(msg)) {
+        bookmarks.forEach(b => { if(b.category === key) b.category = 'uncategorized'; });
+        delete customCats[key];
+        saveData();
+        setCategory('all');
+      }
+    }
+
+    // 搜索与回车事件
+    document.getElementById('search-input').oninput = (e) => { 
+        searchQuery = e.target.value.toLowerCase(); 
+        renderBookmarks(); 
+    };
+    
+    function bindEnter(inputId, btnId) {
+        document.getElementById(inputId).addEventListener('keydown', (e) => {
+            if(e.key === 'Enter') document.getElementById(btnId).click();
+        });
+    }
+    bindEnter('bookmark-name', 'save-bookmark');
+    bindEnter('bookmark-url', 'save-bookmark');
+    bindEnter('new-cat-name', 'save-new-cat');
+
+    // --- 新增功能逻辑区开始 ---
+
+    let ghConfig = JSON.parse(localStorage.getItem('gh_config')) || null;
+    let ghFailCount = 0;
+
+    // 1. 去重逻辑
+    document.getElementById('deduplicate-btn').onclick = () => {
+      const originalCount = bookmarks.length;
+      const seen = new Set();
+      bookmarks = bookmarks.filter(b => {
+        const norm = b.url.replace(/\/$/, "").toLowerCase();
+        if (seen.has(norm)) return false;
+        seen.add(norm); return true;
+      });
+      if (originalCount > bookmarks.length) {
+        saveData(); renderBookmarks(); alert(`清理完成，已移除 ${originalCount - bookmarks.length} 个重复项`);
+      } else alert("未发现重复项");
+    };
+
+    // 2. 解析 GitHub 地址
+    const parseGhPath = () => {
+      const full = document.getElementById('gh-full-path').value.trim();
+      const parts = full.split('/');
+      if (parts.length < 3) return null;
+      return { repo: `${parts[0]}/${parts[1]}`, path: parts.slice(2).join('/') };
+    };
+
+    // 3. 通用 GitHub 请求函数
+    async function ghRequest(url, options = {}) {
+      if (!ghConfig) { document.getElementById('github-modal').classList.add('show'); return null; }
+      if (ghFailCount >= 3) {
+        document.getElementById('gh-error-hint').textContent = "失败次数过多，请确认配置。";
+        document.getElementById('gh-error-hint').classList.remove('hidden');
+        document.getElementById('github-modal').classList.add('show');
+        return null;
+      }
+      options.headers = { ...options.headers, 'Authorization': `token ${ghConfig.token}`, 'Accept': 'application/vnd.github.v3+json' };
+      try {
+        const res = await fetch(url, options);
+        if (!res.ok) throw new Error(res.status);
+        return res;
+      } catch (e) {
+        ghFailCount++;
+        alert(`GitHub 请求失败 (${ghFailCount}/3)`);
+        if (ghFailCount >= 3) document.getElementById('github-modal').classList.add('show');
+        return null;
+      }
+    }
+
+    // 4. 同步 GitHub
+    document.getElementById('sync-github-btn').onclick = async () => {
+      if (!ghConfig) { document.getElementById('github-modal').classList.add('show'); return; }
+      const url = `https://api.github.com/repos/${ghConfig.repo}/contents/${ghConfig.path}`;
+      const res = await ghRequest(url);
+      if (!res) return;
+      const data = await res.json();
+      const content = JSON.parse(decodeURIComponent(escape(atob(data.content))));
+      if (confirm("获取成功，是否覆盖当前本地数据？")) {
+        bookmarks = content.bookmarks; customCats = content.categories;
+        saveData(); location.reload();
+      }
+    };
+
+    // 5. 上传 GitHub
+    document.getElementById('push-github-btn').onclick = async () => {
+      if (!ghConfig) { document.getElementById('github-modal').classList.add('show'); return; }
+      const url = `https://api.github.com/repos/${ghConfig.repo}/contents/${ghConfig.path}`;
+      const existing = await ghRequest(url);
+      let sha = "";
+      if (existing) { const d = await existing.json(); sha = d.sha; }
+      const payload = { bookmarks, categories: customCats };
+      const body = {
+        message: "sync via Bookmark Pro",
+        content: btoa(unescape(encodeURIComponent(JSON.stringify(payload)))),
+        sha: sha || undefined
+      };
+      const res = await ghRequest(url, { method: 'PUT', body: JSON.stringify(body) });
+      if (res) alert("推送成功"), ghFailCount = 0;
+    };
+
+    // 6. 保存配置
+    document.getElementById('save-github-config').onclick = () => {
+      const token = document.getElementById('gh-token').value.trim();
+      const parsed = parseGhPath();
+      if (!token || !parsed) return alert("配置不完整或格式错误");
+      ghConfig = { token, ...parsed };
+      localStorage.setItem('gh_config', JSON.stringify(ghConfig));
+      ghFailCount = 0;
+      closeModal('github-modal');
+    };
+
+    // --- 新增功能逻辑区结束 ---
+
+    // 初始化渲染
+    renderCats();
+    renderBookmarks();
+  </script>
+</body>
+</html>
