@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>极简二维码生成器 Pro - 2026 版</title>
+    <script src="https://cdn.bootcdn.net/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --accent: #00f2fe;
+            --bg: #f0f2f5;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* 主卡片 */
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            width: 100%;
+            max-width: 480px;
+            border-radius: 28px;
+            padding: 35px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 24px;
+            color: #1a202c;
+            margin-bottom: 30px;
+            letter-spacing: 1px;
+        }
+
+        h1 span {
+            color: var(--primary);
+        }
+
+        /* 输入区 */
+        .section-label {
+            font-size: 13px;
+            font-weight: 700;
+            color: #a0aec0;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        textarea {
+            width: 100%;
+            height: 110px;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            background: #f7fafc;
+            font-size: 16px;
+            resize: none;
+            outline: none;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        textarea:focus {
+            border-color: var(--primary);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
+        }
+
+        /* 配置区 */
+        .config-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .config-item {
+            background: #f7fafc;
+            padding: 10px 15px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        input[type="color"] {
+            border: none;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            background: none;
+        }
+
+        /* 二维码展示容器 */
+        .qr-display-area {
+            position: relative;
+            background: #edf2f7;
+            border-radius: 20px;
+            width: 100%;
+            height: 280px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 2px dashed #cbd5e0;
+        }
+
+        .qr-display-area.active {
+            background: white;
+            border: 2px solid #edf2f7;
+        }
+
+        /* 扫描线动画 */
+        .scanner-line {
+            display: none;
+            position: absolute;
+            width: 240px;
+            height: 3px;
+            background: linear-gradient(to right, transparent, var(--accent), transparent);
+            box-shadow: 0 0 15px var(--accent);
+            z-index: 10;
+            animation: scan 2s linear infinite;
+        }
+
+        @keyframes scan {
+            0% {
+                top: 20px;
+            }
+
+            50% {
+                top: 260px;
+            }
+
+            100% {
+                top: 20px;
+            }
+        }
+
+        /* 占位 UI */
+        .placeholder {
+            text-align: center;
+            color: #a0aec0;
+            transition: 0.3s;
+        }
+
+        .placeholder-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        /* 操作按钮 */
+        .action-btns {
+            margin-top: 20px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-download {
+            background: var(--primary);
+            color: white;
+            display: none;
+        }
+
+        .btn-clear {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        /* 二维码图片微调 */
+        #qrcode img {
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="card">
+        <h1>QR Code <span>Gen Pro</span></h1>
+
+        <label class="section-label">内容 / 链接</label>
+        <textarea id="inputField" placeholder="输入网址、文本或 Wi-Fi 信息..."></textarea>
+
+        <div class="config-row">
+            <div class="config-item">
+                <span style="font-size: 13px;">前景色</span>
+                <input type="color" id="fgColor" value="#000000">
+            </div>
+            <div class="config-item">
+                <span style="font-size: 13px;">背景色</span>
+                <input type="color" id="bgColor" value="#ffffff">
+            </div>
+        </div>
+
+        <div id="wrapper" class="qr-display-area">
+            <div class="scanner-line" id="scanner"></div>
+            <div id="qrcode"></div>
+            <div class="placeholder" id="placeholderUI">
+                <span class="placeholder-icon">📷</span>
+                <p style="font-size: 14px;">等待输入内容</p>
+            </div>
+        </div>
+
+        <div class="action-btns">
+            <button class="btn btn-clear" onclick="clearContent()">清空</button>
+            <button class="btn btn-download" id="dlBtn" onclick="downloadImage()">保存图片</button>
+        </div>
+    </div>
+
+    <script>
+        const input = document.getElementById('inputField');
+        const container = document.getElementById('qrcode');
+        const wrapper = document.getElementById('wrapper');
+        const placeholder = document.getElementById('placeholderUI');
+        const scanner = document.getElementById('scanner');
+        const dlBtn = document.getElementById('dlBtn');
+
+        // 防抖函数
+        function debounce(fn, delay) {
+            let timer;
+            return function () {
+                clearTimeout(timer);
+                timer = setTimeout(() => fn.apply(this, arguments), delay);
+            }
+        }
+
+        // 生成二维码逻辑
+        function updateQR() {
+            const content = input.value.trim();
+            const fg = document.getElementById('fgColor').value;
+            const bg = document.getElementById('bgColor').value;
+
+            container.innerHTML = "";
+
+            if (!content) {
+                // 回到空状态
+                wrapper.classList.remove('active');
+                placeholder.style.display = 'block';
+                scanner.style.display = 'none';
+                dlBtn.style.display = 'none';
+                return;
+            }
+
+            // 切换为激活状态
+            placeholder.style.display = 'none';
+            wrapper.classList.add('active');
+            scanner.style.display = 'block';
+            dlBtn.style.display = 'flex';
+
+            try {
+                new QRCode(container, {
+                    text: content,
+                    width: 220,
+                    height: 220,
+                    colorDark: fg,
+                    colorLight: bg,
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+            } catch (err) {
+                console.error("生成失败:", err);
+            }
+        }
+
+        // 下载功能
+        function downloadImage() {
+            const img = container.querySelector('img');
+            const canvas = container.querySelector('canvas');
+            const link = document.createElement('a');
+            link.download = 'qrcode_download.png';
+            link.href = img ? img.src : canvas.toDataURL("image/png");
+            link.click();
+        }
+
+        function clearContent() {
+            input.value = "";
+            updateQR();
+        }
+
+        // 事件监听
+        input.addEventListener('input', debounce(updateQR, 400));
+        document.getElementById('fgColor').addEventListener('change', updateQR);
+        document.getElementById('bgColor').addEventListener('change', updateQR);
+    </script>
+</body>
+
+</html>
