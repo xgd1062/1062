@@ -328,6 +328,121 @@
             border: 2px solid var(--primary);
             background: rgba(167, 139, 250, 0.05);
         }
+
+        /* 1. 变量微调：增加安全区域适配 */
+        :root {
+            /* ...原有变量... */
+            --safe-bottom: env(safe-area-inset-bottom);
+        }
+
+        /* 2. 基础布局调整：取消 PC 端的固定高度，改为最小高度 */
+        .tool-card {
+            /* ...原有属性... */
+            height: auto;
+            /* 取消固定高度 */
+            min-height: 110px;
+            padding: 16px;
+            touch-action: manipulation;
+            /* 优化触控延迟 */
+        }
+
+        /* 3. 移动端核心适配策略 */
+        @media (max-width: 768px) {
+            body {
+                padding: 20px 12px;
+                /* 缩小页边距 */
+            }
+
+            .poem-title {
+                font-size: 1.6rem;
+                /* 减小标题字号 */
+            }
+
+            /* 顶部收藏/历史：由并排改为垂直堆叠 */
+            .top-row {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .top-column {
+                min-height: auto;
+            }
+
+            #historySection {
+                display: none !important;
+            }
+
+            /* 按钮组滑动查看：防止分类过多撑破布局 */
+            .category-bar {
+                justify-content: flex-start;
+                overflow-x: auto;
+                padding-bottom: 8px;
+                -webkit-overflow-scrolling: touch;
+                /* 滚动丝滑 */
+                width: 100%;
+                scrollbar-width: none;
+                /* 隐藏滚动条 */
+            }
+
+            .category-bar::-webkit-scrollbar {
+                display: none;
+            }
+
+            .cat-btn {
+                flex-shrink: 0;
+                /* 防止分类按钮被压缩 */
+                white-space: nowrap;
+            }
+
+            /* 网格调整：在小屏手机上采用 1 列或 2 列 */
+            .tool-grid {
+                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+                gap: 12px;
+            }
+
+            /* 卡片内容针对窄屏的微调 */
+            .tool-card h3 {
+                font-size: 1rem;
+            }
+
+            /* 针对极小屏幕 (iPhone SE类) 强制单列 */
+            @media (max-width: 380px) {
+
+                .tool-grid,
+                .top-grid {
+                    grid-template-columns: 1fr;
+                }
+            }
+
+            /* 管理栏适配：横向铺满，增加安全区 */
+            .admin-bar {
+                width: 95%;
+                bottom: calc(15px + var(--safe-bottom));
+                padding: 8px;
+                gap: 5px;
+                justify-content: space-around;
+            }
+
+            .btn-main {
+                padding: 8px 12px;
+                font-size: 0.75rem;
+                flex: 1;
+                /* 按钮平分空间 */
+                text-align: center;
+            }
+
+            /* 模态框适配 */
+            #configModal {
+                width: 90%;
+                padding: 20px;
+            }
+        }
+
+        /* 4. 优化管理模式下的输入体验 */
+        .editing-mode .edit-input {
+            font-size: 16px !important;
+            /* 关键：iOS 强制 16px 防止点击输入框时页面自动缩放 */
+        }
     </style>
 </head>
 
@@ -349,7 +464,7 @@
                     <div class="empty-hint">暂无收藏</div>
                 </div>
             </div>
-            <div class="top-column">
+            <div class="top-column" id="historySection">
                 <div class="section-label">🕒 最近使用</div>
                 <div id="hisGrid" class="top-grid">
                     <div class="empty-hint">暂无记录</div>
