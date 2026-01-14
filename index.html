@@ -4,9 +4,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>诗意在线工具箱</title>
+    <title>诗意工具箱 - 终极云同步版</title>
     <style>
-        /* --- 保持你原有的 CSS 不变 --- */
+        :root {
+            --primary: #a78bfa;
+            --bg-dark: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.6);
+            --border: rgba(255, 255, 255, 0.1);
+            --text-main: #f1f5f9;
+            --text-dim: #94a3b8;
+            --star-color: #fbbf24;
+            --empty-bg: rgba(255, 255, 255, 0.02);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -14,271 +24,543 @@
         }
 
         body {
-            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
-            line-height: 1.6;
-            background: linear-gradient(135deg, #0f172a, #1e293b);
-            color: #fff;
+            font-family: 'Segoe UI', 'PingFang SC', sans-serif;
+            background: radial-gradient(circle at top right, #1e293b, #0f172a);
+            color: var(--text-main);
             min-height: 100vh;
-            padding: 20px;
+            padding: 40px 20px;
         }
 
+        /* 布局留白 */
         .container {
             max-width: 1200px;
-            margin: 30px auto;
-            padding: 20px;
+            margin: 0 auto;
         }
 
         header {
             text-align: center;
-            margin-bottom: 30px;
-            padding: 20px;
-            animation: fadeIn 1s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            margin-bottom: 40px;
         }
 
         .poem-title {
-            font-size: 2.8rem;
-            font-weight: 700;
-            margin-bottom: 15px;
-            text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            background: linear-gradient(45deg, #a78bfa, #c084fc, #f472b6);
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            background: linear-gradient(to right, #818cf8, #c084fc);
             -webkit-background-clip: text;
-            background-clip: text;
             color: transparent;
-            transition: all 0.5s ease;
-            padding: 10px 0;
         }
 
-        /* 网格布局 */
+        .controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        #searchInput {
+            width: 100%;
+            max-width: 500px;
+            padding: 12px 25px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 50px;
+            color: white;
+            outline: none;
+            backdrop-filter: blur(5px);
+        }
+
+        .category-bar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .cat-btn {
+            padding: 6px 16px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .cat-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* 顶部功能区：固定占位并排 */
+        .top-row {
+            display: flex;
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .top-column {
+            flex: 1;
+            background: var(--empty-bg);
+            padding: 20px;
+            border-radius: 20px;
+            border: 1px dashed rgba(255, 255, 255, 0.05);
+            min-height: 160px;
+        }
+
+        .top-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .empty-hint {
+            grid-column: span 2;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.1);
+            font-size: 0.8rem;
+            padding-top: 30px;
+        }
+
+        .section-label {
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            color: var(--primary);
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
         .tool-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            grid-template-columns: repeat(4, 1fr);
             gap: 20px;
         }
 
-        /* 卡片样式 */
+        /* 卡片设计 */
         .tool-card {
-            display: block;
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(5px);
-            padding: 20px;
-            border-radius: 12px;
-            text-decoration: none;
-            transition: all 0.3s ease;
+            background: var(--card-bg);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            padding: 22px;
+            transition: 0.3s;
             position: relative;
-            overflow: hidden;
-            border: 1px solid rgba(124, 58, 237, 0.2);
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            backdrop-filter: blur(10px);
             height: 100%;
+            min-height: 140px;
         }
 
-        .tool-card:hover {
+        .tool-card:hover:not(.editing-mode) {
             transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(124, 58, 237, 0.3);
-            background: rgba(30, 41, 59, 0.85);
-            border-color: rgba(124, 58, 237, 0.4);
+            border-color: var(--primary);
         }
 
-        .tool-card::before {
-            content: '';
+        .star-btn {
             position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(167, 139, 250, 0.1), transparent);
-            transition: all 0.8s ease;
+            top: 10px;
+            right: 10px;
+            font-size: 1.4rem;
+            cursor: pointer;
+            color: #4b5563;
+            transition: 0.3s;
+            z-index: 5;
+            padding: 5px;
         }
 
-        .tool-card:hover::before {
-            left: 100%;
+        .star-btn.active {
+            color: var(--star-color);
+            text-shadow: 0 0 12px rgba(251, 191, 36, 0.5);
+        }
+
+        .card-tag {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            padding: 3px 10px;
+            font-size: 0.65rem;
+            background: rgba(167, 139, 250, 0.1);
+            color: var(--primary);
+            border-top-left-radius: 10px;
+            border-left: 1px solid var(--border);
+            border-top: 1px solid var(--border);
         }
 
         .tool-card h3 {
-            color: #c084fc;
-            margin-top: 0;
-            font-size: 1.35rem;
-            margin-bottom: 10px;
-            font-weight: 600;
+            color: #fff;
+            font-size: 1rem;
+            margin-bottom: 8px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
+            padding-right: 35px;
         }
 
         .tool-card p {
-            color: rgba(255, 255, 255, 0.85);
-            font-size: 0.9rem;
-            margin-bottom: 0;
+            color: var(--text-dim);
+            font-size: 0.8rem;
             line-height: 1.5;
+            margin-bottom: 10px;
         }
 
-        .footer {
-            text-align: center;
-            margin-top: 40px;
-            padding: 20px;
-            color: rgba(255, 255, 255, 0.6);
+        /* 编辑表单 */
+        .edit-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            gap: 8px;
+        }
+
+        .edit-label {
+            color: var(--primary);
+            min-width: 40px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .edit-input {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            color: #fff;
+            padding: 5px 8px;
+            border-radius: 5px;
+            outline: none;
+            font-size: 0.75rem;
+        }
+
+        /* 弹窗 */
+        #configModal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #1e293b;
+            border: 1px solid var(--primary);
+            padding: 30px;
+            border-radius: 20px;
+            z-index: 2000;
+            width: 380px;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+        }
+
+        /* 底部条 */
+        .admin-bar {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            background: rgba(15, 23, 42, 0.9);
+            padding: 10px 25px;
+            border-radius: 40px;
+            border: 1px solid var(--primary);
+            z-index: 1000;
+        }
+
+        .btn-main {
+            padding: 8px 18px;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
             font-size: 0.85rem;
+            transition: 0.3s;
         }
 
-        .icon {
-            font-size: 1.5rem;
+        .btn-edit {
+            background: var(--primary);
+            color: white;
         }
 
-        @media (max-width: 768px) {
-            .tool-grid {
-                grid-template-columns: 1fr;
-                gap: 15px;
-            }
-
-            .poem-title {
-                font-size: 2.2rem;
-            }
+        .btn-gh {
+            background: #4b5563;
+            color: white;
         }
 
-        /* 加载中的提示样式 */
-        .loading-text {
-            text-align: center;
-            color: #a78bfa;
-            grid-column: 1 / -1;
+        .btn-save,
+        .btn-add {
+            display: none;
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-add {
+            background: #3b82f6;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .dragging {
+            opacity: 0.3;
+        }
+
+        .drag-over {
+            border: 2px solid var(--primary);
         }
     </style>
 </head>
 
 <body>
+
     <div class="container">
         <header>
-            <h1 class="poem-title" id="poemTitle">工欲善其事，必先利其器</h1>
+            <h1 class="poem-title">欲善其事，必先利其器</h1>
+            <div class="controls">
+                <input type="text" id="searchInput" placeholder="搜索工具...">
+                <div class="category-bar" id="categoryBar"></div>
+            </div>
         </header>
 
-        <div class="tool-grid" id="toolGrid">
-            <p class="loading-text">正在读取工具列表...</p>
+        <div id="topSection" class="top-row">
+            <div class="top-column">
+                <div class="section-label">⭐ 我的收藏</div>
+                <div id="favGrid" class="top-grid">
+                    <div class="empty-hint">暂无收藏内容</div>
+                </div>
+            </div>
+            <div class="top-column">
+                <div class="section-label">🕒 最近使用</div>
+                <div id="hisGrid" class="top-grid">
+                    <div class="empty-hint">暂无历史记录</div>
+                </div>
+            </div>
         </div>
 
-        <div class="footer">
-            <p>诗意工具箱 &copy; 202X | 每次刷新，都会是新的变化</p>
+        <div class="section-label">🚀 全部工具 <span id="syncStatus"
+                style="font-size:0.7rem; margin-left:10px; font-weight:normal; opacity:0.5;"></span></div>
+        <div id="toolGrid" class="tool-grid"></div>
+
+        <datalist id="categoryList"></datalist>
+        <div style="height: 120px;"></div>
+    </div>
+
+    <div id="configModal" class="hidden">
+        <h3 style="margin-bottom:20px; color:var(--primary); text-align:center;">GitHub 云同步配置</h3>
+        <div class="edit-group">
+            <span class="edit-label">令牌:</span>
+            <input id="ghToken" class="edit-input" type="password" placeholder="GitHub Token (repo权限)">
+        </div>
+        <div class="edit-group">
+            <span class="edit-label">地址:</span>
+            <input id="ghRepo" class="edit-input" placeholder="xgd1062/1062">
+        </div>
+        <div style="display:flex; gap:10px; margin-top:20px;">
+            <button class="btn-main" style="background:var(--primary); flex:1;" onclick="saveConfig()">保存配置</button>
+            <button class="btn-main" style="background:#4b5563; flex:1;" onclick="toggleModal()">关闭</button>
         </div>
     </div>
 
+    <div class="admin-bar">
+        <button class="btn-main btn-gh" onclick="toggleModal()">⚙️ 设置同步</button>
+        <button id="editBtn" class="btn-main btn-edit" onclick="toggleEditMode()">管理数据</button>
+        <button id="addBtn" class="btn-main btn-add" onclick="addNewTool()">+ 新增工具</button>
+        <button id="saveBtn" class="btn-main btn-save" onclick="saveAllData()">保存并同步</button>
+    </div>
+
     <script>
-        // --- 1. 诗句功能 (保持不变) ---
-        const poems = [
-            "工欲善其事，必先利其器", "磨刀不误砍柴工，利器在手事易成", "运筹帷幄之中，决胜千里之外",
-            "利器入手，快意恩仇皆可求", "妙手偶得之，工具助其成", "效率之道，利器为先",
-            "庖丁解牛，善用其器", "工具有道，事半功倍", "智巧生于器用之间", "器利则工善，工善则事成"
-        ];
+        let allTools = [];
+        let isEditing = false;
+        let currentCat = '全部';
+        const DEFAULT_REPO = 'xgd1062/1062';
+        const FILE_NAME = 'tools_config.json';
 
-        document.addEventListener('DOMContentLoaded', function () {
-            const poemTitle = document.getElementById('poemTitle');
-            const randomIndex = Math.floor(Math.random() * poems.length);
-            poemTitle.textContent = poems[randomIndex];
-            setTimeout(() => {
-                poemTitle.style.transform = "scale(1.03)";
-                poemTitle.style.textShadow = "0 6px 18px rgba(0, 0, 0, 0.4)";
-            }, 300);
-
-            // --- 2. 新增：读取并渲染 Markdown 功能 ---
-            fetchAndRenderTools();
+        document.addEventListener('DOMContentLoaded', async () => {
+            await fetchFromGitHub();
+            if (allTools.length === 0) {
+                const local = localStorage.getItem('poet_tools_v11');
+                allTools = local ? JSON.parse(local) : [
+                    { id: 1, title: "追剧备忘录", icon: "🎬", link: "./000/01.1 追剧备忘录总览.html", category: "生活", desc: "记录追剧进度。", fav: true }
+                ];
+            }
+            renderAll();
+            initCategories();
+            document.getElementById('searchInput').oninput = () => renderAll();
         });
 
-        // 读取 md 文件并渲染
-        async function fetchAndRenderTools() {
-            const grid = document.getElementById('toolGrid');
+        // --- 云同步逻辑 ---
+        async function fetchFromGitHub() {
+            const token = localStorage.getItem('gh_token');
+            const repoPath = localStorage.getItem('gh_repo') || DEFAULT_REPO;
+            const statusEl = document.getElementById('syncStatus');
+            if (!token) return;
+
+            statusEl.innerText = "(正在同步云端...)";
+            const [owner, repo] = repoPath.split('/');
+            const url = `https://api.github.com/repos/${owner}/${repo}/contents/${FILE_NAME}`;
 
             try {
-                // 读取同目录下的 '主页.md' 文件
-                // 注意：必须通过 http/https 服务运行，不能直接打开 html 文件
-                const response = await fetch('./主页.md');
+                const res = await fetch(url, {
+                    headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3.raw' }
+                });
+                if (res.ok) {
+                    allTools = await res.json();
+                    localStorage.setItem('poet_tools_v11', JSON.stringify(allTools));
+                    statusEl.innerText = "(云端同步就绪)";
+                }
+            } catch (e) { statusEl.innerText = "(离线访问中)"; }
+        }
 
-                if (!response.ok) {
-                    throw new Error('无法读取主页.md文件，请确保文件存在');
+        async function syncToGitHub(data) {
+            const token = localStorage.getItem('gh_token');
+            const repoPath = localStorage.getItem('gh_repo') || DEFAULT_REPO;
+            if (!token) return;
+
+            const [owner, repo] = repoPath.split('/');
+            const url = `https://api.github.com/repos/${owner}/${repo}/contents/${FILE_NAME}`;
+
+            try {
+                let sha = '';
+                const getRes = await fetch(url, { headers: { 'Authorization': `token ${token}` } });
+                if (getRes.ok) { sha = (await getRes.json()).sha; }
+
+                const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
+                const putRes = await fetch(url, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: 'Cloud Sync Update', content, sha })
+                });
+                if (!putRes.ok) alert('同步至 GitHub 失败，请检查 Token 权限');
+            } catch (e) { alert('网络同步出错'); }
+        }
+
+        // --- 渲染逻辑 ---
+        function renderGrid(containerId, data) {
+            const grid = document.getElementById(containerId);
+            grid.innerHTML = '';
+            data.forEach((tool) => {
+                const idx = allTools.findIndex(t => t.id === tool.id);
+                const card = document.createElement(isEditing ? 'div' : 'a');
+                card.className = `tool-card ${isEditing ? 'editing-mode' : ''}`;
+
+                if (!isEditing) {
+                    card.href = tool.link;
+                    if (tool.link.startsWith('http')) card.target = "_blank";
+                    card.onclick = () => recordHistory(tool.id);
+                } else {
+                    card.draggable = true;
+                    bindDrag(card, idx);
                 }
 
-                const text = await response.text();
-                const tools = parseMarkdown(text);
+                card.innerHTML = `
+                ${!isEditing ? `<div class="star-btn ${tool.fav ? 'active' : ''}" onclick="event.preventDefault();toggleFav(${tool.id})">★</div>` : ''}
+                ${isEditing ? `
+                    <div style="margin-top:5px">
+                        <div class="edit-group"><span class="edit-label">图标:</span><input class="edit-input" placeholder="Emoji" value="${tool.icon || ''}" onchange="updateData(${idx},'icon',this.value)"></div>
+                        <div class="edit-group"><span class="edit-label">名称:</span><input class="edit-input" value="${tool.title}" onchange="updateData(${idx},'title',this.value)"></div>
+                        <div class="edit-group"><span class="edit-label">链接:</span><input class="edit-input" value="${tool.link}" onchange="updateData(${idx},'link',this.value)"></div>
+                        <div class="edit-group"><span class="edit-label">分类:</span><input class="edit-input" list="categoryList" value="${tool.category}" onchange="updateData(${idx},'category',this.value)"></div>
+                        <div class="edit-group"><span class="edit-label">描述:</span><input class="edit-input" value="${tool.desc}" onchange="updateData(${idx},'desc',this.value)"></div>
+                        <button class="btn-main" style="background:#f43f5e; width:100%; padding:2px; font-size:0.7rem; margin-top:4px" onclick="removeTool(${idx})">删除</button>
+                    </div>
+                ` : `
+                    <h3>${tool.icon || '🛠️'} ${tool.title}</h3>
+                    <p>${tool.desc}</p>
+                    <div class="card-tag">${tool.category}</div>
+                `}
+            `;
+                grid.appendChild(card);
+            });
+        }
 
-                // 清空“正在加载”
-                grid.innerHTML = '';
+        // --- 核心操作 ---
+        function toggleFav(id) {
+            const t = allTools.find(x => x.id === id);
+            if (t) t.fav = !t.fav;
+            renderAll();
+        }
 
-                // 生成 HTML
-                tools.forEach(tool => {
-                    const card = document.createElement('a');
-                    card.className = 'tool-card';
-                    card.href = tool.link;
-                    // 如果链接是外部的，可以加上 target="_blank"
-                    // card.target = "_blank"; 
+        function recordHistory(id) {
+            let his = JSON.parse(localStorage.getItem('tool_his_v11') || '[]');
+            his = [id, ...his.filter(x => x !== id)].slice(0, 2);
+            localStorage.setItem('tool_his_v11', JSON.stringify(his));
+        }
 
-                    card.innerHTML = `
-                        <h3><span class="icon">${tool.icon}</span> ${tool.title}</h3>
-                        <p>${tool.desc}</p>
-                    `;
-                    grid.appendChild(card);
-                });
+        function updateData(idx, f, v) { allTools[idx][f] = v; }
+        function removeTool(idx) { if (confirm('删除此卡片？')) { allTools.splice(idx, 1); renderAll(); } }
 
-            } catch (error) {
-                console.error('加载失败:', error);
-                grid.innerHTML = `<p class="loading-text" style="color:red">加载失败: 请确保使用本地服务器 (Live Server) 运行，且 '主页.md' 文件存在。<br><br>错误信息: ${error.message}</p>`;
+        function addNewTool() {
+            allTools.unshift({ id: Date.now(), title: "新工具", icon: "🛠️", link: "#", category: "默认", desc: "点击编辑描述", fav: false });
+            renderAll();
+        }
+
+        function toggleEditMode() {
+            isEditing = !isEditing;
+            document.getElementById('editBtn').innerText = isEditing ? '完成编辑' : '管理数据';
+            ['saveBtn', 'addBtn'].forEach(id => document.getElementById(id).style.display = isEditing ? 'block' : 'none');
+            renderAll();
+        }
+
+        async function saveAllData() {
+            localStorage.setItem('poet_tools_v11', JSON.stringify(allTools));
+            await syncToGitHub(allTools);
+            alert('数据已成功保存并上传云端！');
+            toggleEditMode();
+            initCategories();
+        }
+
+        function toggleModal() {
+            const modal = document.getElementById('configModal');
+            modal.classList.toggle('hidden');
+            if (!modal.classList.contains('hidden')) {
+                document.getElementById('ghToken').value = localStorage.getItem('gh_token') || '';
+                document.getElementById('ghRepo').value = localStorage.getItem('gh_repo') || DEFAULT_REPO;
             }
         }
 
-        // 解析 Markdown 文本的简单函数
-        function parseMarkdown(mdText) {
-            const tools = [];
-            // 按 '##' 分割不同的块
-            const blocks = mdText.split('##');
+        function saveConfig() {
+            localStorage.setItem('gh_token', document.getElementById('ghToken').value);
+            localStorage.setItem('gh_repo', document.getElementById('ghRepo').value || DEFAULT_REPO);
+            location.reload();
+        }
 
-            blocks.forEach(block => {
-                // 跳过空块（通常是文件的第一个空行）
-                if (!block.trim()) return;
+        function initCategories() {
+            const bar = document.getElementById('categoryBar');
+            const list = document.getElementById('categoryList');
+            const cats = [...new Set(allTools.map(t => t.category))];
+            bar.innerHTML = ['全部', ...cats].map(c => `<button class="cat-btn ${c === currentCat ? 'active' : ''}" onclick="filterCat('${c}')">${c}</button>`).join('');
+            list.innerHTML = cats.map(c => `<option value="${c}">`).join('');
+        }
 
-                // 按行分割
-                const lines = block.trim().split('\n');
+        function filterCat(cat) { currentCat = cat; renderAll(); initCategories(); }
 
-                // 第一行包含 [图标] 和 标题
-                // 例如: [📝] BMI健康计算器
-                const titleLine = lines[0].trim();
+        function renderAll() {
+            const filter = document.getElementById('searchInput').value.toLowerCase();
+            renderGrid('toolGrid', allTools.filter(t => (currentCat === '全部' || t.category === currentCat) && (t.title.toLowerCase().includes(filter) || t.desc.toLowerCase().includes(filter))));
+            const favs = allTools.filter(t => t.fav).slice(0, 2);
+            const hisIds = JSON.parse(localStorage.getItem('tool_his_v11') || '[]');
+            const hisTools = hisIds.map(id => allTools.find(t => t.id === id)).filter(Boolean).slice(0, 2);
+            updateTopGrid('favGrid', favs, '暂无收藏');
+            updateTopGrid('hisGrid', hisTools, '暂无记录');
+            document.getElementById('topSection').style.display = (isEditing || filter) ? 'none' : 'flex';
+        }
 
-                // 提取图标: 查找 [] 里面的内容
-                let icon = '';
-                let title = titleLine;
+        function updateTopGrid(id, data, msg) {
+            const grid = document.getElementById(id);
+            if (data.length === 0) grid.innerHTML = `<div class="empty-hint">${msg}</div>`;
+            else renderGrid(id, data);
+        }
 
-                const iconMatch = titleLine.match(/\[(.*?)\]/);
-                if (iconMatch) {
-                    icon = iconMatch[1];
-                    // 标题是去掉图标后的部分
-                    title = titleLine.replace(iconMatch[0], '').trim();
-                }
-
-                // 查找链接和描述
-                let link = '#';
-                let desc = '暂无描述';
-
-                lines.forEach(line => {
-                    const l = line.trim();
-                    if (l.startsWith('- link:')) {
-                        link = l.replace('- link:', '').trim();
-                    } else if (l.startsWith('- desc:')) {
-                        desc = l.replace('- desc:', '').trim();
-                    }
-                });
-
-                // 只有当有标题时才添加
-                if (title) {
-                    tools.push({ icon, title, link, desc });
-                }
-            });
-
-            return tools;
+        function bindDrag(el, idx) {
+            el.ondragstart = (e) => { e.dataTransfer.setData('idx', idx); el.classList.add('dragging'); };
+            el.ondragend = () => el.classList.remove('dragging');
+            el.ondragover = (e) => { e.preventDefault(); el.classList.add('drag-over'); };
+            el.ondragleave = () => el.classList.remove('drag-over');
+            el.ondrop = (e) => {
+                const fromIdx = e.dataTransfer.getData('idx');
+                const item = allTools.splice(fromIdx, 1)[0];
+                allTools.splice(idx, 0, item);
+                renderAll();
+            };
         }
     </script>
 </body>
