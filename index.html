@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>诗意工具箱 - 终极同步版</title>
+    <title>诗意工具箱 - 极简完美版</title>
     <style>
         :root {
             --primary: #a78bfa;
@@ -161,6 +161,15 @@
             border-color: var(--primary);
         }
 
+        .editing-mode {
+            cursor: move;
+        }
+
+        .editing-mode input,
+        .editing-mode button {
+            cursor: text;
+        }
+
         .star-btn {
             position: absolute;
             top: 10px;
@@ -298,6 +307,7 @@
 
         .dragging {
             opacity: 0.3;
+            transform: scale(0.95);
         }
 
         .drag-over {
@@ -360,7 +370,7 @@
         <button class="btn-main btn-gh" onclick="toggleModal()">⚙️ 设置同步</button>
         <button id="editBtn" class="btn-main btn-edit" onclick="toggleEditMode()">管理数据</button>
         <button id="addBtn" class="btn-main btn-add" onclick="addNewTool()">+ 新增工具</button>
-        <button id="saveBtn" class="btn-main btn-save" onclick="saveAllData()">同步云端</button>
+        <button id="saveBtn" class="btn-main btn-save" onclick="saveAllData()">同步并保存</button>
     </div>
 
     <script>
@@ -372,23 +382,19 @@
         const STORAGE_KEY = 'poet_tools_v12';
 
         document.addEventListener('DOMContentLoaded', async () => {
-            // 优先加载本地缓存，确保瞬间响应
             const local = localStorage.getItem(STORAGE_KEY);
             if (local) {
                 allTools = JSON.parse(local);
                 renderAll();
                 initCategories();
             }
-
-            // 然后静默尝试同步云端
             await fetchFromGitHub();
             renderAll();
             initCategories();
-
             document.getElementById('searchInput').oninput = () => renderAll();
         });
 
-        // --- 稳健云同步逻辑 ---
+        // --- 云同步逻辑 ---
         async function fetchFromGitHub() {
             const token = localStorage.getItem('gh_token');
             const repoPath = localStorage.getItem('gh_repo') || DEFAULT_REPO;
@@ -400,17 +406,15 @@
             const url = `https://api.github.com/repos/${owner}/${repo}/contents/${FILE_NAME}?t=${Date.now()}`;
 
             try {
-                const res = await fetch(url, {
-                    headers: { 'Authorization': `token ${token}` }
-                });
+                const res = await fetch(url, { headers: { 'Authorization': `token ${token}` } });
                 if (res.ok) {
                     const data = await res.json();
                     const content = decodeURIComponent(escape(atob(data.content)));
                     allTools = JSON.parse(content);
                     localStorage.setItem(STORAGE_KEY, JSON.stringify(allTools));
-                    statusEl.innerText = "(云端数据同步完成)";
+                    statusEl.innerText = "(云端同步就绪)";
                 }
-            } catch (e) { statusEl.innerText = "(云端同步失败)"; }
+            } catch (e) { statusEl.innerText = "(离线访问)"; }
         }
 
         async function syncToGitHub(data, silent = false) {
@@ -434,12 +438,11 @@
                 const putRes = await fetch(url, {
                     method: 'PUT',
                     headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: `Auto Sync: ${new Date().toLocaleString()}`, content, sha })
+                    body: JSON.stringify({ message: `Update: ${new Date().toLocaleString()}`, content, sha })
                 });
-
-                if (putRes.ok && !silent) alert('云端同步成功！');
-                if (!putRes.ok && !silent) alert('同步至 GitHub 失败，请检查 Token 权限');
-            } catch (e) { if (!silent) alert('同步出错'); }
+                if (putRes.ok && !silent) alert('同步成功！');
+                return putRes.ok;
+            } catch (e) { if (!silent) alert('同步出错'); return false; }
         }
 
         // --- 渲染逻辑 ---
@@ -455,15 +458,12 @@
                     card.href = tool.link;
                     if (tool.link.startsWith('http')) card.target = "_blank";
                     card.onclick = () => recordHistory(tool.id);
-                } else {
-                    card.draggable = true;
-                    bindDrag(card, idx);
                 }
 
                 card.innerHTML = `
                 ${!isEditing ? `<div class="star-btn ${tool.fav ? 'active' : ''}" onclick="event.preventDefault();toggleFav(${tool.id})">★</div>` : ''}
                 ${isEditing ? `
-                    <div style="margin-top:5px">
+                    <div onmousedown="event.stopPropagation()">
                         <div class="edit-group"><span class="edit-label">图标:</span><input class="edit-input" value="${tool.icon || ''}" onchange="updateData(${idx},'icon',this.value)"></div>
                         <div class="edit-group"><span class="edit-label">名称:</span><input class="edit-input" value="${tool.title}" onchange="updateData(${idx},'title',this.value)"></div>
                         <div class="edit-group"><span class="edit-label">链接:</span><input class="edit-input" value="${tool.link}" onchange="updateData(${idx},'link',this.value)"></div>
@@ -477,20 +477,40 @@
                     <div class="card-tag">${tool.category}</div>
                 `}
             `;
+                if (isEditing) {
+                    card.onmousedown = (e) => {
+                        if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') {
+                            card.draggable = false;
+                        } else {
+                            card.draggable = true;
+                        }
+                    };
+                    bindDrag(card, idx);
+                }
                 grid.appendChild(card);
             });
         }
 
-        // --- 收藏逻辑优化：即时保存与静默同步 ---
+        function bindDrag(el, idx) {
+            el.ondragstart = (e) => { e.dataTransfer.setData('idx', idx); el.classList.add('dragging'); };
+            el.ondragend = () => { el.classList.remove('dragging'); el.draggable = false; };
+            el.ondragover = (e) => { e.preventDefault(); el.classList.add('drag-over'); };
+            el.ondragleave = () => el.classList.remove('drag-over');
+            el.ondrop = (e) => {
+                const fromIdx = e.dataTransfer.getData('idx');
+                const item = allTools.splice(fromIdx, 1)[0];
+                allTools.splice(idx, 0, item);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(allTools));
+                renderAll();
+            };
+        }
+
         async function toggleFav(id) {
             const t = allTools.find(x => x.id === id);
             if (t) {
                 t.fav = !t.fav;
-                // 1. 立即更新界面
                 renderAll();
-                // 2. 立即持久化到本地
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(allTools));
-                // 3. 静默同步云端，不打扰用户
                 await syncToGitHub(allTools, true);
             }
         }
@@ -501,8 +521,12 @@
             localStorage.setItem('tool_his_v11', JSON.stringify(his));
         }
 
-        function updateData(idx, f, v) { allTools[idx][f] = v; }
-        function removeTool(idx) { if (confirm('删除此卡片？')) { allTools.splice(idx, 1); renderAll(); } }
+        function updateData(idx, f, v) {
+            allTools[idx][f] = v;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(allTools));
+        }
+
+        function removeTool(idx) { if (confirm('确认删除？')) { allTools.splice(idx, 1); renderAll(); } }
 
         function addNewTool() {
             allTools.unshift({ id: Date.now(), title: "新工具", icon: "🛠️", link: "#", category: "默认", desc: "点击编辑", fav: false });
@@ -511,22 +535,22 @@
 
         function toggleEditMode() {
             isEditing = !isEditing;
-            document.getElementById('editBtn').innerText = isEditing ? '完成' : '管理数据';
+            document.getElementById('editBtn').innerText = isEditing ? '退出编辑' : '管理数据';
             ['saveBtn', 'addBtn'].forEach(id => document.getElementById(id).style.display = isEditing ? 'block' : 'none');
             renderAll();
+            if (!isEditing) initCategories();
         }
 
+        // --- 修改：同步后自动退出编辑 ---
         async function saveAllData() {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(allTools));
-            await syncToGitHub(allTools);
-            toggleEditMode();
-            initCategories();
+            const ok = await syncToGitHub(allTools);
+            if (ok && isEditing) {
+                toggleEditMode(); // 同步成功后自动切换回预览模式
+            }
         }
 
-        function toggleModal() {
-            document.getElementById('configModal').classList.toggle('hidden');
-        }
-
+        function toggleModal() { document.getElementById('configModal').classList.toggle('hidden'); }
         function saveConfig() {
             localStorage.setItem('gh_token', document.getElementById('ghToken').value.trim());
             localStorage.setItem('gh_repo', document.getElementById('ghRepo').value.trim() || DEFAULT_REPO);
@@ -558,19 +582,6 @@
             const grid = document.getElementById(id);
             if (data.length === 0) grid.innerHTML = `<div class="empty-hint">${msg}</div>`;
             else renderGrid(id, data);
-        }
-
-        function bindDrag(el, idx) {
-            el.ondragstart = (e) => { e.dataTransfer.setData('idx', idx); el.classList.add('dragging'); };
-            el.ondragend = () => el.classList.remove('dragging');
-            el.ondragover = (e) => { e.preventDefault(); el.classList.add('drag-over'); };
-            el.ondragleave = () => el.classList.remove('drag-over');
-            el.ondrop = (e) => {
-                const fromIdx = e.dataTransfer.getData('idx');
-                const item = allTools.splice(fromIdx, 1)[0];
-                allTools.splice(idx, 0, item);
-                renderAll();
-            };
         }
     </script>
 </body>
