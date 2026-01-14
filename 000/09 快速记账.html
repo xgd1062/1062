@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>极简记账 Pro - 全功能终结版</title>
+    <style>
+        :root {
+            --primary: #4361ee;
+            --expense: #ef233c;
+            --income: #2ec4b6;
+            --bg: #f8f9fa;
+            --card: #ffffff;
+            --text: #2b2d42;
+            --gray: #8d99ae;
+            --radius: 12px;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+
+        body {
+            max-width: 500px;
+            margin: 0 auto;
+            background: var(--bg);
+            color: var(--text);
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        /* 顶部看板 */
+        .dashboard {
+            background: var(--primary);
+            color: white;
+            padding: 20px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+        }
+
+        .budget-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 10px;
+        }
+
+        .budget-label {
+            font-size: 0.8em;
+            opacity: 0.8;
+        }
+
+        .budget-value {
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+
+        .budget-setting {
+            text-align: right;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        .budget-setting:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .progress-container {
+            background: rgba(255, 255, 255, 0.2);
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            background: #fff;
+            height: 100%;
+            transition: width 0.5s ease;
+        }
+
+        /* 输入区 */
+        .input-card {
+            background: var(--card);
+            padding: 20px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+        }
+
+        #quick-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #edf2f4;
+            border-radius: 8px;
+            font-size: 1.1em;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        #quick-input:focus {
+            border-color: var(--primary);
+        }
+
+        .preview {
+            font-size: 0.85em;
+            color: var(--gray);
+            margin-top: 8px;
+            min-height: 20px;
+        }
+
+        /* 列表区 */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .btn-text {
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .entry-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .entry-item {
+            background: var(--card);
+            padding: 12px 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid var(--expense);
+            animation: slideIn 0.3s ease;
+        }
+
+        .entry-item.is-income {
+            border-left-color: var(--income);
+        }
+
+        /* 弹窗样式 */
+        dialog {
+            border: none;
+            border-radius: var(--radius);
+            padding: 0;
+            width: 95%;
+            max-width: 480px;
+            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #eee;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .modal-content {
+            padding: 20px;
+            max-height: 75vh;
+            overflow-y: auto;
+        }
+
+        .date-filter {
+            background: #fff;
+            border: 1px solid #eee;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            font-size: 0.8em;
+        }
+
+        .date-filter input {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 4px;
+            font-size: 1em;
+            flex: 1;
+        }
+
+        .stat-card {
+            background: #f0f4ff;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .cat-row {
+            margin-bottom: 10px;
+        }
+
+        .cat-label {
+            font-size: 0.8em;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .cat-bar-bg {
+            background: #dfe5f3;
+            height: 6px;
+            border-radius: 3px;
+        }
+
+        .cat-bar-fill {
+            background: var(--primary);
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.5s;
+        }
+
+        /* 危险区域 */
+        .danger-zone {
+            margin-top: 30px;
+            padding: 15px;
+            border: 1px dashed #ffb3b3;
+            border-radius: 8px;
+            background: #fff5f5;
+            text-align: center;
+        }
+
+        .btn-danger {
+            background: #ef233c;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+
+        .btn-danger:hover {
+            background: #d90429;
+        }
+
+        #toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            display: none;
+            z-index: 100;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="dashboard">
+        <div class="budget-info">
+            <div>
+                <div class="budget-label">今日总支出</div>
+                <div id="daily-total" class="budget-value">￥0.00</div>
+            </div>
+            <div class="budget-setting" onclick="updateBudget()">
+                <div style="font-size: 0.7em; opacity: 0.8;">日预算 <span id="budget-limit-val">200</span></div>
+                <div id="budget-percent" style="font-size: 1.2em; font-weight: bold;">0%</div>
+            </div>
+        </div>
+        <div class="progress-container">
+            <div id="progress-bar" class="progress-bar" style="width: 0%"></div>
+        </div>
+    </div>
+
+    <div class="input-card">
+        <input type="text" id="quick-input" placeholder="输入: 咖啡 15 或 奖金 100" autocomplete="off">
+        <div id="preview" class="preview">识别预览...</div>
+    </div>
+
+    <div class="section-header">
+        <h2 style="font-size: 1.1em; margin: 0;">今日明细</h2>
+        <div><button class="btn-text" onclick="exportData()">导出 CSV</button><button class="btn-text"
+                style="margin-left:10px" onclick="openHistory()">深度分析</button></div>
+    </div>
+
+    <ul id="entry-list" class="entry-list"></ul>
+    <div id="toast">已撤销 <button class="btn-text" style="color: #4cc9f0; margin-left:10px"
+            onclick="undoDelete()">撤销</button></div>
+
+    <dialog id="history-modal">
+        <div class="modal-header">
+            <div style="display:flex; justify-content:space-between; align-items:center"><strong>深度数据分析</strong><button
+                    class="btn-text" onclick="this.closest('dialog').close()">关闭</button></div>
+        </div>
+        <div class="modal-content">
+            <div class="date-filter"><input type="date" id="start-date"><span>至</span><input type="date" id="end-date">
+            </div>
+            <div id="analysis-render-area"></div>
+            <div class="danger-zone">
+                <div style="font-size: 0.8em; color: #666; margin-bottom: 10px;">⚠️ 数据管理</div>
+                <button class="btn-danger" onclick="clearAllData()">清空全部本地数据</button>
+            </div>
+        </div>
+    </dialog>
+
+    <script>
+        const STORAGE_KEYS = { TODAY: 'qa_v3_today', HISTORY: 'qa_v3_history', BUDGET: 'qa_v3_budget' };
+        const CATEGORIES = {
+            '餐饮': ['饭', '餐', '吃', '咖啡', '饮', '零食', '水果', '麦当劳', '外卖'],
+            '交通': ['车', '地铁', '打车', '公交', '加油', '票'],
+            '生活': ['超市', '买菜', '水费', '电费', '话费', '房租', '生活'],
+            '购物': ['买', '鞋', '衣服', '淘宝', '京东', '拼多多'],
+            '其他': []
+        };
+
+        let state = { todayEntries: [], historyEntries: [], dailyBudget: 200, lastDeleted: null };
+
+        // --- 核心逻辑 ---
+        function getCategory(desc) {
+            for (let cat in CATEGORIES) { if (CATEGORIES[cat].some(k => desc.includes(k))) return cat; }
+            return '其他';
+        }
+
+        function parseInput(input) {
+            const text = input.trim();
+            if (!text) return null;
+            const mathMatch = text.match(/[\d\+\-\.\*\/]+/);
+            let amount = 0, desc = text;
+            if (mathMatch) {
+                try { amount = Function(`"use strict"; return (${mathMatch[0]})`)(); desc = text.replace(mathMatch[0], '').trim() || '未分类记录'; }
+                catch (e) { return null; }
+            }
+            const isInc = ['收', '入', '工资', '奖', '红包'].some(k => desc.includes(k));
+            return { amount: Math.abs(amount), description: desc, type: isInc ? 'income' : 'expense', timestamp: Date.now(), category: getCategory(desc) };
+        }
+
+        // --- 删除全部数据 ---
+        function clearAllData() {
+            if (confirm("🚨 警告：这将彻底删除所有历史记录和设置，且不可恢复！\n\n确定要继续吗？")) {
+                localStorage.clear();
+                state.todayEntries = [];
+                state.historyEntries = [];
+                state.dailyBudget = 200;
+                save();
+                render();
+                document.getElementById('history-modal').close();
+                alert("数据已全部清空。");
+            }
+        }
+
+        // --- 分析与渲染 ---
+        function openHistory() {
+            const today = new Date();
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(today.getDate() - 6);
+            document.getElementById('start-date').value = sevenDaysAgo.toISOString().split('T')[0];
+            document.getElementById('end-date').value = today.toISOString().split('T')[0];
+            renderAnalysis();
+            document.getElementById('history-modal').showModal();
+        }
+
+        document.getElementById('start-date').addEventListener('change', renderAnalysis);
+        document.getElementById('end-date').addEventListener('change', renderAnalysis);
+
+        function renderAnalysis() {
+            const startStr = document.getElementById('start-date').value;
+            const endStr = document.getElementById('end-date').value;
+            if (!startStr || !endStr) return;
+
+            const startTime = new Date(startStr + " 00:00:00").getTime();
+            const endTime = new Date(endStr + " 23:59:59").getTime();
+            const filteredData = [...state.todayEntries, ...state.historyEntries].filter(item => item.timestamp >= startTime && item.timestamp <= endTime);
+
+            const area = document.getElementById('analysis-render-area');
+            if (filteredData.length === 0) {
+                area.innerHTML = '<p style="color:#999;text-align:center;margin:8px 0;">该时段无数据</p>';
+                return;
+            }
+
+            let totalExp = 0, totalInc = 0;
+            const catStats = {};
+            filteredData.forEach(item => {
+                if (item.type === 'expense') {
+                    totalExp += item.amount;
+                    catStats[item.category] = (catStats[item.category] || 0) + item.amount;
+                } else totalInc += item.amount;
+            });
+
+            let html = `<div class="stat-card"><div style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:1px solid #dfe5f3; padding-bottom:5px;">
+                    <div><small>支出</small><br><b style="color:var(--expense)">￥${totalExp.toFixed(2)}</b></div>
+                    <div style="text-align:right"><small>收入</small><br><b style="color:var(--income)">￥${totalInc.toFixed(2)}</b></div>
+                    </div><h4>📊 分类占比</h4>`;
+
+            Object.keys(catStats).sort((a, b) => catStats[b] - catStats[a]).forEach(cat => {
+                const pct = (catStats[cat] / totalExp * 100).toFixed(1);
+                html += `<div class="cat-row"><div class="cat-label"><span>${cat}</span><b>￥${catStats[cat].toFixed(2)}</b></div>
+                     <div class="cat-bar-bg"><div class="cat-bar-fill" style="width:${pct}%"></div></div></div>`;
+            });
+            html += `</div><h4>📃 明细</h4><div style="font-size:0.85em;">` +
+                filteredData.map(item => `<div style="display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #f0f0f0;">
+                <span>${new Date(item.timestamp).toLocaleDateString().slice(5)} ${item.description}</span>
+                <b style="color:${item.type === 'income' ? 'var(--income)' : 'var(--expense)'}">￥${item.amount.toFixed(2)}</b></div>`).join('') + `</div>`;
+            area.innerHTML = html;
+        }
+
+        // --- 基础维护 ---
+        function render() {
+            const listEl = document.getElementById('entry-list');
+            listEl.innerHTML = '';
+            let totalExp = 0;
+            state.todayEntries.forEach((item, i) => {
+                if (item.type === 'expense') totalExp += item.amount;
+                const li = document.createElement('li');
+                li.className = `entry-item ${item.type === 'income' ? 'is-income' : ''}`;
+                li.innerHTML = `<div style="flex-grow:1"><span style="font-weight:500;display:block">${item.description} <small style="color:#999">#${item.category}</small></span>
+                            <span style="font-size:0.7em;color:var(--gray)">${new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></div>
+                            <div style="display:flex; align-items:center"><span style="color:${item.type === 'income' ? 'var(--income)' : 'var(--expense)'}; font-weight:bold;">
+                            ${item.type === 'income' ? '+' : '-'}￥${item.amount.toFixed(2)}</span><button style="border:none;background:none;color:#ccc;cursor:pointer;margin-left:8px;" onclick="deleteEntry(${i})">✕</button></div>`;
+                listEl.appendChild(li);
+            });
+            document.getElementById('daily-total').textContent = `￥${totalExp.toFixed(2)}`;
+            const pct = Math.min((totalExp / state.dailyBudget) * 100, 100);
+            document.getElementById('progress-bar').style.width = `${pct}%`;
+            document.getElementById('budget-percent').textContent = `${Math.round(pct)}%`;
+            document.getElementById('budget-limit-val').textContent = state.dailyBudget;
+        }
+
+        function init() {
+            state.dailyBudget = parseFloat(localStorage.getItem(STORAGE_KEYS.BUDGET)) || 200;
+            const todayStr = new Date().toLocaleDateString();
+            const loadedToday = JSON.parse(localStorage.getItem(STORAGE_KEYS.TODAY) || '[]');
+            state.historyEntries = JSON.parse(localStorage.getItem(STORAGE_KEYS.HISTORY) || '[]');
+            state.todayEntries = loadedToday.filter(e => {
+                if (new Date(e.timestamp).toLocaleDateString() === todayStr) return true;
+                state.historyEntries.unshift(e); return false;
+            });
+            save(); render();
+        }
+
+        function save() { localStorage.setItem(STORAGE_KEYS.TODAY, JSON.stringify(state.todayEntries)); localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(state.historyEntries)); }
+        function deleteEntry(i) { state.lastDeleted = { index: i, data: state.todayEntries[i] }; state.todayEntries.splice(i, 1); save(); render(); document.getElementById('toast').style.display = 'block'; setTimeout(() => document.getElementById('toast').style.display = 'none', 4000); }
+        function undoDelete() { if (state.lastDeleted) { state.todayEntries.splice(state.lastDeleted.index, 0, state.lastDeleted.data); state.lastDeleted = null; document.getElementById('toast').style.display = 'none'; save(); render(); } }
+        function updateBudget() { const v = prompt("新预算：", state.dailyBudget); if (v && !isNaN(v)) { state.dailyBudget = parseFloat(v); localStorage.setItem(STORAGE_KEYS.BUDGET, state.dailyBudget); render(); } }
+        function exportData() {
+            const all = [...state.todayEntries, ...state.historyEntries];
+            let csv = "\uFEFF日期,分类,描述,金额,类型\n";
+            all.forEach(e => csv += `${new Date(e.timestamp).toLocaleString()},${e.category},${e.description},${e.amount},${e.type}\n`);
+            const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' })); a.download = `财务报表_${new Date().toLocaleDateString()}.csv`; a.click();
+        }
+
+        document.getElementById('quick-input').addEventListener('keypress', e => { if (e.key === 'Enter') { const p = parseInput(e.target.value); if (p) { state.todayEntries.unshift(p); e.target.value = ''; save(); render(); } } });
+        document.getElementById('quick-input').addEventListener('input', e => { const p = parseInput(e.target.value); document.getElementById('preview').innerHTML = p ? `识别为 [${p.category}]：￥${p.amount.toFixed(2)}` : '识别预览...'; });
+
+        init();
+    </script>
+</body>
+
+</html>
