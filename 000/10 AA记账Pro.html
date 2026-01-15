@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AA记账Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #f1f5f9;
+            font-size: 13px;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            padding: 12px;
+            margin-bottom: 8px;
+        }
+
+        .input-line {
+            border: none;
+            border-bottom: 1px solid #e2e8f0;
+            background: transparent;
+            width: 100%;
+            border-radius: 0;
+            padding: 4px 0;
+        }
+
+        .input-line:focus {
+            outline: none;
+            border-bottom-color: #6366f1;
+        }
+
+        select {
+            appearance: none;
+            border: none;
+            background: transparent;
+            width: 100%;
+            padding: 4px 0;
+            outline: none;
+            border-bottom: 1px solid #e2e8f0;
+            border-radius: 0;
+        }
+
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        /* 严格分配百分比，确保表头和内容对齐 */
+        .col-name {
+            width: 48%;
+        }
+
+        .col-amount {
+            width: 22%;
+        }
+
+        .col-payer {
+            width: 25%;
+        }
+
+        .col-del {
+            width: 5%;
+            text-align: right;
+        }
+    </style>
+</head>
+
+<body class="p-2">
+    <div class="max-w-md mx-auto">
+        <header class="flex justify-between items-center mb-3 px-1">
+            <h1 class="text-lg font-black text-slate-800 tracking-tighter">AA极速结账</h1>
+            <div id="totalSum" class="text-[11px] font-mono text-white bg-slate-900 px-2 py-0.5 rounded">总额: ￥0</div>
+        </header>
+
+        <div class="card">
+            <div class="flex justify-between items-center mb-3">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">参与人员</span>
+                <button onclick="addUser()" class="text-[10px] bg-indigo-600 text-white px-2 py-0.5 rounded">+
+                    增加</button>
+            </div>
+            <div id="userList" class="grid grid-cols-4 gap-2">
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="flex justify-between items-center mb-3">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">账单明细</span>
+                <button onclick="addActivity()" class="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded">+
+                    活动</button>
+            </div>
+
+            <div class="flex items-center mb-1 text-[10px] text-slate-400 font-bold px-0">
+                <div class="col-name">项目名称</div>
+                <div class="col-amount">金额</div>
+                <div class="col-payer">支付者</div>
+                <div class="col-del"></div>
+            </div>
+
+            <div id="activityList" class="space-y-4">
+            </div>
+        </div>
+
+        <div class="card bg-indigo-600 text-white shadow-lg">
+            <div id="avgDisplay"
+                class="text-xs text-indigo-100 mb-2 border-b border-indigo-400 pb-1 italic text-center text-sm font-bold">
+                人均支出: ￥0</div>
+            <div id="resultOutput" class="space-y-2 font-mono text-sm px-1"></div>
+        </div>
+    </div>
+
+    <script>
+        let state = JSON.parse(localStorage.getItem('aa_pro_final_v1')) || {
+            users: [{ id: 1, name: "老王" }, { id: 2, name: "小李" }, { id: 3, name: "阿强" }],
+            activities: [{ id: 1, title: "活动1", amount: 0, payerId: 1 }]
+        };
+
+        function save() {
+            localStorage.setItem('aa_pro_final_v1', JSON.stringify(state));
+            calculate();
+        }
+
+        function addUser() {
+            const nextId = Date.now();
+            state.users.push({ id: nextId, name: `参与者${state.users.length + 1}` });
+            render();
+        }
+
+        function removeUser(id) {
+            if (state.users.length <= 1) return;
+            state.users = state.users.filter(u => u.id !== id);
+            // 修正支付者引用
+            state.activities.forEach(a => { if (a.payerId === id) a.payerId = state.users[0].id; });
+            render();
+        }
+
+        function handleNameChange(id, newName) {
+            const user = state.users.find(x => x.id === id);
+            if (user) user.name = newName;
+            // 实时同步所有下拉框的名字
+            document.querySelectorAll(`.payer-select`).forEach(sel => {
+                const opt = sel.querySelector(`option[value="${id}"]`);
+                if (opt) opt.innerText = newName;
+            });
+            save();
+        }
+
+        function render() {
+            // 人员渲染：补回右上角删除按钮
+            const uList = document.getElementById('userList');
+            uList.innerHTML = state.users.map(u => `
+                <div class="relative flex items-center bg-slate-50 rounded border border-slate-200">
+                    <input class="w-full bg-transparent text-[11px] font-bold outline-none text-center py-1.5 px-1" 
+                           value="${u.name}" onfocus="this.select()"
+                           oninput="handleNameChange(${u.id}, this.value)">
+                    <button onclick="removeUser(${u.id})" 
+                            class="absolute -top-1.5 -right-1.5 bg-white text-red-500 rounded-full w-4 h-4 flex items-center justify-center text-[12px] shadow-sm border border-red-100">
+                            ×
+                    </button>
+                </div>
+            `).join('');
+
+            // 活动渲染：精确对齐
+            const aList = document.getElementById('activityList');
+            aList.innerHTML = state.activities.map(a => `
+                <div class="flex items-center">
+                    <div class="col-name pr-3">
+                        <input class="input-line font-bold text-slate-700 text-xs" 
+                               value="${a.title}" onfocus="this.select()"
+                               oninput="state.activities.find(x=>x.id===${a.id}).title=this.value; save()">
+                    </div>
+                    <div class="col-amount pr-3">
+                        <div class="flex items-center border-b border-slate-200">
+                            <span class="text-[10px] text-slate-400 mr-0.5">￥</span>
+                            <input type="number" class="w-full bg-transparent font-mono text-indigo-600 font-bold outline-none py-1" 
+                                   value="${a.amount}" onfocus="this.select()"
+                                   oninput="state.activities.find(x=>x.id===${a.id}).amount=parseFloat(this.value)||0; save()">
+                        </div>
+                    </div>
+                    <div class="col-payer">
+                        <select class="payer-select text-xs font-bold text-slate-600" 
+                                onchange="state.activities.find(x=>x.id===${a.id}).payerId=parseInt(this.value); save()">
+                            ${state.users.map(u => `<option value="${u.id}" ${a.payerId === u.id ? 'selected' : ''}>${u.name}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="col-del">
+                        <button onclick="state.activities = state.activities.filter(x=>x.id!==${a.id}); render()" 
+                                class="text-slate-300 text-xl pl-1">×</button>
+                    </div>
+                </div>
+            `).join('');
+            save();
+        }
+
+        function calculate() {
+            const { users, activities } = state;
+            let paidMap = {};
+            users.forEach(u => paidMap[u.id] = 0);
+            let total = activities.reduce((sum, a) => sum + (a.amount || 0), 0);
+            activities.forEach(a => { if (paidMap[a.payerId] !== undefined) paidMap[a.payerId] += a.amount; });
+            const avg = total / (users.length || 1);
+
+            document.getElementById('totalSum').innerText = `总额: ￥${total.toFixed(2)}`;
+            document.getElementById('avgDisplay').innerText = `人均支出: ￥${avg.toFixed(2)}`;
+
+            let balances = users.map(u => ({ name: u.name, net: avg - paidMap[u.id] }));
+            let d_list = balances.filter(b => b.net > 0.01).sort((a, b) => b.net - a.net);
+            let c_list = balances.filter(b => b.net < -0.01).sort((a, b) => a.net - b.net);
+
+            let logs = [];
+            while (d_list.length > 0 && c_list.length > 0) {
+                let d = d_list[0];
+                let c = c_list[0];
+                let amount = Math.min(d.net, Math.abs(c.net));
+                logs.push(`<div class="flex justify-between py-1.5 border-b border-indigo-500/30 last:border-0">
+                    <span>${d.name} <span class="opacity-40 tracking-tighter mx-1">➜</span> ${c.name}</span>
+                    <b class="text-white tracking-tight">￥${amount.toFixed(2)}</b>
+                </div>`);
+                d.net -= amount;
+                c.net += amount;
+                if (d.net <= 0.01) d_list.shift();
+                if (Math.abs(c.net) <= 0.01) c_list.shift();
+            }
+            document.getElementById('resultOutput').innerHTML = logs.length > 0 ? logs.join('') : '<div class="text-center opacity-40 py-1">账单平整</div>';
+        }
+
+        render();
+    </script>
+</body>
+
+</html>
