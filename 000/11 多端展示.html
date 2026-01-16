@@ -1,202 +1,372 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>同步工具 v6.5 - 安全直连版</title>
+    <title>同步工具 v7.1 - 全API直连版</title>
     <style>
-        :root { --primary: #007aff; --bg: #f2f2f7; --card: #ffffff; --success: #34c759; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .main-container { width: 100%; max-width: 500px; display: flex; flex-direction: column; gap: 15px; }
-        .status-bar { font-size: 12px; color: #8e8e93; background: #e5e5ea; padding: 4px 12px; border-radius: 20px; display: flex; align-items: center; gap: 6px; }
-        .dot { width: 8px; height: 8px; border-radius: 50%; background: #34c759; }
-        .card { background: var(--card); border-radius: 18px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); position: relative; width: 100%; box-sizing: border-box; }
-        
-        /* 保持展示框与编辑框 UI 一致 */
-        .content-area { 
-            font-size: 16px; line-height: 1.6; color: #1c1c1e; white-space: pre-wrap; 
-            word-wrap: break-word; min-height: 200px; width: 100%; border: none; 
-            padding: 10px; margin: 0 0 55px 0; font-family: inherit; box-sizing: border-box; 
-        }
-        textarea.content-area { 
-            display: none; background: #f9f9fb; outline: none; resize: none; 
-            border: 1px solid #efeff4; border-radius: 12px;
+        :root {
+            --primary: #007aff;
+            --bg: #f2f2f7;
+            --card: #ffffff;
+            --success: #34c759;
         }
 
-        .action-bar { position: absolute; bottom: 15px; right: 15px; display: flex; gap: 8px; }
-        button { padding: 8px 14px; border-radius: 10px; border: none; font-size: 13px; font-weight: 500; cursor: pointer; display: flex; align-items: center; }
-        .btn-blur { background: #f0f0f5; color: #333; }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-success { background: var(--success); color: white; }
+        body {
+            font-family: -apple-system, sans-serif;
+            background: var(--bg);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
 
-        .image-container { width: 100%; background: #e5e5ea; border-radius: 18px; overflow: hidden; min-height: 200px; display: flex; align-items: center; justify-content: center; }
-        #img-box { width: 100%; height: auto; display: block; opacity: 0; transition: opacity 0.4s; }
-        #toast { position: fixed; top: 30px; background: rgba(0,0,0,0.8); color: white; padding: 10px 20px; border-radius: 20px; font-size: 14px; opacity: 0; transition: 0.3s; pointer-events: none; z-index: 1000; }
+        .main-container {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .status-bar {
+            font-size: 12px;
+            color: #8e8e93;
+            background: #e5e5ea;
+            padding: 4px 12px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ccc;
+        }
+
+        .dot.active {
+            background: #34c759;
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: 18px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+            position: relative;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .content-area {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #1c1c1e;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            min-height: 200px;
+            width: 100%;
+            border: none;
+            padding: 10px;
+            margin: 0 0 55px 0;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
+
+        textarea.content-area {
+            display: none;
+            background: #f9f9fb;
+            outline: none;
+            resize: none;
+            border: 1px solid #efeff4;
+            border-radius: 12px;
+        }
+
+        .action-bar {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            display: flex;
+            gap: 8px;
+        }
+
+        button {
+            padding: 8px 14px;
+            border-radius: 10px;
+            border: none;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: 0.2s;
+        }
+
+        .btn-blur {
+            background: #f0f0f5;
+            color: #333;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .image-wrapper {
+            position: relative;
+            width: 100%;
+            border-radius: 18px;
+            overflow: hidden;
+            background: #e5e5ea;
+            min-height: 220px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+        }
+
+        #img-box {
+            width: 100%;
+            height: auto;
+            display: block;
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+
+        .img-upload-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transition: opacity 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .image-wrapper:hover .img-upload-overlay {
+            opacity: 1;
+        }
+
+        .upload-btn-icon {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px 18px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        #toast {
+            position: fixed;
+            top: 30px;
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            opacity: 0;
+            transition: 0.3s;
+            pointer-events: none;
+            z-index: 1000;
+        }
     </style>
 </head>
+
 <body>
 
-<div class="main-container">
-    <div class="status-bar">
-        <div class="dot" id="status-dot"></div>
-        <span id="status-text">连接中...</span>
-    </div>
+    <div class="main-container">
+        <div class="status-bar">
+            <div class="dot" id="status-dot"></div>
+            <span id="status-text">同步引擎加载中...</span>
+        </div>
 
-    <div class="card">
-        <div id="text-box" class="content-area">数据加载中...</div>
-        <textarea id="edit-area" class="content-area" spellcheck="false" placeholder="请输入内容..."></textarea>
-        
-        <div class="action-bar">
-            <button id="btn-copy" class="btn-blur">复制</button>
-            <button id="btn-edit" class="btn-blur">编辑</button>
-            <button id="btn-paste" class="btn-success" style="display:none">粘贴覆盖</button>
-            <button id="btn-send" class="btn-primary" style="display:none">发布同步</button>
-            <button id="btn-cancel" class="btn-blur" style="display:none">取消</button>
+        <div class="card">
+            <div id="text-box" class="content-area">正在从 API 获取最新文字...</div>
+            <textarea id="edit-area" class="content-area" spellcheck="false"></textarea>
+            <div class="action-bar">
+                <button id="btn-copy" class="btn-blur">复制</button>
+                <button id="btn-edit" class="btn-blur">编辑文字</button>
+                <button id="btn-paste" class="btn-success" style="display:none">粘贴覆盖</button>
+                <button id="btn-send" class="btn-primary" style="display:none">同步文本</button>
+                <button id="btn-cancel" class="btn-blur" style="display:none">取消</button>
+            </div>
+        </div>
+
+        <div class="image-wrapper">
+            <div id="img-loading-text"
+                style="position:absolute; width:100%; text-align:center; top:45%; color:#8e8e93; font-size:13px;">正在从
+                API 获取最新图片...</div>
+            <img id="img-box" />
+            <div class="img-upload-overlay" onclick="triggerImageUpload()">
+                <div class="upload-btn-icon">更换并重命名为 11.png</div>
+            </div>
+            <input type="file" id="file-input" accept="image/*" style="display: none;">
         </div>
     </div>
 
-    <div class="image-container">
-        <img id="img-box" />
-    </div>
-</div>
+    <div id="toast"></div>
 
-<div id="toast"></div>
+    <script>
+        const CONFIG = { owner: "xgd1062", repo: "1062", txt_path: "111/11.txt", img_path: "111/11.png", branch: "main" };
+        const API_TXT = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${CONFIG.txt_path}`;
+        const API_IMG = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${CONFIG.img_path}`;
 
-<script>
-    const CONFIG = { owner: "xgd1062", repo: "1062", path: "111/11.txt", branch: "main", img: "111/11.jpg" };
-    const API_URL = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${CONFIG.path}`;
-    const IMG_URL = `https://cdn.jsdelivr.net/gh/${CONFIG.owner}/${CONFIG.repo}@${CONFIG.branch}/${CONFIG.img}`;
+        const textBox = document.getElementById('text-box');
+        const editArea = document.getElementById('edit-area');
+        const imgBox = document.getElementById('img-box');
+        const statusText = document.getElementById('status-text');
+        const statusDot = document.getElementById('status-dot');
+        const fileInput = document.getElementById('file-input');
 
-    const textBox = document.getElementById('text-box');
-    const editArea = document.getElementById('edit-area');
-    const imgBox = document.getElementById('img-box');
-    const statusText = document.getElementById('status-text');
-    const statusDot = document.getElementById('status-dot');
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg; t.style.opacity = 1;
+            setTimeout(() => t.style.opacity = 0, 2500);
+        }
 
-    function showToast(msg) {
-        const t = document.getElementById('toast');
-        t.innerText = msg; t.style.opacity = 1;
-        setTimeout(() => t.style.opacity = 0, 2000);
-    }
+        function getAuthHeader() {
+            const token = localStorage.getItem('gh_token');
+            return token ? { "Authorization": `token ${token}` } : {};
+        }
 
-    // 核心读取函数
-    async function loadLatestData() {
-        let token = localStorage.getItem('gh_token');
-        const headers = token ? { "Authorization": `token ${token}` } : {};
+        // --- 核心改动：图片和文字全部通过 API 获取内容 ---
+        async function initAllData() {
+            const headers = getAuthHeader();
+            statusDot.classList.remove('active');
 
-        try {
-            const res = await fetch(`${API_URL}?t=${Date.now()}`, { headers: headers, cache: 'no-store' });
-            if (!res.ok) throw new Error(res.status);
+            try {
+                // 1. 获取文字 (API 直连)
+                const resTxt = await fetch(`${API_TXT}?t=${Date.now()}`, { headers, cache: 'no-store' });
+                if (resTxt.ok) {
+                    const dataTxt = await resTxt.json();
+                    textBox.innerText = decodeURIComponent(escape(atob(dataTxt.content)));
+                }
 
-            const data = await res.json();
-            const decodedText = decodeURIComponent(escape(atob(data.content)));
-            
-            textBox.innerText = decodedText;
-            statusText.innerText = token ? "API 已授权 - 实时模式" : "匿名预览 - 建议编辑时输入 Token";
-            statusDot.style.background = "#34c759";
-            
-            imgBox.src = IMG_URL + "?v=" + Date.now();
-            imgBox.onload = () => imgBox.style.opacity = 1;
-        } catch (e) {
-            statusDot.style.background = "#ff3b30";
-            if(e.message === "404") {
-                textBox.innerText = "错误：找不到文件，请检查路径。";
-            } else {
-                textBox.innerText = "读取受限。请点击“编辑”并输入 Token。";
+                // 2. 获取图片 (关键：直接拿 API 返回的 Base64)
+                const resImg = await fetch(`${API_IMG}?t=${Date.now()}`, { headers, cache: 'no-store' });
+                if (resImg.ok) {
+                    const dataImg = await resImg.json();
+                    // 直接将 API 返回的 base64 字符串拼成图片源
+                    // GitHub API 返回的 content 默认带换行符，需要清理一下
+                    const pureBase64 = dataImg.content.replace(/\s/g, '');
+                    imgBox.src = `data:image/png;base64,${pureBase64}`;
+                    imgBox.onload = () => {
+                        imgBox.style.opacity = 1;
+                        document.getElementById('img-loading-text').style.display = 'none';
+                    };
+                }
+
+                statusText.innerText = localStorage.getItem('gh_token') ? "全 API 直连 - 实时模式" : "匿名模式 - 建议配置 Token";
+                statusDot.classList.add('active');
+            } catch (e) {
+                statusText.innerText = "API 获取失败";
             }
         }
-    }
 
-    // UI 切换逻辑
-    function toggleUI(isEdit) {
-        textBox.style.display = isEdit ? 'none' : 'block';
-        editArea.style.display = isEdit ? 'block' : 'none';
-        ['btn-copy', 'btn-edit'].forEach(id => document.getElementById(id).style.display = isEdit ? 'none' : 'flex');
-        ['btn-paste', 'btn-send', 'btn-cancel'].forEach(id => document.getElementById(id).style.display = isEdit ? 'flex' : 'none');
-        
-        if(isEdit) {
-            editArea.value = textBox.innerText;
-            editArea.style.height = (textBox.offsetHeight > 200 ? textBox.offsetHeight : 200) + 'px';
-            editArea.focus();
+        // 文字同步逻辑
+        document.getElementById('btn-edit').onclick = () => {
+            if (!localStorage.getItem('gh_token')) {
+                const t = prompt("请输入 Token:");
+                if (t) { localStorage.setItem('gh_token', t); initAllData(); }
+            } else { toggleTextUI(true); }
+        };
+
+        async function toggleTextUI(isEdit) {
+            textBox.style.display = isEdit ? 'none' : 'block';
+            editArea.style.display = isEdit ? 'block' : 'none';
+            ['btn-copy', 'btn-edit'].forEach(id => document.getElementById(id).style.display = isEdit ? 'none' : 'flex');
+            ['btn-paste', 'btn-send', 'btn-cancel'].forEach(id => document.getElementById(id).style.display = isEdit ? 'flex' : 'none');
+            if (isEdit) {
+                editArea.value = textBox.innerText;
+                editArea.style.height = (textBox.offsetHeight > 200 ? textBox.offsetHeight : 200) + 'px';
+                editArea.focus();
+            }
         }
-    }
 
-    // 【关键修改点】点击编辑时先验证权限
-    document.getElementById('btn-edit').onclick = async () => {
-        let token = localStorage.getItem('gh_token');
-        
-        if (!token) {
-            const inputToken = prompt("进入编辑模式需要提供 GitHub Token (需勾选 repo 权限):");
-            if (!inputToken) return; // 用户点取消，不进入编辑模式
-            
-            // 简单初步验证 Token 格式（GitHub Token 通常以 ghp_ 开头）
-            localStorage.setItem('gh_token', inputToken);
-            showToast("Token 已保存，正在切换...");
-            await loadLatestData(); // 重新加载一次，确保 Token 有效
+        document.getElementById('btn-send').onclick = async () => {
+            const token = localStorage.getItem('gh_token');
+            const btn = document.getElementById('btn-send');
+            btn.disabled = true; btn.innerText = "正在推送到 API...";
+            try {
+                const getRes = await fetch(`${API_TXT}?t=${Date.now()}`, { headers: { "Authorization": `token ${token}` }, cache: 'no-store' });
+                const fileData = await getRes.json();
+                const putRes = await fetch(API_TXT, {
+                    method: "PUT",
+                    headers: { "Authorization": `token ${token}`, "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        message: "Update Text",
+                        content: btoa(unescape(encodeURIComponent(editArea.value))),
+                        sha: fileData.sha,
+                        branch: CONFIG.branch
+                    })
+                });
+                if (putRes.ok) { showToast("文字已实时更新"); toggleTextUI(false); initAllData(); }
+            } catch (e) { alert("同步失败"); } finally { btn.disabled = false; btn.innerText = "同步文本"; }
+        };
+
+        // 图片上传逻辑 (保持不变，但上传后触发 initAllData)
+        function triggerImageUpload() {
+            if (!localStorage.getItem('gh_token')) {
+                const t = prompt("请先输入 Token:");
+                if (t) { localStorage.setItem('gh_token', t); initAllData(); }
+            } else { fileInput.click(); }
         }
-        
-        toggleUI(true);
-    };
 
-    document.getElementById('btn-cancel').onclick = () => toggleUI(false);
-    
-    document.getElementById('btn-copy').onclick = () => {
-        navigator.clipboard.writeText(textBox.innerText);
-        showToast("已复制");
-    };
+        fileInput.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async (ev) => {
+                const base64 = ev.target.result.split(',')[1];
+                await uploadImage(base64);
+            };
+            reader.readAsDataURL(file);
+        };
 
-    document.getElementById('btn-paste').onclick = async () => {
-        try {
-            editArea.value = await navigator.clipboard.readText();
-            showToast("已粘贴覆盖");
-        } catch(e) { showToast("无法读取剪切板"); }
-    };
+        async function uploadImage(base64) {
+            const token = localStorage.getItem('gh_token');
+            showToast("图片上传中...");
+            try {
+                let sha = null;
+                const g = await fetch(`${API_IMG}?t=${Date.now()}`, { headers: { "Authorization": `token ${token}` }, cache: 'no-store' });
+                if (g.ok) { const d = await g.json(); sha = d.sha; }
 
-    document.getElementById('btn-send').onclick = async () => {
-        const token = localStorage.getItem('gh_token');
-        const btn = document.getElementById('btn-send');
-        btn.disabled = true; btn.innerText = "正在同步...";
-
-        try {
-            // 1. 获取最新 SHA（API 强一致性读取）
-            const getRes = await fetch(`${API_URL}?t=${Date.now()}`, { 
-                headers: { "Authorization": `token ${token}` },
-                cache: 'no-store'
-            });
-            if(!getRes.ok) throw new Error("验证失败，请重新编辑输入 Token");
-            const fileData = await getRes.json();
-            
-            // 2. 发送更新
-            const content = btoa(unescape(encodeURIComponent(editArea.value)));
-            const putRes = await fetch(API_URL, {
-                method: "PUT",
-                headers: { "Authorization": `token ${token}`, "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    message: "Web Update",
-                    content: content,
-                    sha: fileData.sha,
-                    branch: CONFIG.branch
-                })
-            });
-
-            if (putRes.ok) {
-                showToast("同步成功");
-                setTimeout(async () => {
-                    await loadLatestData();
-                    toggleUI(false);
-                    btn.disabled = false;
-                    btn.innerText = "发布同步";
-                }, 800);
-            } else { throw new Error(); }
-        } catch (e) {
-            alert(e.message || "同步失败，Token 可能已失效");
-            localStorage.removeItem('gh_token');
-            btn.disabled = false; btn.innerText = "发布同步";
-            toggleUI(false); // 失败时退回展示模式，强制重新触发编辑权限流程
+                const p = await fetch(API_IMG, {
+                    method: "PUT",
+                    headers: { "Authorization": `token ${token}`, "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        message: "Update Image to 11.png",
+                        content: base64,
+                        sha: sha,
+                        branch: CONFIG.branch
+                    })
+                });
+                if (p.ok) { showToast("图片同步成功！"); initAllData(); }
+            } catch (e) { showToast("图片更新失败"); }
         }
-    };
 
-    loadLatestData();
-</script>
+        document.getElementById('btn-cancel').onclick = () => toggleTextUI(false);
+        document.getElementById('btn-copy').onclick = () => { navigator.clipboard.writeText(textBox.innerText); showToast("已复制文字"); };
+        document.getElementById('btn-paste').onclick = async () => { editArea.value = await navigator.clipboard.readText(); };
+
+        // 初始化
+        initAllData();
+    </script>
 </body>
+
 </html>
