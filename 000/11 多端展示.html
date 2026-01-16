@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>同步工具 v6.3 - 路径修正版</title>
+    <style>
+        :root {
+            --primary: #007aff;
+            --bg: #f2f2f7;
+            --card: #ffffff;
+            --success: #34c759;
+        }
+
+        body {
+            font-family: -apple-system, sans-serif;
+            background: var(--bg);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .main-container {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .header-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #fetch-source {
+            font-size: 11px;
+            color: #8e8e93;
+            background: #e5e5ea;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .mode-selector {
+            display: flex;
+            background: #e5e5ea;
+            padding: 2px;
+            border-radius: 12px;
+        }
+
+        .mode-btn {
+            padding: 6px 16px;
+            border-radius: 10px;
+            border: none;
+            font-size: 13px;
+            cursor: pointer;
+            color: #666;
+            background: transparent;
+        }
+
+        .mode-btn.active {
+            background: white;
+            color: #000;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: 18px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+            position: relative;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .content-area {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #1c1c1e;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            min-height: 180px;
+            width: 100%;
+            border: none;
+            padding: 10px;
+            margin: 0 0 50px 0;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
+
+        textarea.content-area {
+            display: none;
+            background: #f9f9fb;
+            outline: none;
+            resize: none;
+            border: 1px solid #eee;
+            border-radius: 12px;
+        }
+
+        .action-bar {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            display: flex;
+            gap: 8px;
+        }
+
+        button {
+            padding: 8px 14px;
+            border-radius: 10px;
+            border: none;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+
+        .btn-blur {
+            background: #f0f0f5;
+            color: #333;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .image-container {
+            width: 100%;
+            background: #e5e5ea;
+            border-radius: 18px;
+            overflow: hidden;
+            min-height: 220px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #img-box {
+            width: 100%;
+            height: auto;
+            display: block;
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+
+        #toast {
+            position: fixed;
+            top: 30px;
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            opacity: 0;
+            transition: 0.3s;
+            pointer-events: none;
+            z-index: 1000;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="main-container">
+        <div class="header-info">
+            <div id="fetch-source">探测中...</div>
+            <div class="mode-selector">
+                <button class="mode-btn" onclick="updateMode('auto')" id="m-auto">智能</button>
+                <button class="mode-btn" onclick="updateMode('live')" id="m-live">实时</button>
+                <button class="mode-btn" onclick="updateMode('cdn')" id="m-cdn">加速</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div id="text-box" class="content-area">正在读取: 111/11.txt ...</div>
+            <textarea id="edit-area" class="content-area" spellcheck="false"></textarea>
+
+            <div class="action-bar">
+                <button id="btn-copy" class="btn-blur">复制</button>
+                <button id="btn-edit" class="btn-blur">编辑</button>
+                <button id="btn-paste" class="btn-success" style="display:none">粘贴覆盖</button>
+                <button id="btn-send" class="btn-primary" style="display:none">同步更新</button>
+                <button id="btn-cancel" class="btn-blur" style="display:none">取消</button>
+            </div>
+        </div>
+
+        <div class="image-container">
+            <img id="img-box" alt="Loading..." />
+        </div>
+    </div>
+
+    <div id="toast"></div>
+
+    <script>
+        // 修改后的配置：使用 GitHub 仓库内的绝对路径逻辑
+        const CONFIG = {
+            owner: "xgd1062",
+            repo: "1062",
+            path: "111/11.txt", // 移除 ../，使用仓库根目录起算的路径
+            branch: "main",
+            img: "111/11.jpg"
+        };
+
+        const URLS = {
+            CDN: `https://cdn.jsdelivr.net/gh/${CONFIG.owner}/${CONFIG.repo}@${CONFIG.branch}/${CONFIG.path}`,
+            RAW: `https://raw.githubusercontent.com/${CONFIG.owner}/${CONFIG.repo}/${CONFIG.branch}/${CONFIG.path}`,
+            IMG: `https://cdn.jsdelivr.net/gh/${CONFIG.owner}/${CONFIG.repo}@${CONFIG.branch}/${CONFIG.img}`,
+            API: `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${CONFIG.path}`
+        };
+
+        let state = {
+            mode: localStorage.getItem('fetch_mode') || 'auto',
+            token: localStorage.getItem('gh_token') || '',
+            lastUpdate: parseInt(localStorage.getItem('last_update_time') || '0')
+        };
+
+        const textBox = document.getElementById('text-box');
+        const editArea = document.getElementById('edit-area');
+        const imgBox = document.getElementById('img-box');
+        const sourceTag = document.getElementById('fetch-source');
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg; t.style.opacity = 1;
+            setTimeout(() => t.style.opacity = 0, 2000);
+        }
+
+        async function fetchData() {
+            const now = Date.now();
+            const diff = now - state.lastUpdate;
+
+            // 强制刷新逻辑：实时模式或20分钟内更新，使用超强随机数穿透
+            let useRaw = (state.mode === 'live' || (state.mode === 'auto' && diff < 1200000));
+            let fetchUrl = useRaw ? `${URLS.RAW}?t=${now}&unique=${Math.random()}` : `${URLS.CDN}?v=${Math.floor(now / 600000)}`;
+
+            sourceTag.innerText = useRaw ? "● 实时模式 (RAW)" : "○ 加速模式 (CDN)";
+            sourceTag.style.color = useRaw ? "#ff3b30" : "#8e8e93";
+
+            try {
+                const res = await fetch(fetchUrl, { cache: 'no-store' });
+                if (!res.ok) throw new Error();
+                const text = await res.text();
+
+                if (text !== textBox.innerText) {
+                    textBox.innerText = text;
+                    localStorage.setItem('cache_text', text);
+                    imgBox.src = URLS.IMG + "?v=" + now;
+                    imgBox.onload = () => imgBox.style.opacity = 1;
+                }
+            } catch (e) {
+                textBox.innerText = localStorage.getItem('cache_text') || "读取失败，请检查仓库路径";
+            }
+        }
+
+        function updateMode(m) {
+            state.mode = m;
+            localStorage.setItem('fetch_mode', m);
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('m-' + m).classList.add('active');
+            fetchData();
+        }
+
+        function toggleUI(isEdit) {
+            textBox.style.display = isEdit ? 'none' : 'block';
+            editArea.style.display = isEdit ? 'block' : 'none';
+            ['btn-copy', 'btn-edit'].forEach(id => document.getElementById(id).style.display = isEdit ? 'none' : 'flex');
+            ['btn-paste', 'btn-send', 'btn-cancel'].forEach(id => document.getElementById(id).style.display = isEdit ? 'flex' : 'none');
+            if (isEdit) {
+                editArea.value = textBox.innerText;
+                editArea.style.height = (textBox.offsetHeight > 180 ? textBox.offsetHeight : 180) + 'px';
+                editArea.focus();
+            }
+        }
+
+        document.getElementById('btn-edit').onclick = () => toggleUI(true);
+        document.getElementById('btn-cancel').onclick = () => toggleUI(false);
+        document.getElementById('btn-copy').onclick = () => {
+            navigator.clipboard.writeText(textBox.innerText);
+            showToast("复制成功");
+        };
+
+        document.getElementById('btn-paste').onclick = async () => {
+            try {
+                editArea.value = await navigator.clipboard.readText();
+                showToast("已粘贴");
+            } catch (e) { showToast("粘贴失败"); }
+        };
+
+        document.getElementById('btn-send').onclick = async () => {
+            if (!state.token) {
+                state.token = prompt("请输入 Token:");
+                if (!state.token) return;
+                localStorage.setItem('gh_token', state.token);
+            }
+
+            const btn = document.getElementById('btn-send');
+            btn.disabled = true; btn.innerText = "同步中...";
+
+            try {
+                // 必须带时间戳获取最新 SHA
+                const g = await fetch(`${URLS.API}?t=${Date.now()}`, {
+                    headers: { "Authorization": `token ${state.token}` },
+                    cache: 'no-store'
+                });
+                const fileData = await g.json();
+
+                const putRes = await fetch(URLS.API, {
+                    method: "PUT",
+                    headers: { "Authorization": `token ${state.token}`, "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        message: "Sync Update",
+                        content: btoa(unescape(encodeURIComponent(editArea.value))),
+                        sha: fileData.sha,
+                        branch: CONFIG.branch
+                    })
+                });
+
+                if (putRes.ok) {
+                    state.lastUpdate = Date.now();
+                    localStorage.setItem('last_update_time', state.lastUpdate);
+                    showToast("同步成功！");
+                    setTimeout(() => {
+                        updateMode('live'); // 同步后自动强制进入实时模式
+                        toggleUI(false);
+                    }, 500);
+                } else { throw new Error(); }
+            } catch (e) {
+                alert("同步失败：请检查路径或 Token 权限");
+                state.token = ""; localStorage.removeItem('gh_token');
+            } finally {
+                btn.disabled = false; btn.innerText = "同步更新";
+            }
+        };
+
+        updateMode(state.mode);
+    </script>
+</body>
+
+</html>
