@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>内网直达控制台</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #f8fafc;
+            --active: #10b981;
+            --text: #1e293b;
+        }
+
+        body {
+            font-family: -apple-system, sans-serif;
+            background: var(--bg);
+            display: flex;
+            justify-content: center;
+            padding: 40px 20px;
+            user-select: none;
+        }
+
+        .card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 440px;
+        }
+
+        .title {
+            margin: 0 0 20px 0;
+            font-size: 1rem;
+            color: var(--text);
+            font-weight: bold;
+            text-align: center;
+            opacity: 0.8;
+        }
+
+        /* IP 输入区 */
+        .ip-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            background: #f1f5f9;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+        }
+
+        .fixed-text {
+            color: #64748b;
+            font-weight: bold;
+            font-family: monospace;
+            font-size: 1.1rem;
+        }
+
+        .segment {
+            width: 65px;
+            border: none;
+            background: white;
+            color: var(--primary);
+            font-weight: bold;
+            font-family: monospace;
+            font-size: 1.4rem;
+            text-align: center;
+            padding: 6px 0;
+            border-radius: 6px;
+            outline: none;
+        }
+
+        .segment:focus {
+            box-shadow: 0 0 0 2px var(--primary);
+        }
+
+        /* 端口选择区：缩小并居中 */
+        .port-section {
+            width: 60%;
+            margin: 0 auto 25px auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .port-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+            width: 100%;
+        }
+
+        .port-btn {
+            padding: 6px 2px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #475569;
+            text-align: center;
+        }
+
+        .port-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .custom-port-container {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            padding: 4px 10px;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .custom-port-container label {
+            font-size: 0.7rem;
+            color: #94a3b8;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+
+        #customPort {
+            border: none;
+            outline: none;
+            width: 100%;
+            font-family: monospace;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: var(--primary);
+            text-align: center;
+        }
+
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .btn-go {
+            width: 100%;
+            padding: 14px;
+            background: var(--active);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+            transition: 0.2s;
+        }
+
+        .btn-go:hover {
+            transform: translateY(-1px);
+            background: #059669;
+        }
+
+        /* 标签显示完整信息 */
+        .tag-section {
+            margin-top: 25px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 15px;
+        }
+
+        .tag-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .tag {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: 0.2s;
+        }
+
+        .tag:hover {
+            border-color: var(--primary);
+            background: #f0f7ff;
+            transform: translateX(4px);
+        }
+
+        .tag-info-left {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .tag-name {
+            font-weight: bold;
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+
+        .tag-full-address {
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
+        .tag-port-badge {
+            background: #e0e7ff;
+            color: #4338ca;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            font-family: monospace;
+        }
+
+        .tag-del {
+            color: #cbd5e1;
+            font-size: 18px;
+            padding-left: 10px;
+            transition: 0.2s;
+        }
+
+        .tag-del:hover {
+            color: #ef4444;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="card">
+        <div class="title">192.168. 极速访问终端</div>
+
+        <div class="ip-container">
+            <span class="fixed-text">192.168.</span>
+            <input type="number" id="seg3" class="segment" value="5">
+            <span class="fixed-text">.</span>
+            <input type="number" id="seg4" class="segment" placeholder="?" autofocus>
+        </div>
+
+        <div class="port-section">
+            <div class="port-grid">
+                <div class="port-btn active" onclick="setPort(80, this)">80</div>
+                <div class="port-btn" onclick="setPort(8080, this)">8080</div>
+                <div class="port-btn" onclick="setPort(5244, this)">5244</div>
+            </div>
+            <div class="custom-port-container">
+                <label>PORT</label>
+                <input type="number" id="customPort" value="80">
+            </div>
+        </div>
+
+        <button class="btn-go" onclick="navigate()">进入设备 (Enter)</button>
+
+        <div class="tag-section">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 5px;">
+                <span style="font-size: 0.75rem; color: #64748b; font-weight: 600;">已保存的快捷标签</span>
+                <button onclick="addTag()"
+                    style="font-size:11px; border:none; background:none; color:var(--primary); cursor:pointer; font-weight: bold;">+
+                    收藏当前配置</button>
+            </div>
+            <div id="tagGrid" class="tag-grid"></div>
+        </div>
+    </div>
+
+    <script>
+        const s3 = document.getElementById('seg3');
+        const s4 = document.getElementById('seg4');
+        const cp = document.getElementById('customPort');
+
+        window.onload = () => {
+            s4.focus();
+            renderTags();
+
+            // 绑定滚轮事件
+            [s3, s4, cp].forEach(el => {
+                el.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    let val = parseInt(el.value) || 0;
+                    val = e.deltaY < 0 ? val + 1 : val - 1;
+                    if (el.id !== 'customPort') val = Math.max(0, Math.min(255, val));
+                    else val = Math.max(1, Math.min(65535, val));
+                    el.value = val;
+                    if (el.id === 'customPort') {
+                        document.querySelectorAll('.port-btn').forEach(b => b.classList.remove('active'));
+                    }
+                });
+            });
+        };
+
+        function setPort(port, btn) {
+            document.querySelectorAll('.port-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            cp.value = port;
+        }
+
+        document.onkeydown = (e) => { if (e.key === 'Enter') navigate(); };
+
+        function navigate(v3, v4, p) {
+            const val3 = v3 || s3.value;
+            const val4 = v4 || s4.value;
+            const port = p || cp.value;
+            if (!val3 || !val4 || !port) return;
+            const protocol = (port == 443) ? 'https://' : 'http://';
+            const url = `${protocol}192.168.${val3}.${val4}${port == 80 || port == 443 ? '' : ':' + port}`;
+            window.open(url, '_blank');
+        }
+
+        function addTag() {
+            const name = prompt("给这个设备起个名字 (如: 我的服务器):");
+            if (!name) return;
+            const tags = JSON.parse(localStorage.getItem('full_info_tags') || '[]');
+            tags.push({ name, s3: s3.value, s4: s4.value, port: cp.value });
+            localStorage.setItem('full_info_tags', JSON.stringify(tags));
+            renderTags();
+        }
+
+        function deleteTag(idx, e) {
+            e.stopPropagation();
+            const tags = JSON.parse(localStorage.getItem('full_info_tags') || '[]');
+            tags.splice(idx, 1);
+            localStorage.setItem('full_info_tags', JSON.stringify(tags));
+            renderTags();
+        }
+
+        function renderTags() {
+            const grid = document.getElementById('tagGrid');
+            const tags = JSON.parse(localStorage.getItem('full_info_tags') || '[]');
+            grid.innerHTML = tags.length ? '' : '<p style="font-size:0.7rem; color:#94a3b8; text-align:center;">暂无快捷标签</p>';
+            tags.forEach((t, i) => {
+                const div = document.createElement('div');
+                div.className = 'tag';
+                div.onclick = () => navigate(t.s3, t.s4, t.port);
+                div.innerHTML = `
+                <div class="tag-info-left">
+                    <span class="tag-name">${t.name}</span>
+                    <span class="tag-full-address">192.168.${t.s3}.${t.s4}</span>
+                </div>
+                <div style="display:flex; align-items:center;">
+                    <span class="tag-port-badge">${t.port}</span>
+                    <span class="tag-del" onclick="deleteTag(${i}, event)">×</span>
+                </div>
+            `;
+                grid.appendChild(div);
+            });
+        }
+    </script>
+</body>
+
+</html>
