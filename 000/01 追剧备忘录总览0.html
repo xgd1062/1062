@@ -8,11 +8,8 @@
     <style>
         :root {
             --primary-color: #42b983;
-            /* 核心绿色 */
             --card-bg-light: #f0f9f4;
-            /* 淡绿背景 */
             --bg-color: #f8fbf9;
-            /* 限制最大显示 4 列：(100% / 4) */
             --column-width: 25%;
         }
 
@@ -33,12 +30,10 @@
             letter-spacing: 2px;
         }
 
-        /* 限制容器宽度，确保 4 列填满 */
         .app-container {
             width: 100%;
             max-width: 1100px;
             position: relative;
-            cursor: grab;
         }
 
         .scroll-viewport {
@@ -48,13 +43,14 @@
             scrollbar-width: none;
             -ms-overflow-style: none;
             padding-bottom: 20px;
+            /* 允许原生滚动 */
+            -webkit-overflow-scrolling: touch;
         }
 
         .scroll-viewport::-webkit-scrollbar {
             display: none;
         }
 
-        /* 总宽度为 7 列宽 */
         .schedule-inner {
             display: flex;
             width: calc(var(--column-width) * 7);
@@ -78,7 +74,6 @@
         .today .column-content {
             background: rgba(66, 185, 131, 0.08);
             border: 1.5px dashed var(--primary-color);
-            /* 今日高亮 */
         }
 
         .header {
@@ -93,7 +88,6 @@
             color: var(--primary-color);
         }
 
-        /* 固定宽高卡片 */
         .card {
             background: var(--card-bg-light);
             border: 1px solid rgba(66, 185, 131, 0.2);
@@ -102,7 +96,6 @@
             margin: 0 auto 12px auto;
             box-shadow: 0 4px 6px rgba(66, 185, 131, 0.05);
             width: 95%;
-            /* 在列宽内自适应 */
             height: 115px;
             display: flex;
             flex-direction: column;
@@ -116,7 +109,6 @@
         .card:hover {
             transform: translateY(-3px);
             background: #e1f5eb;
-            box-shadow: 0 6px 12px rgba(66, 185, 131, 0.15);
         }
 
         .card-title {
@@ -148,7 +140,6 @@
         .fill {
             height: 100%;
             background: linear-gradient(90deg, #96e6a1 0%, #d4fc79 100%);
-            transition: width 0.5s ease;
         }
 
         .auto-tag {
@@ -157,39 +148,30 @@
             margin-left: 2px;
         }
 
-        /* ================= 手机端专用适配 (仅修改此处) ================= */
+        /* 手机端适配：修正滑动体验 */
         @media (max-width: 768px) {
             :root {
-                /* 强制手机端列宽为 100% 视口宽度 */
-                --column-width: 100vw; 
-            }
-
-            .app-container {
-                max-width: 100vw;
+                --column-width: 100vw;
             }
 
             .scroll-viewport {
-                /* 增加弹性滑动和吸附感 */
                 scroll-snap-type: x mandatory;
-                -webkit-overflow-scrolling: touch;
+                /* 开启吸附 */
             }
 
             .day-column {
-                /* 每一列占据整屏 */
-                flex: 0 0 100vw;
-                padding: 0 10px;
                 scroll-snap-align: center;
+                padding: 0 10px;
             }
 
             .column-content {
-                /* 手机端内容高度自适应，防止出现过长留白 */
                 min-height: auto;
-                margin-bottom: 40px;
+                margin-bottom: 30px;
             }
 
-            h2 {
-                margin: 15px 0;
-                font-size: 1.2rem;
+            .app-container {
+                cursor: default;
+                /* 手机端恢复默认指针 */
             }
         }
     </style>
@@ -218,23 +200,18 @@
 
         async function initBoard() {
             try {
-                // 获取外部 JSON 数据
                 const response = await fetch('01番剧更新信息.json');
                 const result = await response.json();
                 const animeData = result.data;
                 const exportTime = new Date(result.export_time);
-
-                // 计算更新天数差
                 const now = new Date();
                 const diffDays = Math.floor(Math.max(0, now - exportTime) / (1000 * 60 * 60 * 24));
-
                 const board = document.getElementById('scheduleBoard');
-                const today = new Date().getDay();
+                const today = now.getDay();
 
                 weekDays.forEach(dayInfo => {
                     const column = document.createElement('div');
                     column.className = `day-column ${dayInfo.day === today ? 'today' : ''}`;
-
                     let cardsHtml = '';
                     const todayAnimes = animeData.filter(a => a.update_day === dayInfo.value);
 
@@ -246,60 +223,53 @@
 
                         cardsHtml += `
                         <a href="${anime.url}" target="_blank" class="card">
-                            <div class="card-title" title="${anime.name}">${anime.name}</div>
+                            <div class="card-title">${anime.name}</div>
                             <div>
                                 <div class="card-meta">
                                     <span>最新: ${predictedUpdate}${diffDays > 0 && !isFinished ? '<span class="auto-tag">+' + diffDays + '</span>' : ''}</span> 
                                     <span>进度: ${anime.my_progress}/${anime.total_episodes || '??'}</span>
                                 </div>
-                                <div class="progress-bar">
-                                    <div class="fill" style="width: ${progressPercent}%"></div>
-                                </div>
+                                <div class="progress-bar"><div class="fill" style="width: ${progressPercent}%"></div></div>
                             </div>
-                        </a>
-                    `;
+                        </a>`;
                     });
 
-                    column.innerHTML = `
-                    <div class="column-content">
-                        <div class="header">${dayInfo.label}</div>
-                        ${cardsHtml || '<div style="text-align:center; padding:40px; opacity:0.3; font-size:12px;">今日无更新</div>'}
-                    </div>
-                `;
+                    column.innerHTML = `<div class="column-content"><div class="header">${dayInfo.label}</div>${cardsHtml}</div>`;
                     board.appendChild(column);
 
                     if (dayInfo.day === today) {
                         setTimeout(() => {
-                            const viewport = document.getElementById('viewport');
-                            // 修正：滚动到今天
-                            viewport.scrollLeft = column.offsetLeft;
-                        }, 150);
+                            document.getElementById('viewport').scrollLeft = column.offsetLeft;
+                        }, 200);
                     }
                 });
 
                 setupDrag();
-            } catch (err) {
-                console.error("加载失败:", err);
-            }
+            } catch (err) { console.error(err); }
         }
 
-        // 保留原有的 PC 端拖拽逻辑
         function setupDrag() {
             const slider = document.getElementById('viewport');
+            // 如果是触屏设备，跳过 JS 拖拽逻辑，使用原生滑动
+            if ('ontouchstart' in window) return;
+
             let isDown = false, startX, scrollLeft;
+            slider.style.cursor = 'grab';
+
             slider.addEventListener('mousedown', (e) => {
                 isDown = true;
-                slider.style.scrollBehavior = 'auto';
+                slider.style.cursor = 'grabbing';
                 startX = e.pageX - slider.offsetLeft;
                 scrollLeft = slider.scrollLeft;
             });
-            slider.addEventListener('mouseleave', () => isDown = false);
-            slider.addEventListener('mouseup', () => isDown = false);
+            slider.addEventListener('mouseleave', () => { isDown = false; slider.style.cursor = 'grab'; });
+            slider.addEventListener('mouseup', () => { isDown = false; slider.style.cursor = 'grab'; });
             slider.addEventListener('mousemove', (e) => {
                 if (!isDown) return;
                 e.preventDefault();
                 const x = e.pageX - slider.offsetLeft;
-                slider.scrollLeft = scrollLeft - (x - startX) * 1.5;
+                const walk = (x - startX) * 2;
+                slider.scrollLeft = scrollLeft - walk;
             });
         }
 
