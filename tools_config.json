@@ -1,12 +1,12 @@
 [
   {
-    "id": 1768485006380,
-    "title": "蓝奏云",
-    "icon": "🚀",
+    "id": 1766401100014,
+    "title": "蓝奏云控制台",
+    "icon": "☁️",
     "link": "https://pc.woozooo.com/mydisk.php",
-    "category": "工具",
-    "desc": "点击编辑内容",
-    "fav": false
+    "category": "存储",
+    "desc": "蓝奏云盘后台管理，用于上传、分享及管理个人云端文件",
+    "fav": true
   },
   {
     "id": 1768458043238,
