@@ -4,7 +4,7 @@
     "title": "蓝奏云",
     "icon": "🚀",
     "link": "https://pc.woozooo.com/mydisk.php",
-    "category": "云盘",
+    "category": "工具",
     "desc": "点击编辑内容",
     "fav": false
   },
@@ -130,7 +130,7 @@
     "title": "涂鸦手账",
     "icon": "🌐",
     "link": "https://doo.x219.qzz.io/",
-    "category": "默认",
+    "category": "工具",
     "desc": "访问托管在 GitHub Pages 上的个人项目展示或导航页面",
     "fav": true
   }
