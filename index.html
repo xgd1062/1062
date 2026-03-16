@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>诗意工具箱 - 极简精致版</title>
+    <title>诗意工具箱 - 精致微缩版</title>
     <style>
         :root {
             --primary: #a78bfa;
@@ -15,433 +15,163 @@
             --text-dim: #94a3b8;
             --star-color: #fbbf24;
             --empty-bg: rgba(255, 255, 255, 0.02);
+            --danger: #f43f5e;
+            --safe-bottom: env(safe-area-inset-bottom);
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Segoe UI', 'PingFang SC', sans-serif;
             background: radial-gradient(circle at top right, #1e293b, #0f172a);
             color: var(--text-main);
             min-height: 100vh;
-            padding: 40px 20px;
+            padding: 30px 15px;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
+        .container { max-width: 1000px; margin: 0 auto; }
 
-        header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
+        header { text-align: center; margin-bottom: 30px; }
 
         .poem-title {
-            font-size: 2.2rem;
+            font-size: 1.8rem;
             font-weight: 800;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             background: linear-gradient(to right, #818cf8, #c084fc);
             -webkit-background-clip: text;
             color: transparent;
         }
 
-        .controls {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 20px;
-            margin-bottom: 30px;
-        }
+        .controls { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-bottom: 25px; }
 
         #searchInput {
-            width: 100%;
-            max-width: 500px;
-            padding: 12px 25px;
+            width: 100%; max-width: 400px; padding: 10px 20px;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--border);
-            border-radius: 50px;
-            color: white;
-            outline: none;
-            -webkit-backdrop-filter: blur(5px);
-            backdrop-filter: blur(5px);
+            border-radius: 50px; color: white; outline: none;
+            backdrop-filter: blur(5px); font-size: 0.9rem;
         }
 
-        .category-bar {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
+        .category-bar { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
 
         .cat-btn {
-            padding: 6px 16px;
-            border-radius: 10px;
-            border: 1px solid var(--border);
-            background: rgba(255, 255, 255, 0.03);
-            color: var(--text-dim);
-            cursor: pointer;
-            transition: 0.3s;
+            padding: 4px 12px; border-radius: 8px; border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.03); color: var(--text-dim);
+            cursor: pointer; transition: 0.3s; font-size: 0.8rem;
         }
 
-        .cat-btn.active {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
+        .cat-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
 
-        .top-row {
-            display: flex;
-            gap: 25px;
-            margin-bottom: 40px;
-        }
+        .top-row { display: flex; gap: 20px; margin-bottom: 30px; }
 
         .top-column {
-            flex: 1;
-            background: var(--empty-bg);
-            padding: 15px;
-            border-radius: 20px;
-            border: 1px dashed rgba(255, 255, 255, 0.05);
-            min-height: 150px;
+            flex: 1; background: var(--empty-bg); padding: 12px;
+            border-radius: 15px; border: 1px dashed rgba(255, 255, 255, 0.05); min-height: 100px;
         }
 
-        .top-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-        }
-
-        .empty-hint {
-            grid-column: span 2;
-            text-align: center;
-            color: rgba(255, 255, 255, 0.1);
-            font-size: 0.85rem;
-            padding-top: 35px;
-        }
+        .top-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
 
         .section-label {
-            margin-bottom: 15px;
-            font-size: 0.95rem;
-            color: var(--primary);
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            margin-bottom: 12px; font-size: 0.85rem; color: var(--primary);
+            font-weight: bold; display: flex; align-items: center; gap: 6px;
         }
 
         .tool-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
         }
 
-        /* 卡片固定高度 120px */
         .tool-card {
             background: var(--card-bg);
-            border-radius: 16px;
+            border-radius: 12px;
             border: 1px solid var(--border);
-            padding: 18px;
-            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            padding: 12px;
+            transition: all 0.3s ease;
             position: relative;
             text-decoration: none;
             color: inherit;
             display: flex;
             flex-direction: column;
-            -webkit-backdrop-filter: blur(12px);
             backdrop-filter: blur(12px);
-            height: 120px;
+            height: 90px;
             overflow: hidden;
         }
 
         .tool-card:hover:not(.editing-mode) {
-            transform: translateY(-5px);
+            transform: translateY(-3px);
             border-color: var(--primary);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
         }
 
         .editing-mode {
-            cursor: move;
-            height: auto !important;
-            min-height: 120px;
+            border: 1px dashed var(--primary);
+            cursor: pointer;
         }
 
-        .editing-mode input,
-        .editing-mode button {
-            cursor: text;
-        }
-
-        /* 标题单行截断逻辑 */
         .tool-card h3 {
-            color: #fff;
-            font-size: 1.1rem;
-            margin-bottom: 6px;
-            display: block;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            padding-right: 30px;
-            font-weight: 700;
-            width: 100%;
+            color: #fff; font-size: 0.95rem; margin-bottom: 4px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            padding-right: 20px; font-weight: 600;
         }
 
-        /* 描述文字限制2行 */
         .tool-card p {
-            color: var(--text-dim);
-            font-size: 0.85rem;
-            line-height: 1.5;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
+            color: var(--text-dim); font-size: 0.75rem; line-height: 1.4;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
             overflow: hidden;
-            margin-bottom: 0;
         }
 
         .star-btn {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            font-size: 1.3rem;
-            cursor: pointer;
-            color: #4b5563;
-            transition: 0.3s;
-            z-index: 5;
-            padding: 5px;
+            position: absolute; top: 10px; right: 10px;
+            font-size: 1rem; cursor: pointer; color: #4b5563; z-index: 5;
         }
 
-        .star-btn.active {
-            color: var(--star-color);
-            text-shadow: 0 0 12px rgba(251, 191, 36, 0.5);
-        }
+        .star-btn.active { color: var(--star-color); }
 
         .card-tag {
-            position: absolute;
-            bottom: 0;
-            right: 0;
-            padding: 2px 10px;
-            font-size: 0.65rem;
-            background: rgba(167, 139, 250, 0.15);
-            color: var(--primary);
-            border-top-left-radius: 10px;
-            border-left: 1px solid var(--border);
-            border-top: 1px solid var(--border);
+            position: absolute; bottom: 0; right: 0; padding: 1px 6px;
+            font-size: 0.6rem; background: rgba(167, 139, 250, 0.1);
+            color: var(--primary); border-top-left-radius: 8px;
         }
 
-        /* 编辑表单样式 */
-        .edit-group {
-            display: flex;
-            align-items: center;
-            margin-bottom: 6px;
-            gap: 8px;
+        #editorModal {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: #1e293b; border: 1px solid var(--primary);
+            padding: 20px; border-radius: 15px; z-index: 2000;
+            width: 90%; max-width: 500px; box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
         }
 
-        .edit-label {
-            color: var(--primary);
-            min-width: 40px;
-            font-size: 0.75rem;
-            font-weight: bold;
-        }
-
-        .edit-input {
-            flex: 1;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid var(--border);
-            color: #fff;
-            padding: 4px 8px;
-            border-radius: 5px;
-            outline: none;
-            font-size: 0.75rem;
-        }
-
-        #configModal {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: #1e293b;
-            border: 1px solid var(--primary);
-            padding: 30px;
-            border-radius: 20px;
-            z-index: 2000;
-            width: 380px;
-            box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+        #jsonTextArea {
+            width: 100%; height: 300px; background: #0f172a;
+            color: #10b981; border: 1px solid var(--border);
+            border-radius: 8px; padding: 10px; font-family: monospace;
+            font-size: 0.85rem; resize: none; outline: none;
         }
 
         .admin-bar {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 10px;
-            background: rgba(15, 23, 42, 0.9);
-            padding: 10px 25px;
-            border-radius: 40px;
-            border: 1px solid var(--primary);
-            z-index: 1000;
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 8px; background: rgba(15, 23, 42, 0.9);
+            padding: 8px 15px; border-radius: 30px; border: 1px solid var(--primary);
+            z-index: 1000; backdrop-filter: blur(10px);
         }
 
         .btn-main {
-            padding: 8px 18px;
-            border-radius: 20px;
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 0.85rem;
-            transition: 0.3s;
+            padding: 6px 12px; border-radius: 15px; border: none;
+            cursor: pointer; font-weight: 600; font-size: 0.75rem;
+            transition: 0.3s; display: flex; align-items: center; gap: 4px;
         }
 
-        .btn-edit {
-            background: var(--primary);
-            color: white;
-        }
+        .btn-edit { background: var(--primary); color: white; }
+        .btn-gh { background: #4b5563; color: white; }
+        .btn-sync { background: #10b981; color: white; } /* 绿色常驻 */
+        .btn-add { background: #3b82f6; color: white; display: none; }
 
-        .btn-gh {
-            background: #4b5563;
-            color: white;
-        }
+        .hidden { display: none !important; }
 
-        .btn-save,
-        .btn-add {
-            display: none;
-            background: #10b981;
-            color: white;
-        }
-
-        .btn-add {
-            background: #3b82f6;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        .dragging {
-            opacity: 0.2;
-            transform: scale(0.95);
-        }
-
-        .drag-over {
-            border: 2px solid var(--primary);
-            background: rgba(167, 139, 250, 0.05);
-        }
-
-        /* 1. 变量微调：增加安全区域适配 */
-        :root {
-            /* ...原有变量... */
-            --safe-bottom: env(safe-area-inset-bottom);
-        }
-
-        /* 2. 基础布局调整：取消 PC 端的固定高度，改为最小高度 */
-        .tool-card {
-            /* ...原有属性... */
-            height: auto;
-            /* 取消固定高度 */
-            min-height: 110px;
-            padding: 16px;
-            touch-action: manipulation;
-            /* 优化触控延迟 */
-        }
-
-        /* 3. 移动端核心适配策略 */
-        @media (max-width: 768px) {
-            body {
-                padding: 20px 12px;
-                /* 缩小页边距 */
-            }
-
-            .poem-title {
-                font-size: 1.6rem;
-                /* 减小标题字号 */
-            }
-
-            /* 顶部收藏/历史：由并排改为垂直堆叠 */
-            .top-row {
-                flex-direction: column;
-                gap: 15px;
-            }
-
-            .top-column {
-                min-height: auto;
-            }
-
-            #historySection {
-                display: none !important;
-            }
-
-            /* 按钮组滑动查看：防止分类过多撑破布局 */
-            .category-bar {
-                justify-content: flex-start;
-                overflow-x: auto;
-                padding-bottom: 8px;
-                -webkit-overflow-scrolling: touch;
-                /* 滚动丝滑 */
-                width: 100%;
-                scrollbar-width: none;
-                /* 隐藏滚动条 */
-            }
-
-            .category-bar::-webkit-scrollbar {
-                display: none;
-            }
-
-            .cat-btn {
-                flex-shrink: 0;
-                /* 防止分类按钮被压缩 */
-                white-space: nowrap;
-            }
-
-            /* 网格调整：在小屏手机上采用 1 列或 2 列 */
-            .tool-grid {
-                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-                gap: 12px;
-            }
-
-            /* 卡片内容针对窄屏的微调 */
-            .tool-card h3 {
-                font-size: 1rem;
-            }
-
-            /* 针对极小屏幕 (iPhone SE类) 强制单列 */
-            @media (max-width: 380px) {
-
-                .tool-grid,
-                .top-grid {
-                    grid-template-columns: 1fr;
-                }
-            }
-
-            /* 管理栏适配：横向铺满，增加安全区 */
-            .admin-bar {
-                width: 95%;
-                bottom: calc(15px + var(--safe-bottom));
-                padding: 8px;
-                gap: 5px;
-                justify-content: space-around;
-            }
-
-            .btn-main {
-                padding: 8px 12px;
-                font-size: 0.75rem;
-                flex: 1;
-                /* 按钮平分空间 */
-                text-align: center;
-            }
-
-            /* 模态框适配 */
-            #configModal {
-                width: 90%;
-                padding: 20px;
-            }
-        }
-
-        /* 4. 优化管理模式下的输入体验 */
-        .editing-mode .edit-input {
-            font-size: 16px !important;
-            /* 关键：iOS 强制 16px 防止点击输入框时页面自动缩放 */
+        @media (max-width: 600px) {
+            .tool-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+            .top-row { flex-direction: column; }
+            .admin-bar { width: 92%; justify-content: space-around; }
         }
     </style>
 </head>
@@ -452,197 +182,202 @@
         <header>
             <h1 class="poem-title">欲善其事，必先利其器</h1>
             <div class="controls">
-                <input type="text" id="searchInput" placeholder="搜索关键词...">
+                <input type="text" id="searchInput" placeholder="检索工具...">
                 <div class="category-bar" id="categoryBar"></div>
             </div>
         </header>
 
         <div id="topSection" class="top-row">
             <div class="top-column">
-                <div class="section-label">⭐ 我的收藏</div>
-                <div id="favGrid" class="top-grid">
-                    <div class="empty-hint">暂无收藏</div>
-                </div>
+                <div class="section-label">⭐ 常用</div>
+                <div id="favGrid" class="top-grid"></div>
             </div>
             <div class="top-column" id="historySection">
-                <div class="section-label">🕒 最近使用</div>
-                <div id="hisGrid" class="top-grid">
-                    <div class="empty-hint">暂无记录</div>
-                </div>
+                <div class="section-label">🕒 历史</div>
+                <div id="hisGrid" class="top-grid"></div>
             </div>
         </div>
 
-        <div class="section-label">🚀 全部工具 <span id="syncStatus"
-                style="font-size:0.7rem; margin-left:12px; font-weight:normal; opacity:0.5;"></span></div>
+        <div class="section-label">🚀 库 <span id="syncStatus" style="font-size:0.6rem; margin-left:10px; opacity:0.4;"></span></div>
         <div id="toolGrid" class="tool-grid"></div>
 
-        <datalist id="categoryList"></datalist>
-        <div style="height: 120px;"></div>
+        <div style="height: 100px;"></div>
     </div>
 
-    <div id="configModal" class="hidden">
-        <h3 style="margin-bottom:20px; color:var(--primary); text-align:center;">GitHub 云同步配置</h3>
-        <div class="edit-group">
-            <span class="edit-label">令牌:</span>
-            <input id="ghToken" class="edit-input" type="password" placeholder="ghp_xxxx">
+    <div id="editorModal" class="hidden">
+        <h4 style="margin-bottom:12px; color:var(--primary);">数据对象编辑器 (JSON)</h4>
+        <textarea id="jsonTextArea"></textarea>
+        <div style="display:flex; gap:10px; margin-top:15px;">
+            <button class="btn-main" style="background:#10b981; flex:1;" onclick="applyJsonChange()">应用修改</button>
+            <button class="btn-main" style="background:#f43f5e; width:60px;" onclick="deleteCurrent()">删除</button>
+            <button class="btn-main" style="background:#4b5563; width:60px;" onclick="closeEditor()">取消</button>
         </div>
-        <div class="edit-group">
-            <span class="edit-label">库名:</span>
-            <input id="ghRepo" class="edit-input" placeholder="xgd1062/1062">
-        </div>
-        <div style="display:flex; gap:10px; margin-top:20px;">
-            <button class="btn-main" style="background:var(--primary); flex:1;" onclick="saveConfig()">保存并刷新</button>
-            <button class="btn-main" style="background:#4b5563; flex:1;" onclick="toggleModal()">取消</button>
-        </div>
+    </div>
+
+    <div id="configModal" class="hidden" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#1e293b; border:1px solid var(--primary); padding:20px; border-radius:15px; z-index:2000;">
+        <p style="margin-bottom:10px; font-size:0.8rem;">GitHub Token & Repo</p>
+        <input id="ghToken" type="password" placeholder="Token" style="width:100%; margin-bottom:10px; background:rgba(0,0,0,0.3); border:1px solid var(--border); color:white; padding:5px;">
+        <input id="ghRepo" placeholder="xgd1062/1062" style="width:100%; margin-bottom:15px; background:rgba(0,0,0,0.3); border:1px solid var(--border); color:white; padding:5px;">
+        <button class="btn-main" style="background:var(--primary); width:100%;" onclick="saveConfig()">保存配置</button>
     </div>
 
     <div class="admin-bar">
-        <button class="btn-main btn-gh" onclick="toggleModal()">⚙️ 设置同步</button>
-        <button id="editBtn" class="btn-main btn-edit" onclick="toggleEditMode()">管理数据</button>
-        <button id="addBtn" class="btn-main btn-add" onclick="addNewTool()">+ 新增工具</button>
-        <button id="saveBtn" class="btn-main btn-save" onclick="saveAllData()">同步并保存</button>
+        <button class="btn-main btn-gh" onclick="toggleConfig()">⚙️ 配置</button>
+        <button id="editBtn" class="btn-main btn-edit" onclick="toggleEditMode()">🛠️ 管理</button>
+        <button id="addBtn" class="btn-main btn-add" onclick="addNewTool()">+ 新增</button>
+        <button id="syncBtn" class="btn-main btn-sync" onclick="saveAllData()">💾 同步云端</button>
     </div>
 
     <script>
         let allTools = [];
         let isEditing = false;
         let currentCat = '全部';
-        const DEFAULT_REPO = 'xgd1062/1062';
-        const FILE_NAME = 'tools_config.json';
+        let editingId = null;
         const STORAGE_KEY = 'poet_tools_v12';
+        const FILE_NAME = 'tools_config.json';
 
         document.addEventListener('DOMContentLoaded', async () => {
             const local = localStorage.getItem(STORAGE_KEY);
-            if (local) {
-                allTools = JSON.parse(local);
-                renderAll();
-                initCategories();
-            }
+            if (local) { allTools = JSON.parse(local); renderAll(); initCategories(); }
             await fetchFromGitHub();
             renderAll();
             initCategories();
             document.getElementById('searchInput').oninput = () => renderAll();
         });
 
-        // --- 云同步逻辑 ---
+        // --- 云同步 ---
         async function fetchFromGitHub() {
-            const token = localStorage.getItem('gh_token');
-            const repoPath = localStorage.getItem('gh_repo') || DEFAULT_REPO;
-            const statusEl = document.getElementById('syncStatus');
-            if (!token) return;
-
-            statusEl.innerText = "(云端同步中...)";
-            const [owner, repo] = repoPath.split('/');
-            const url = `https://api.github.com/repos/${owner}/${repo}/contents/${FILE_NAME}?t=${Date.now()}`;
-
+            const token = localStorage.getItem('gh_token'), repo = localStorage.getItem('gh_repo');
+            if (!token || !repo) return;
+            document.getElementById('syncStatus').innerText = "正在同步...";
             try {
-                const res = await fetch(url, { headers: { 'Authorization': `token ${token}` } });
+                const res = await fetch(`https://api.github.com/repos/${repo}/contents/${FILE_NAME}?t=${Date.now()}`, {
+                    headers: { 'Authorization': `token ${token}` }
+                });
                 if (res.ok) {
                     const data = await res.json();
-                    const content = decodeURIComponent(escape(atob(data.content)));
-                    allTools = JSON.parse(content);
+                    allTools = JSON.parse(decodeURIComponent(escape(atob(data.content))));
                     localStorage.setItem(STORAGE_KEY, JSON.stringify(allTools));
-                    statusEl.innerText = "(云端同步已完成)";
+                    document.getElementById('syncStatus').innerText = "云端就绪";
                 }
-            } catch (e) { statusEl.innerText = "(离线工作模式)"; }
+            } catch (e) { document.getElementById('syncStatus').innerText = "本地模式"; }
         }
 
-        async function syncToGitHub(data, silent = false) {
-            const token = localStorage.getItem('gh_token');
-            const repoPath = localStorage.getItem('gh_repo') || DEFAULT_REPO;
-            if (!token) return;
-
-            const [owner, repo] = repoPath.split('/');
-            const url = `https://api.github.com/repos/${owner}/${repo}/contents/${FILE_NAME}`;
-
+        async function saveAllData() {
+            const token = localStorage.getItem('gh_token'), repo = localStorage.getItem('gh_repo');
+            if (!token) return alert("请先配置 Token");
+            const btn = document.getElementById('syncBtn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = "⏳ 同步中...";
+            
             try {
-                let sha = '';
-                const getRes = await fetch(url + `?t=${Date.now()}`, { headers: { 'Authorization': `token ${token}` } });
-                if (getRes.ok) { sha = (await getRes.json()).sha; }
+                let sha = "";
+                const getRes = await fetch(`https://api.github.com/repos/${repo}/contents/${FILE_NAME}`, {
+                    headers: { 'Authorization': `token ${token}` }
+                });
+                if (getRes.ok) sha = (await getRes.json()).sha;
 
-                const jsonStr = JSON.stringify(data, null, 2);
-                const encoder = new TextEncoder();
-                const uint8 = encoder.encode(jsonStr);
-                const content = btoa(String.fromCharCode(...uint8));
-
-                const putRes = await fetch(url, {
+                const content = btoa(unescape(encodeURIComponent(JSON.stringify(allTools, null, 2))));
+                const putRes = await fetch(`https://api.github.com/repos/${repo}/contents/${FILE_NAME}`, {
                     method: 'PUT',
                     headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: `Update: ${new Date().toLocaleString()}`, content, sha })
+                    body: JSON.stringify({ message: "Update Tools", content, sha })
                 });
-                if (putRes.ok && !silent) alert('同步成功！');
-                return putRes.ok;
-            } catch (e) { if (!silent) alert('保存出错'); return false; }
+                if (putRes.ok) { 
+                    btn.innerHTML = "✨ 同步成功";
+                    setTimeout(() => btn.innerHTML = originalText, 1500);
+                }
+            } catch (e) { 
+                alert("同步失败"); 
+                btn.innerHTML = originalText;
+            }
         }
 
-        // --- 界面渲染 ---
+        // --- 渲染逻辑 ---
         function renderGrid(containerId, data) {
             const grid = document.getElementById(containerId);
-            grid.innerHTML = '';
+            grid.innerHTML = data.length ? '' : '<div class="empty-hint" style="grid-column:span 2; text-align:center; font-size:0.7rem; opacity:0.3; margin-top:20px;">无数据</div>';
+            
             data.forEach((tool) => {
-                const idx = allTools.findIndex(t => t.id === tool.id);
                 const card = document.createElement(isEditing ? 'div' : 'a');
                 card.className = `tool-card ${isEditing ? 'editing-mode' : ''}`;
-
                 if (!isEditing) {
                     card.href = tool.link;
                     if (tool.link.startsWith('http')) card.target = "_blank";
                     card.onclick = () => recordHistory(tool.id);
+                } else {
+                    card.onclick = () => openEditor(tool.id);
                 }
 
                 card.innerHTML = `
-                ${!isEditing ? `<div class="star-btn ${tool.fav ? 'active' : ''}" onclick="event.preventDefault();toggleFav(${tool.id})">★</div>` : ''}
-                ${isEditing ? `
-                    <div onmousedown="event.stopPropagation()">
-                        <div class="edit-group"><span class="edit-label">图标:</span><input class="edit-input" value="${tool.icon || ''}" onchange="updateData(${idx},'icon',this.value)"></div>
-                        <div class="edit-group"><span class="edit-label">名称:</span><input class="edit-input" value="${tool.title}" onchange="updateData(${idx},'title',this.value)"></div>
-                        <div class="edit-group"><span class="edit-label">链接:</span><input class="edit-input" value="${tool.link}" onchange="updateData(${idx},'link',this.value)"></div>
-                        <div class="edit-group"><span class="edit-label">分类:</span><input class="edit-input" list="categoryList" value="${tool.category}" onchange="updateData(${idx},'category',this.value)"></div>
-                        <div class="edit-group"><span class="edit-label">描述:</span><input class="edit-input" value="${tool.desc}" onchange="updateData(${idx},'desc',this.value)"></div>
-                        <button class="btn-main" style="background:#f43f5e; width:100%; padding:2px; font-size:0.7rem; margin-top:4px" onclick="removeTool(${idx})">删除</button>
-                    </div>
-                ` : `
+                    ${!isEditing ? `<div class="star-btn ${tool.fav ? 'active' : ''}" onclick="event.preventDefault();toggleFav(${tool.id})">★</div>` : ''}
                     <h3 title="${tool.title}">${tool.icon || '🛠️'} ${tool.title}</h3>
                     <p>${tool.desc}</p>
                     <div class="card-tag">${tool.category}</div>
-                `}
-            `;
-                if (isEditing) {
-                    card.onmousedown = (e) => {
-                        if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') {
-                            card.draggable = false;
-                        } else {
-                            card.draggable = true;
-                        }
-                    };
-                    bindDrag(card, idx);
-                }
+                `;
                 grid.appendChild(card);
             });
         }
 
-        function bindDrag(el, idx) {
-            el.ondragstart = (e) => { e.dataTransfer.setData('idx', idx); el.classList.add('dragging'); };
-            el.ondragend = () => { el.classList.remove('dragging'); el.draggable = false; };
-            el.ondragover = (e) => { e.preventDefault(); el.classList.add('drag-over'); };
-            el.ondragleave = () => el.classList.remove('drag-over');
-            el.ondrop = (e) => {
-                const fromIdx = e.dataTransfer.getData('idx');
-                const item = allTools.splice(fromIdx, 1)[0];
-                allTools.splice(idx, 0, item);
+        // --- JSON 编辑器逻辑 ---
+        function openEditor(id) {
+            editingId = id;
+            const tool = allTools.find(t => t.id === id);
+            document.getElementById('jsonTextArea').value = JSON.stringify(tool, null, 4);
+            document.getElementById('editorModal').classList.remove('hidden');
+        }
+
+        function closeEditor() {
+            document.getElementById('editorModal').classList.add('hidden');
+            editingId = null;
+        }
+
+        function applyJsonChange() {
+            try {
+                const updated = JSON.parse(document.getElementById('jsonTextArea').value);
+                const idx = allTools.findIndex(t => t.id === editingId);
+                allTools[idx] = updated;
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(allTools));
                 renderAll();
+                closeEditor();
+            } catch (e) { alert("JSON 格式错误，请检查"); }
+        }
+
+        function deleteCurrent() {
+            if (confirm("确定删除此项？")) {
+                allTools = allTools.filter(t => t.id !== editingId);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(allTools));
+                renderAll();
+                closeEditor();
+            }
+        }
+
+        function addNewTool() {
+            const newTool = {
+                id: Date.now(),
+                title: "新工具",
+                icon: "🚀",
+                link: "#",
+                category: currentCat === '全部' ? "默认" : currentCat,
+                desc: "请在此输入描述",
+                fav: false
             };
+            allTools.unshift(newTool);
+            renderAll();
+            openEditor(newTool.id);
+        }
+
+        // --- 辅助功能 ---
+        function toggleEditMode() {
+            isEditing = !isEditing;
+            document.getElementById('editBtn').innerText = isEditing ? '✅ 退出' : '🛠️ 管理';
+            document.getElementById('addBtn').style.display = isEditing ? 'flex' : 'none';
+            renderAll();
         }
 
         async function toggleFav(id) {
             const t = allTools.find(x => x.id === id);
-            if (t) {
-                t.fav = !t.fav;
-                renderAll();
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(allTools));
-                await syncToGitHub(allTools, true);
-            }
+            if (t) { t.fav = !t.fav; renderAll(); localStorage.setItem(STORAGE_KEY, JSON.stringify(allTools)); }
         }
 
         function recordHistory(id) {
@@ -651,77 +386,34 @@
             localStorage.setItem('tool_his_v11', JSON.stringify(his));
         }
 
-        function updateData(idx, f, v) {
-            allTools[idx][f] = v;
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(allTools));
-        }
-
-        function removeTool(idx) { if (confirm('确认删除？')) { allTools.splice(idx, 1); renderAll(); } }
-
-        function addNewTool() {
-            // 逻辑：如果当前选中的是“全部”，则新工具分类为“默认”；
-            // 如果选中了具体分类（如“开发”），则新工具自动归类到“开发”。
-            const newCategory = currentCat === '全部' ? "默认" : currentCat;
-
-            allTools.unshift({
-                id: Date.now(),
-                title: "新工具",
-                icon: "🚀",
-                link: "#",
-                category: newCategory,
-                desc: "点击编辑内容",
-                fav: false
-            });
-
-            renderAll();
-        }
-
-        function toggleEditMode() {
-            isEditing = !isEditing;
-            document.getElementById('editBtn').innerText = isEditing ? '退出编辑' : '管理数据';
-            ['saveBtn', 'addBtn'].forEach(id => document.getElementById(id).style.display = isEditing ? 'block' : 'none');
-            renderAll();
-            if (!isEditing) initCategories();
-        }
-
-        async function saveAllData() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(allTools));
-            const ok = await syncToGitHub(allTools);
-            if (ok && isEditing) toggleEditMode(); // 同步成功后自动退出编辑
-        }
-
-        function toggleModal() { document.getElementById('configModal').classList.toggle('hidden'); }
-        function saveConfig() {
-            localStorage.setItem('gh_token', document.getElementById('ghToken').value.trim());
-            localStorage.setItem('gh_repo', document.getElementById('ghRepo').value.trim() || DEFAULT_REPO);
-            location.reload();
-        }
-
         function initCategories() {
-            const bar = document.getElementById('categoryBar');
-            const list = document.getElementById('categoryList');
-            const cats = [...new Set(allTools.map(t => t.category))];
-            bar.innerHTML = ['全部', ...cats].map(c => `<button class="cat-btn ${c === currentCat ? 'active' : ''}" onclick="filterCat('${c}')">${c}</button>`).join('');
-            list.innerHTML = cats.map(c => `<option value="${c}">`).join('');
+            const cats = [...new Set(allTools.map(t => t.category))].filter(Boolean);
+            document.getElementById('categoryBar').innerHTML = ['全部', ...cats].map(c => 
+                `<button class="cat-btn ${c === currentCat ? 'active' : ''}" onclick="filterCat('${c}')">${c}</button>`
+            ).join('');
         }
 
         function filterCat(cat) { currentCat = cat; renderAll(); initCategories(); }
 
         function renderAll() {
             const filter = document.getElementById('searchInput').value.toLowerCase();
-            renderGrid('toolGrid', allTools.filter(t => (currentCat === '全部' || t.category === currentCat) && (t.title.toLowerCase().includes(filter) || t.desc.toLowerCase().includes(filter))));
+            const filtered = allTools.filter(t => (currentCat === '全部' || t.category === currentCat) && (t.title.toLowerCase().includes(filter) || t.desc.toLowerCase().includes(filter)));
+            renderGrid('toolGrid', filtered);
+            
             const favs = allTools.filter(t => t.fav).slice(0, 2);
             const hisIds = JSON.parse(localStorage.getItem('tool_his_v11') || '[]');
             const hisTools = hisIds.map(id => allTools.find(t => t.id === id)).filter(Boolean).slice(0, 2);
-            updateTopGrid('favGrid', favs, '暂无收藏');
-            updateTopGrid('hisGrid', hisTools, '暂无记录');
+            renderGrid('favGrid', favs);
+            renderGrid('hisGrid', hisTools);
+            
             document.getElementById('topSection').style.display = (isEditing || filter) ? 'none' : 'flex';
         }
 
-        function updateTopGrid(id, data, msg) {
-            const grid = document.getElementById(id);
-            if (data.length === 0) grid.innerHTML = `<div class="empty-hint">${msg}</div>`;
-            else renderGrid(id, data);
+        function toggleConfig() { document.getElementById('configModal').classList.toggle('hidden'); }
+        function saveConfig() {
+            localStorage.setItem('gh_token', document.getElementById('ghToken').value.trim());
+            localStorage.setItem('gh_repo', document.getElementById('ghRepo').value.trim());
+            location.reload();
         }
     </script>
 </body>
