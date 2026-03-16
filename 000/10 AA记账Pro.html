@@ -116,30 +116,47 @@
     </div>
 
     <script>
+        // 初始化状态，优先读取本地存储
         let state = JSON.parse(localStorage.getItem('aa_pro_final_v1')) || {
             users: [{ id: 1, name: "老王" }, { id: 2, name: "小李" }, { id: 3, name: "阿强" }],
-            activities: [{ id: 1, title: "活动1", amount: 0, payerId: 1 }]
+            activities: [{ id: 1, title: "项目1", amount: 0, payerId: 1 }]
         };
 
+        // 数据持久化
         function save() {
             localStorage.setItem('aa_pro_final_v1', JSON.stringify(state));
             calculate();
         }
 
+        // 新增参与者
         function addUser() {
             const nextId = Date.now();
             state.users.push({ id: nextId, name: `参与者${state.users.length + 1}` });
             render();
         }
 
+        // 移除参与者
         function removeUser(id) {
             if (state.users.length <= 1) return;
             state.users = state.users.filter(u => u.id !== id);
-            // 修正支付者引用
+            // 如果删除的刚好是某项活动的支付者，将其重置为第一个用户
             state.activities.forEach(a => { if (a.payerId === id) a.payerId = state.users[0].id; });
             render();
         }
 
+        // 修复：新增活动函数
+        function addActivity() {
+            const nextId = Date.now();
+            state.activities.push({ 
+                id: nextId, 
+                title: `活动${state.activities.length + 1}`, 
+                amount: 0, 
+                payerId: state.users[0] ? state.users[0].id : null 
+            });
+            render();
+        }
+
+        // 姓名实时同步逻辑
         function handleNameChange(id, newName) {
             const user = state.users.find(x => x.id === id);
             if (user) user.name = newName;
@@ -151,8 +168,9 @@
             save();
         }
 
+        // 页面渲染逻辑
         function render() {
-            // 人员渲染：补回右上角删除按钮
+            // 渲染人员列表
             const uList = document.getElementById('userList');
             uList.innerHTML = state.users.map(u => `
                 <div class="relative flex items-center bg-slate-50 rounded border border-slate-200">
@@ -166,7 +184,7 @@
                 </div>
             `).join('');
 
-            // 活动渲染：精确对齐
+            // 渲染活动列表
             const aList = document.getElementById('activityList');
             aList.innerHTML = state.activities.map(a => `
                 <div class="flex items-center">
@@ -198,6 +216,7 @@
             save();
         }
 
+        // 计算逻辑：计算人均及债权债务关系
         function calculate() {
             const { users, activities } = state;
             let paidMap = {};
@@ -230,6 +249,7 @@
             document.getElementById('resultOutput').innerHTML = logs.length > 0 ? logs.join('') : '<div class="text-center opacity-40 py-1">账单平整</div>';
         }
 
+        // 初次渲染
         render();
     </script>
 </body>
