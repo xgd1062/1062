@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>追番进度管理 - 纯日期推算版</title>
+    <title>追番进度管理 - 自动登录版</title>
 
     <style>
         :root {
@@ -307,8 +307,8 @@
     <div id="configModal" class="modal">
         <div class="modal-content">
             <h3>GitHub 配置</h3>
-            <div class="form-group"><label>Access Token:</label><input type="password" id="gh_token"></div>
-            <button class="btn-submit" onclick="saveConfig()">连接并加载</button>
+            <div class="form-group"><label>Access Token (持久化缓存):</label><input type="password" id="gh_token"></div>
+            <button class="btn-submit" onclick="saveConfig()">连接并保存</button>
             <button class="btn-submit" style="background:#6c757d; margin-top:8px;"
                 onclick="closeModal('configModal')">取消</button>
         </div>
@@ -335,7 +335,7 @@
                         <option value="周日">周日</option>
                     </select>
                 </div>
-                <button type="submit" class="btn-submit">保存(暂存)</button>
+                <button type="submit" class="btn-submit">暂存修改</button>
                 <button type="button" class="btn-submit" style="background:#6c757d; margin-top:8px;"
                     onclick="closeModal('animeModal')">取消</button>
             </form>
@@ -351,7 +351,8 @@
 
         let state = {
             data: [],
-            token: sessionStorage.getItem('gh_token') || '',
+            // 修改点：从 localStorage 读取，实现持久化
+            token: localStorage.getItem('gh_token') || '',
             sha: null,
             baseTime: null,
             editIdx: null
@@ -360,40 +361,37 @@
         window.onload = () => {
             updateTime();
             setInterval(updateTime, 1000);
-            if (state.token) pullCloud();
-            else openModal('configModal');
+
+            // 如果缓存里有 Token，直接拉取数据
+            if (state.token) {
+                document.getElementById('gh_token').value = state.token;
+                pullCloud();
+            } else {
+                openModal('configModal');
+            }
         };
 
         function updateTime() {
             document.getElementById('current-time').textContent = new Date().toLocaleString();
         }
 
-        // --- 只计算日期差的推算逻辑 ---
+        // 推算逻辑（纯日期差）
         function calculateCurrentUpdate(item) {
             if (!state.baseTime) return { value: item.current_update, isChanged: false };
-
-            // 1. 获取当前日期，并将时间归零
             const now = new Date();
             const nowDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-            // 2. 获取基准日期，并将时间归零
             const base = new Date(state.baseTime);
             const baseDateOnly = new Date(base.getFullYear(), base.getMonth(), base.getDate());
 
-            // 3. 计算纯日期差（天数）
             const diffDays = Math.round((nowDateOnly - baseDateOnly) / (1000 * 60 * 60 * 24));
-
             if (diffDays <= 0) return { value: item.current_update, isChanged: false };
 
-            // 4. 计算周数和剩余天数
             let additionalUpdate = Math.floor(diffDays / 7);
             const remainingDays = diffDays % 7;
 
-            // 5. 检查剩余天数是否跨过更新日
             if (remainingDays > 0) {
                 const baseDayIdx = baseDateOnly.getDay();
                 const targetDayIdx = CONFIG.WEEK_REVERSE[item.update_day];
-
                 for (let i = 1; i <= remainingDays; i++) {
                     if ((baseDayIdx + i) % 7 === targetDayIdx) {
                         additionalUpdate += 1;
@@ -403,12 +401,9 @@
             }
 
             const predictedValue = item.current_update + additionalUpdate;
-
-            // 总集数封顶
             if (item.total_episodes && predictedValue > item.total_episodes) {
                 return { value: item.total_episodes, isChanged: item.total_episodes > item.current_update };
             }
-
             return { value: predictedValue, isChanged: additionalUpdate > 0 };
         }
 
@@ -423,25 +418,29 @@
                     state.baseTime = content.export_time;
                     state.sha = meta.sha;
                     render();
-                    showStatus(`数据已拉取。基准日期: ${new Date(state.baseTime).toLocaleDateString()}`);
-                } else { openModal('configModal'); }
-            } catch (e) { alert("同步失败"); }
+                    showStatus("已从云端拉取最新数据");
+                } else {
+                    alert("Token 可能已过期或配置错误");
+                    openModal('configModal');
+                }
+            } catch (e) {
+                showStatus("网络连接失败，请检查设置");
+            }
         }
 
         async function pushCloud() {
             if (!state.token) return openModal('configModal');
 
-            // 上传前将所有 current_update 替换为推算出的最新值
             const newData = state.data.map(item => {
                 const prediction = calculateCurrentUpdate(item);
                 return { ...item, current_update: prediction.value };
             });
 
-            showStatus("正在更新基准并保存...");
+            showStatus("正在更新并同步到 GitHub...");
 
             const url = `https://api.github.com/repos/${CONFIG.REPO.owner}/${CONFIG.REPO.repo}/contents/${CONFIG.REPO.path}`;
             const body = {
-                message: "Date-Only Predict Sync",
+                message: "Cloud Sync with Persistent Token",
                 content: btoa(unescape(encodeURIComponent(JSON.stringify({
                     export_time: new Date().toLocaleString(),
                     data: newData
@@ -461,8 +460,8 @@
                 state.data = newData;
                 state.baseTime = new Date().toLocaleString();
                 render();
-                showStatus("同步成功！已重置日期基准。");
-            } else { alert("同步失败"); }
+                showStatus("云端同步成功，基准日期已重置");
+            } else { alert("保存失败，请检查网络或 GitHub 状态"); }
         }
 
         function render() {
@@ -501,7 +500,7 @@
                         <div class="anime-content"><h4><a href="${item.url || '#'}" target="_blank">${item.name}</a></h4></div>
                         <div class="progress-info">
                             更至: <span class="updated-episode-display ${prediction.isChanged ? 'is-predicted' : ''}">${prediction.value}</span><br>
-                            已看: <span class="user-episode-display">${item.my_progress}</span> ${total ? `(共${total}集)` : ''}
+                            我在: <span class="user-episode-display">${item.my_progress}</span> ${total ? `(共${total}集)` : ''}
                         </div>
                         <div class="progress-bar"><div class="progress-fill" style="width:${Math.min(100, progress)}%"></div></div>
                         <div class="anime-actions">
@@ -559,15 +558,23 @@
             closeModal('animeModal');
         };
 
+        // 修改点：保存到 localStorage
         function saveConfig() {
             const t = document.getElementById('gh_token').value.trim();
-            if (t) { state.token = t; sessionStorage.setItem('gh_token', t); pullCloud(); closeModal('configModal'); }
+            if (t) {
+                state.token = t;
+                localStorage.setItem('gh_token', t); // 存入本地缓存
+                pullCloud();
+                closeModal('configModal');
+            }
         }
+
         function showStatus(m) {
             const s = document.getElementById('sync-status');
             s.textContent = m; s.style.display = 'block';
             setTimeout(() => s.style.display = 'none', 3000);
         }
+
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
