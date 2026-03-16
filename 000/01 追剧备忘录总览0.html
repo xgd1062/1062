@@ -3,133 +3,126 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>极简追番看板 - 移动适配版</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>极简追番看板 - 动态版</title>
     <style>
         :root {
             --primary-color: #42b983;
+            /* 核心绿色 */
             --card-bg-light: #f0f9f4;
+            /* 淡绿背景 */
             --bg-color: #f8fbf9;
-            /* 默认 PC 端每页显示 4 列 */
+            /* 限制最大显示 4 列：(100% / 4) */
             --column-width: 25%;
         }
 
         body {
-            font-family: -apple-system, "SF Pro Display", "PingFang SC", sans-serif;
+            font-family: -apple-system, "Helvetica Neue", sans-serif;
             background-color: var(--bg-color);
             margin: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
             overflow-x: hidden;
-            height: 100vh;
         }
 
         h2 {
-            margin: 15px 0;
+            margin: 25px 0;
             color: var(--primary-color);
-            font-size: 1.2rem;
+            font-size: 1.4rem;
             letter-spacing: 2px;
-            flex-shrink: 0;
         }
 
-        /* 核心容器 */
+        /* 限制容器宽度，确保 4 列填满 */
         .app-container {
             width: 100%;
-            max-width: 1200px;
-            flex: 1;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
+            max-width: 1100px;
+            position: relative;
+            cursor: grab;
         }
 
-        /* 滚动视口：启用捕捉对齐 */
         .scroll-viewport {
             display: flex;
             width: 100%;
-            height: 100%;
             overflow-x: auto;
-            scroll-snap-type: x mandatory; /* 核心：强制捕捉 */
             scrollbar-width: none;
             -ms-overflow-style: none;
-            -webkit-overflow-scrolling: touch;
+            padding-bottom: 20px;
         }
 
         .scroll-viewport::-webkit-scrollbar {
             display: none;
         }
 
+        /* 总宽度为 7 列宽 */
         .schedule-inner {
             display: flex;
-            /* 宽度将通过 JS 或 CSS 根据列数动态确定，这里设为 700% 对应 7 天 */
             width: calc(var(--column-width) * 7);
-            height: 100%;
+            padding: 10px 0;
         }
 
         .day-column {
             flex: 0 0 var(--column-width);
-            scroll-snap-align: center; /* 核心：捕捉点在中心 */
-            padding: 0 10px;
+            padding: 0 8px;
             box-sizing: border-box;
-            height: 100%;
         }
 
         .column-content {
             background: rgba(255, 255, 255, 0.7);
-            border-radius: 20px;
-            padding: 15px 12px;
-            height: calc(100% - 20px);
-            border: 1px solid rgba(0,0,0,0.03);
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
+            border-radius: 16px;
+            padding: 15px 8px;
+            min-height: 80vh;
+            border: 1px solid transparent;
         }
 
-        /* 今日高亮 */
         .today .column-content {
-            background: rgba(66, 185, 131, 0.05);
-            border: 2px solid var(--primary-color);
+            background: rgba(66, 185, 131, 0.08);
+            border: 1.5px dashed var(--primary-color);
+            /* 今日高亮 */
         }
 
         .header {
             text-align: center;
-            font-size: 13px;
+            font-size: 14px;
             font-weight: 800;
-            margin-bottom: 15px;
-            color: #999;
-            flex-shrink: 0;
+            margin-bottom: 20px;
+            color: #888;
         }
 
         .today .header {
             color: var(--primary-color);
         }
 
-        /* 卡片设计 */
+        /* 固定宽高卡片 */
         .card {
             background: var(--card-bg-light);
-            border: 1px solid rgba(66, 185, 131, 0.15);
-            border-radius: 14px;
+            border: 1px solid rgba(66, 185, 131, 0.2);
+            border-radius: 12px;
             padding: 12px;
-            margin-bottom: 12px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+            margin: 0 auto 12px auto;
+            box-shadow: 0 4px 6px rgba(66, 185, 131, 0.05);
+            width: 95%;
+            /* 在列宽内自适应 */
+            height: 115px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             text-decoration: none;
             color: #444;
-            min-height: 100px;
-            flex-shrink: 0;
-            transition: transform 0.2s;
+            transition: all 0.2s ease;
+            box-sizing: border-box;
         }
 
-        .card:active {
-            transform: scale(0.98);
+        .card:hover {
+            transform: translateY(-3px);
+            background: #e1f5eb;
+            box-shadow: 0 6px 12px rgba(66, 185, 131, 0.15);
         }
 
         .card-title {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: bold;
-            color: #2c3e50;
+            color: #333;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
@@ -139,15 +132,15 @@
 
         .card-meta {
             font-size: 11px;
-            color: #7f8c8d;
+            color: #777;
             display: flex;
             justify-content: space-between;
-            margin: 8px 0 4px 0;
+            margin-bottom: 4px;
         }
 
         .progress-bar {
-            height: 5px;
-            background: rgba(255, 255, 255, 0.8);
+            height: 6px;
+            background: rgba(255, 255, 255, 0.6);
             border-radius: 10px;
             overflow: hidden;
         }
@@ -155,31 +148,48 @@
         .fill {
             height: 100%;
             background: linear-gradient(90deg, #96e6a1 0%, #d4fc79 100%);
+            transition: width 0.5s ease;
         }
 
         .auto-tag {
-            background: var(--primary-color);
-            color: white;
-            padding: 1px 4px;
-            border-radius: 4px;
             font-size: 9px;
-            margin-left: 4px;
+            color: #42b983;
+            margin-left: 2px;
         }
 
-        /* 移动端适配：关键修改 */
+        /* ================= 手机端专用适配 (仅修改此处) ================= */
         @media (max-width: 768px) {
             :root {
-                --column-width: 100%; /* 一页显示一列 */
+                /* 强制手机端列宽为 100% 视口宽度 */
+                --column-width: 100vw; 
             }
-            
-            h2 { margin: 10px 0; }
-            
+
+            .app-container {
+                max-width: 100vw;
+            }
+
+            .scroll-viewport {
+                /* 增加弹性滑动和吸附感 */
+                scroll-snap-type: x mandatory;
+                -webkit-overflow-scrolling: touch;
+            }
+
             .day-column {
-                padding: 0 15px; /* 增加手机边缘留白 */
+                /* 每一列占据整屏 */
+                flex: 0 0 100vw;
+                padding: 0 10px;
+                scroll-snap-align: center;
             }
 
             .column-content {
-                padding: 15px 15px;
+                /* 手机端内容高度自适应，防止出现过长留白 */
+                min-height: auto;
+                margin-bottom: 40px;
+            }
+
+            h2 {
+                margin: 15px 0;
+                font-size: 1.2rem;
             }
         }
     </style>
@@ -187,9 +197,9 @@
 
 <body>
 
-    <h2>🍃 追番进度看板</h2>
+    <h2>🍃 我的追番进度表</h2>
 
-    <div class="app-container">
+    <div class="app-container" id="dragArea">
         <div class="scroll-viewport" id="viewport">
             <div class="schedule-inner" id="scheduleBoard"></div>
         </div>
@@ -197,28 +207,29 @@
 
     <script>
         const weekDays = [
-            { label: '周一 / MONDAY', value: '周一', day: 1 },
-            { label: '周二 / TUESDAY', value: '周二', day: 2 },
-            { label: '周三 / WEDNESDAY', value: '周三', day: 3 },
-            { label: '周四 / THURSDAY', value: '周四', day: 4 },
-            { label: '周五 / FRIDAY', value: '周五', day: 5 },
-            { label: '周六 / SATURDAY', value: '周六', day: 6 },
-            { label: '周日 / SUNDAY', value: '周日', day: 0 }
+            { label: '周一 / MON', value: '周一', day: 1 },
+            { label: '周二 / TUE', value: '周二', day: 2 },
+            { label: '周三 / WED', value: '周三', day: 3 },
+            { label: '周四 / THU', value: '周四', day: 4 },
+            { label: '周五 / FRI', value: '周五', day: 5 },
+            { label: '周六 / SAT', value: '周六', day: 6 },
+            { label: '周日 / SUN', value: '周日', day: 0 }
         ];
 
         async function initBoard() {
             try {
-                // 读取本地存储或获取数据
+                // 获取外部 JSON 数据
                 const response = await fetch('01番剧更新信息.json');
                 const result = await response.json();
                 const animeData = result.data;
                 const exportTime = new Date(result.export_time);
 
+                // 计算更新天数差
                 const now = new Date();
                 const diffDays = Math.floor(Math.max(0, now - exportTime) / (1000 * 60 * 60 * 24));
 
                 const board = document.getElementById('scheduleBoard');
-                const today = now.getDay();
+                const today = new Date().getDay();
 
                 weekDays.forEach(dayInfo => {
                     const column = document.createElement('div');
@@ -235,7 +246,7 @@
 
                         cardsHtml += `
                         <a href="${anime.url}" target="_blank" class="card">
-                            <div class="card-title">${anime.name}</div>
+                            <div class="card-title" title="${anime.name}">${anime.name}</div>
                             <div>
                                 <div class="card-meta">
                                     <span>最新: ${predictedUpdate}${diffDays > 0 && !isFinished ? '<span class="auto-tag">+' + diffDays + '</span>' : ''}</span> 
@@ -252,28 +263,48 @@
                     column.innerHTML = `
                     <div class="column-content">
                         <div class="header">${dayInfo.label}</div>
-                        ${cardsHtml || '<div style="text-align:center; margin-top:50px; opacity:0.2; font-size:12px;">今日无更新</div>'}
+                        ${cardsHtml || '<div style="text-align:center; padding:40px; opacity:0.3; font-size:12px;">今日无更新</div>'}
                     </div>
                 `;
                     board.appendChild(column);
 
-                    // 初始定位到今天
                     if (dayInfo.day === today) {
                         setTimeout(() => {
                             const viewport = document.getElementById('viewport');
+                            // 修正：滚动到今天
                             viewport.scrollLeft = column.offsetLeft;
-                        }, 50);
+                        }, 150);
                     }
                 });
 
+                setupDrag();
             } catch (err) {
-                console.error("加载数据失败:", err);
+                console.error("加载失败:", err);
             }
+        }
+
+        // 保留原有的 PC 端拖拽逻辑
+        function setupDrag() {
+            const slider = document.getElementById('viewport');
+            let isDown = false, startX, scrollLeft;
+            slider.addEventListener('mousedown', (e) => {
+                isDown = true;
+                slider.style.scrollBehavior = 'auto';
+                startX = e.pageX - slider.offsetLeft;
+                scrollLeft = slider.scrollLeft;
+            });
+            slider.addEventListener('mouseleave', () => isDown = false);
+            slider.addEventListener('mouseup', () => isDown = false);
+            slider.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                e.preventDefault();
+                const x = e.pageX - slider.offsetLeft;
+                slider.scrollLeft = scrollLeft - (x - startX) * 1.5;
+            });
         }
 
         window.onload = initBoard;
     </script>
-
 </body>
 
 </html>
