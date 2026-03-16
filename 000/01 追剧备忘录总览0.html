@@ -194,7 +194,7 @@
         async function initBoard() {
             try {
                 // 获取外部 JSON 数据
-                const response = await fetch('番剧更新信息.json');
+                const response = await fetch('01番剧更新信息.json');
                 const result = await response.json();
                 const animeData = result.data;
                 const exportTime = new Date(result.export_time);
