@@ -112,7 +112,7 @@
                 <h2>同步到 GitHub</h2><span onclick="closeModal('sync-modal')" class="close">&times;</span>
             </div>
             <div class="form-group"><input type="password" id="gh-token" placeholder="GitHub Token"></div>
-            <div class="form-group"><input type="text" id="gh-repo" placeholder="用户名/仓库名 (如: xgd1062/v)"></div>
+            <div class="form-group"><input type="text" id="gh-repo" placeholder="用户名/仓库名 (如: xgd1062/1062/000/)"></div>
             <button onclick="syncToGithub()" id="sync-btn" class="btn-primary" style="width:100%">覆盖云端
                 04data.json</button>
         </div>
@@ -427,7 +427,7 @@
         async function syncToGithub() {
             const btn = document.getElementById('sync-btn');
             const token = document.getElementById('gh-token').value.trim();
-            const repo = document.getElementById('gh-repo').value.trim() || "xgd1062/v";
+            const repo = document.getElementById('gh-repo').value.trim() || "xgd1062/1062/000";
             btn.innerText = "⏳ 同步中..."; btn.disabled = true;
             try {
                 const getRes = await fetch(`https://api.github.com/repos/${repo}/contents/04data.json?ref=main`, {
