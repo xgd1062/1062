@@ -78,6 +78,18 @@
         "desc": "解析无水印下载"
     },
     {
+        "title": "小艺-AI",
+        "url": "https://xiaoyi.huawei.com/chat/",
+        "img": "http://i2.hdslb.com/bfs/archive/036a64b4293c952817ef72b71138b253e948b25f.jpg",
+        "desc": "华为人工智能助手"
+    },
+    {
+        "title": "TG图床",
+        "url": "https://tg-image-a92.pages.dev/",
+        "desc": "",
+        "img": ""
+    },
+    {
         "title": "慕慕有奶糖",
         "url": "https://space.bilibili.com/18841842/",
         "img": "http://i0.hdslb.com/bfs/archive/0f15991eebc570b0243529d7538f1c096dd70b39.jpg",
@@ -96,12 +108,6 @@
         "img": "https://i0.hdslb.com/bfs/new_dyn/4a74783306caed464e1b3686de4a8adc2689967.png@628w_560h_1e_1c.webp"
     },
     {
-        "title": "小艺-AI",
-        "url": "https://xiaoyi.huawei.com/chat/",
-        "img": "http://i2.hdslb.com/bfs/archive/036a64b4293c952817ef72b71138b253e948b25f.jpg",
-        "desc": "华为人工智能助手"
-    },
-    {
         "title": "华为云服务",
         "url": "https://cloud.huawei.com/#/home",
         "desc": "",
@@ -110,12 +116,6 @@
     {
         "title": "oppo云服务",
         "url": "https://cloud.oppo.com/login.html?callback=https%3A%2F%2Fcloud.oppo.com%2Findex.html",
-        "desc": "",
-        "img": ""
-    },
-    {
-        "title": "TG图床",
-        "url": "https://tg-image-a92.pages.dev/",
         "desc": "",
         "img": ""
     }
