@@ -54,12 +54,6 @@
         "desc": "寓教于乐，学习圣地"
     },
     {
-        "title": "AGE动漫",
-        "url": "http://www.age.tv",
-        "img": "http://p.ananas.chaoxing.com/star3/origin/731917c94ae480eeb36847dd78b198c4.png",
-        "desc": "看番专业户"
-    },
-    {
         "title": "淘宝闪购",
         "url": "https://h5.ele.me/msite/",
         "desc": "h5小程序，嘎嘎快",
@@ -117,12 +111,6 @@
         "title": "oppo云服务",
         "url": "https://cloud.oppo.com/login.html?callback=https%3A%2F%2Fcloud.oppo.com%2Findex.html",
         "desc": "",
-        "img": ""
-    },
-    {
-        "title": "诗意工具箱",
-        "url": "https://xgd1062.github.io/1062/",
-        "desc": "一个全AI自研的网页合集",
         "img": ""
     },
     {
