@@ -461,7 +461,7 @@
                 state.baseTime = new Date().toLocaleString();
                 render();
                 showStatus("云端同步成功，基准日期已重置");
-            } else { alert("保存失败，请检查网络或 GitHub 状态"); }
+            } else { alert("保存失败，请检查网络 host 或 GitHub 状态"); }
         }
 
         function render() {
@@ -470,10 +470,11 @@
 
             const todayIdx = new Date().getDay();
             const sortedWeek = [];
-            for (let i = 0; i < 7; i++) {
-                const idx = (todayIdx + i) % 7;
+            // 修改：从 0 到 -6 倒序循环，实现日期的倒序排列
+            for (let i = 0; i > -7; i--) {
+                const idx = (todayIdx + i + 7) % 7;
                 const name = CONFIG.WEEK_MAP[idx];
-                let rel = i === 0 ? "今天" : (i === 1 ? "明天" : (i === 6 ? "昨天" : ""));
+                let rel = i === 0 ? "今天" : (i === -1 ? "昨天" : (i === -6 ? "明天" : ""));
                 sortedWeek.push({ name, relative: rel });
             }
 
