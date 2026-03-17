@@ -108,13 +108,13 @@
     "fav": false
   },
   {
-    "id": 1768401100012,
-    "title": "多端展示2",
-    "icon": "📱",
-    "link": "https://upp.x219.qzz.io/",
-    "category": "开发",
-    "desc": "响应式布局演示，查看网页在不同终端设备上的展示效果",
-    "fav": false
+    "id": 1768401100013,
+    "title": "留言板",
+    "icon": "🚀",
+    "link": "https://xgd1062.github.io/v/",
+    "category": "默认",
+    "desc": "基于 GitHub Pages 构建的个人工具集导航与展示中心",
+    "fav": true
   },
   {
     "id": 1768400000012,
