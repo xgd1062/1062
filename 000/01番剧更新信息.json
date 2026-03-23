@@ -1,18 +1,18 @@
 {
-  "export_time": "2026/3/19 09:58:04",
+  "export_time": "2026/3/23 19:33:07",
   "data": [
     {
       "name": "牧神记",
       "url": "https://cn.agekkkk.com/anime/3b982a8b6e7f32af90504292/play/3/65.html",
-      "current_update": 74,
-      "my_progress": 74,
+      "current_update": 75,
+      "my_progress": 75,
       "total_episodes": null,
       "update_day": "周一"
     },
     {
       "name": "宗门除了我都是卧底",
       "update_day": "周一",
-      "current_update": 125,
+      "current_update": 126,
       "my_progress": 120,
       "total_episodes": null,
       "url": "https://cn.agekkkk.com/anime/79d2307f19c7e7c7767ec20f/play/3/107.html"
@@ -29,7 +29,7 @@
       "name": "身为魔族的我想向勇者小队的可爱女孩告白",
       "update_day": "周三",
       "current_update": 11,
-      "my_progress": 10,
+      "my_progress": 11,
       "total_episodes": 12,
       "url": "https://cn.agekkkk.com/anime/a50cbb95f9176335aeec43d2/play/5/1.html"
     },
@@ -37,7 +37,7 @@
       "name": "贵族转生 ～得天眷顾一出生就获得最强力量～",
       "update_day": "周四",
       "current_update": 11,
-      "my_progress": 10,
+      "my_progress": 11,
       "total_episodes": 12,
       "url": "https://cn.agekkkk.com/anime/22d3dc31e228065a0154bd6e/play/4/1.html"
     },
@@ -45,7 +45,7 @@
       "name": "师兄呀师兄",
       "update_day": "周四",
       "current_update": 133,
-      "my_progress": 132,
+      "my_progress": 133,
       "total_episodes": null,
       "url": "https://cn.agekkkk.com/anime/4c774bcb9f3e002b32327320/play/3/123.html"
     },
@@ -53,23 +53,23 @@
       "name": "优雅贵族的休假指南。",
       "update_day": "周四",
       "current_update": 11,
-      "my_progress": 10,
+      "my_progress": 11,
       "total_episodes": 12,
       "url": "https://cn.agekkkk.com/anime/d30105e527e35b4001bb45aa.html"
     },
     {
       "name": "一人之下第六季",
-      "update_day": "周五",
-      "current_update": 12,
-      "my_progress": 12,
-      "total_episodes": 12,
-      "url": "https://cn.agekkkk.com/anime/e4c672743f348fd3d42f4488/play/2/2.html"
+      "url": "https://cn.agekkkk.com/anime/e4c672743f348fd3d42f4488/play/2/2.html",
+      "current_update": 13,
+      "my_progress": 13,
+      "total_episodes": null,
+      "update_day": "周五"
     },
     {
       "name": "葬送的芙莉莲第二季",
       "update_day": "周六",
-      "current_update": 9,
-      "my_progress": 9,
+      "current_update": 10,
+      "my_progress": 10,
       "total_episodes": 12,
       "url": "https://cn.agekkkk.com/anime/de236bc31b220c7115bf9cd1/play/4/1.html"
     }
