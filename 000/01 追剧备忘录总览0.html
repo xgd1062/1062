@@ -205,7 +205,6 @@
                 const animeData = result.data;
                 const exportTime = new Date(result.export_time);
                 const now = new Date();
-                const diffDays = Math.floor(Math.max(0, now - exportTime) / (1000 * 60 * 60 * 24));
                 const board = document.getElementById('scheduleBoard');
                 const today = now.getDay();
 
@@ -217,7 +216,27 @@
 
                     todayAnimes.forEach(anime => {
                         const isFinished = anime.total_episodes && anime.my_progress >= anime.total_episodes;
-                        const predictedUpdate = isFinished ? anime.current_update : (anime.current_update + diffDays);
+
+                        // 周更逻辑计算：计算间隔周数
+                        let addedEpisodes = 0;
+                        if (!isFinished) {
+                            const msPerDay = 24 * 60 * 60 * 1000;
+                            const msPerWeek = 7 * msPerDay;
+
+                            // 找到 export_time 之后第一个更新日的时间戳
+                            let firstUpdateAfterExport = new Date(exportTime);
+                            const daysToFirstUpdate = (dayInfo.day - exportTime.getDay() + 7) % 7;
+                            firstUpdateAfterExport.setDate(exportTime.getDate() + daysToFirstUpdate);
+                            firstUpdateAfterExport.setHours(0, 0, 0, 0);
+
+                            if (now >= firstUpdateAfterExport) {
+                                // 基础集数：1（代表跨过的第一个更新日）+ 之后经过的完整周数
+                                const remainingMs = now - firstUpdateAfterExport;
+                                addedEpisodes = 1 + Math.floor(remainingMs / msPerWeek);
+                            }
+                        }
+
+                        const predictedUpdate = isFinished ? anime.current_update : (anime.current_update + addedEpisodes);
                         const denominator = anime.total_episodes || predictedUpdate;
                         const progressPercent = Math.min((anime.my_progress / denominator) * 100, 100).toFixed(1);
 
@@ -226,7 +245,7 @@
                             <div class="card-title">${anime.name}</div>
                             <div>
                                 <div class="card-meta">
-                                    <span>最新: ${predictedUpdate}${diffDays > 0 && !isFinished ? '<span class="auto-tag">+' + diffDays + '</span>' : ''}</span> 
+                                    <span>最新: ${predictedUpdate}${addedEpisodes > 0 && !isFinished ? '<span class="auto-tag">+' + addedEpisodes + '</span>' : ''}</span> 
                                     <span>进度: ${anime.my_progress}/${anime.total_episodes || '??'}</span>
                                 </div>
                                 <div class="progress-bar"><div class="fill" style="width: ${progressPercent}%"></div></div>
