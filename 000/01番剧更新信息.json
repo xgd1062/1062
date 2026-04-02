@@ -1,5 +1,5 @@
 {
-  "export_time": "2026/4/2 11:46:36",
+  "export_time": "2026/4/2 11:47:08",
   "data": [
     {
       "name": "牧神记",
@@ -27,11 +27,11 @@
     },
     {
       "name": "身为魔族的我想向勇者小队的可爱女孩告白",
-      "update_day": "周三",
-      "current_update": 12,
+      "url": "https://cn.agekkkk.com/anime/a50cbb95f9176335aeec43d2/play/5/1.html",
+      "current_update": 13,
       "my_progress": 11,
-      "total_episodes": 12,
-      "url": "https://cn.agekkkk.com/anime/a50cbb95f9176335aeec43d2/play/5/1.html"
+      "total_episodes": null,
+      "update_day": "周三"
     },
     {
       "name": "师兄呀师兄",
