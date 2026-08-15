@@ -9,30 +9,12 @@
     "fav": false
   },
   {
-    "id": 1766401100014,
-    "title": "蓝奏云控制台",
-    "icon": "☁️",
-    "link": "https://pc.woozooo.com/mydisk.php",
-    "category": "存储",
-    "desc": "蓝奏云盘后台管理，用于上传、分享及管理个人云端文件",
-    "fav": false
-  },
-  {
     "id": 1768458043238,
     "title": "AA记账Pro",
     "icon": "🧾",
     "link": "./000/10 AA记账Pro.html",
     "category": "工具",
     "desc": "专业版多人分账工具，支持复杂开销分摊与结算",
-    "fav": false
-  },
-  {
-    "id": 1768401100001,
-    "title": "追剧备忘录总览",
-    "icon": "📺",
-    "link": "./000/01 追剧备忘录总览0.html",
-    "category": "娱乐",
-    "desc": "管理和记录你的动漫与影视剧观看进度",
     "fav": false
   },
   {
