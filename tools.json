@@ -33,7 +33,7 @@
     "link": "./000/01 追剧备忘录总览0.html",
     "category": "娱乐",
     "desc": "管理和记录你的动漫与影视剧观看进度",
-    "fav": true
+    "fav": false
   },
   {
     "id": 1768401100002,
@@ -114,7 +114,7 @@
     "link": "https://xgd1062.github.io/v/",
     "category": "默认",
     "desc": "基于 GitHub Pages 构建的个人工具集导航与展示中心",
-    "fav": true
+    "fav": false
   },
   {
     "id": 1768400000012,
@@ -129,9 +129,9 @@
     "id": 1768401100013,
     "title": "涂鸦手账",
     "icon": "🌐",
-    "link": "https://doo.x219.qzz.io/",
+    "link": "https://cv-2x9.pages.dev/",
     "category": "工具",
     "desc": "访问托管在 GitHub Pages 上的个人项目展示或导航页面",
-    "fav": false
+    "fav": true
   }
 ]
