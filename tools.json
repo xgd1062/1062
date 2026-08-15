@@ -63,15 +63,6 @@
     "fav": false
   },
   {
-    "id": 1768401100008,
-    "title": "GitHub 文件上传器",
-    "icon": "📂",
-    "link": "./000/08 GitHub 文件上传器.html",
-    "category": "工具",
-    "desc": "便捷地将本地文件推送到 GitHub 仓库",
-    "fav": false
-  },
-  {
     "id": 1768401100009,
     "title": "快速记账",
     "icon": "💰",
