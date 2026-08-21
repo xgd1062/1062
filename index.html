@@ -33,6 +33,46 @@
             padding: 30px 15px;
         }
 
+        /* 提示悬浮窗组件样式 */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            background: rgba(30, 41, 59, 0.95);
+            border: 1px solid var(--primary);
+            color: var(--text-main);
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            z-index: 3000;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast.success {
+            border-color: #10b981;
+        }
+
+        .toast.error {
+            border-color: #f43f5e;
+        }
+
+        .toast.info {
+            border-color: var(--primary);
+        }
+
         .container {
             max-width: 1000px;
             margin: 0 auto;
@@ -274,12 +314,6 @@
             color: white;
         }
 
-        .btn-sync {
-            background: #10b981;
-            color: white;
-        }
-
-        /* 绿色常驻 */
         .btn-add {
             background: #3b82f6;
             color: white;
@@ -308,6 +342,9 @@
 </head>
 
 <body>
+
+    <!-- 悬浮提示框 -->
+    <div id="toast" class="toast"></div>
 
     <div class="container">
         <header>
@@ -360,7 +397,6 @@
         <button class="btn-main btn-gh" onclick="toggleConfig()">⚙️ 配置</button>
         <button id="editBtn" class="btn-main btn-edit" onclick="toggleEditMode()">🛠️ 管理</button>
         <button id="addBtn" class="btn-main btn-add" onclick="addNewTool()">+ 新增</button>
-        <button id="syncBtn" class="btn-main btn-sync" onclick="saveAllData()">💾 同步云端</button>
     </div>
 
     <script>
@@ -368,6 +404,7 @@
         let isEditing = false;
         let currentCat = '全部';
         let editingId = null;
+        let syncTimer = null;
         const STORAGE_KEY = 'poet_tools_v12';
         const FILE_NAME = 'tools.json';
 
@@ -378,7 +415,22 @@
             renderAll();
             initCategories();
             document.getElementById('searchInput').oninput = () => renderAll();
+
+            // 回显配置
+            if (localStorage.getItem('gh_token')) document.getElementById('ghToken').value = localStorage.getItem('gh_token');
+            if (localStorage.getItem('gh_repo')) document.getElementById('ghRepo').value = localStorage.getItem('gh_repo');
         });
+
+        // 浮动提示框函数
+        function showToast(msg, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.className = `toast show ${type}`;
+            clearTimeout(toast.timer);
+            toast.timer = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
 
         // --- 云同步 ---
         async function fetchFromGitHub() {
@@ -398,12 +450,26 @@
             } catch (e) { document.getElementById('syncStatus').innerText = "本地模式"; }
         }
 
-        async function saveAllData() {
+        // 统一的数据保存与自动同步触发器
+        function autoSave() {
+            // 本地存储
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(allTools));
+            renderAll();
+
+            // 防抖同步云端
+            clearTimeout(syncTimer);
+            syncTimer = setTimeout(syncToGitHub, 800);
+        }
+
+        async function syncToGitHub() {
             const token = localStorage.getItem('gh_token'), repo = localStorage.getItem('gh_repo');
-            if (!token) return alert("请先配置 Token");
-            const btn = document.getElementById('syncBtn');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = "⏳ 同步中...";
+            if (!token || !repo) {
+                showToast("仅本地保存，未配置 GitHub Token", "info");
+                return;
+            }
+
+            showToast("⏳ 正在自动同步...", "info");
+            document.getElementById('syncStatus').innerText = "正在同步...";
 
             try {
                 let sha = "";
@@ -416,15 +482,19 @@
                 const putRes = await fetch(`https://api.github.com/repos/${repo}/contents/${FILE_NAME}`, {
                     method: 'PUT',
                     headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: "Update Tools", content, sha })
+                    body: JSON.stringify({ message: "Auto Sync Tools", content, sha })
                 });
+
                 if (putRes.ok) {
-                    btn.innerHTML = "✨ 同步成功";
-                    setTimeout(() => btn.innerHTML = originalText, 1500);
+                    showToast("✨ 已自动同步至云端", "success");
+                    document.getElementById('syncStatus').innerText = "云端就绪";
+                } else {
+                    showToast("❌ 同步失败，请检查配置", "error");
+                    document.getElementById('syncStatus').innerText = "同步失败";
                 }
             } catch (e) {
-                alert("同步失败");
-                btn.innerHTML = originalText;
+                showToast("❌ 网络连接异常，同步失败", "error");
+                document.getElementById('syncStatus').innerText = "网络异常";
             }
         }
 
@@ -472,18 +542,16 @@
                 const updated = JSON.parse(document.getElementById('jsonTextArea').value);
                 const idx = allTools.findIndex(t => t.id === editingId);
                 allTools[idx] = updated;
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(allTools));
-                renderAll();
                 closeEditor();
-            } catch (e) { alert("JSON 格式错误，请检查"); }
+                autoSave();
+            } catch (e) { showToast("JSON 格式错误，请检查", "error"); }
         }
 
         function deleteCurrent() {
             if (confirm("确定删除此项？")) {
                 allTools = allTools.filter(t => t.id !== editingId);
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(allTools));
-                renderAll();
                 closeEditor();
+                autoSave();
             }
         }
 
@@ -498,8 +566,8 @@
                 fav: false
             };
             allTools.unshift(newTool);
-            renderAll();
             openEditor(newTool.id);
+            autoSave();
         }
 
         // --- 辅助功能 ---
@@ -512,7 +580,10 @@
 
         async function toggleFav(id) {
             const t = allTools.find(x => x.id === id);
-            if (t) { t.fav = !t.fav; renderAll(); localStorage.setItem(STORAGE_KEY, JSON.stringify(allTools)); }
+            if (t) {
+                t.fav = !t.fav;
+                autoSave();
+            }
         }
 
         function recordHistory(id) {
@@ -548,7 +619,9 @@
         function saveConfig() {
             localStorage.setItem('gh_token', document.getElementById('ghToken').value.trim());
             localStorage.setItem('gh_repo', document.getElementById('ghRepo').value.trim());
-            location.reload();
+            toggleConfig();
+            showToast("配置已保存", "success");
+            fetchFromGitHub();
         }
     </script>
 </body>
