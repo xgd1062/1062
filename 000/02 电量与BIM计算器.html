@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <!-- 优化移动端视口配置 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>多功能在线计算器</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            /* 禁用移动端点击高亮和提升触摸流畅度 */
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            /* 使用 dvh 解决移动端浏览器地址栏遮挡问题 */
+            min-height: 100dvh;
+            padding: 16px;
+            transition: background 0.5s ease;
+        }
+
+        /* 适用于电量计算器时的背景切换 */
+        body.power-theme {
+            background: linear-gradient(135deg, #1abc9c 0%, #3498db 100%);
+        }
+
+        .main-container {
+            background-color: rgba(255, 255, 255, 0.96);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            width: 100%;
+            max-width: 480px;
+            padding: 24px 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        /* 顶部切换开关容器 */
+        .switch-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            background: rgba(0, 0, 0, 0.05);
+            padding: 6px 14px;
+            border-radius: 30px;
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .switch-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #7f8c8d;
+            cursor: pointer;
+            user-select: none;
+            transition: color 0.3s;
+        }
+
+        .switch-label.active {
+            color: #2c3e50;
+        }
+
+        /* 开关 Switch 样式 */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 46px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #3498db;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background-color: #1abc9c;
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(22px);
+        }
+
+        /* 计算器面板通用与切换 */
+        .calc-panel {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .calc-panel.active {
+            display: block;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 22px;
+            font-weight: 600;
+        }
+
+        .input-group {
+            margin: 16px 0;
+            text-align: left;
+        }
+
+        label.field-label {
+            display: block;
+            margin-bottom: 6px;
+            color: #34495e;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        /* 输入框移动端优化：防止 iOS 自动放大（必须 >= 16px） */
+        input[type="number"] {
+            width: 100%;
+            padding: 12px 14px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            -webkit-appearance: none;
+        }
+
+        /* BMI 输入框 focus */
+        #bmi-panel input[type="number"]:focus {
+            border-color: #3498db;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        /* 电量 输入框 focus */
+        #power-panel input[type="number"]:focus {
+            border-color: #1abc9c;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(26, 188, 156, 0.2);
+        }
+
+        .combined-input {
+            display: flex;
+            gap: 10px;
+        }
+
+        .combined-input input {
+            flex-grow: 1;
+        }
+
+        /* 单位选择器样式：移动端弹性换行与触控区域增大 */
+        .unit-selector {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+            padding: 6px;
+            background-color: #f4f6f6;
+            border-radius: 10px;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        .unit-option {
+            display: inline-flex;
+            align-items: center;
+            cursor: pointer;
+            font-size: 13px;
+            color: #34495e;
+            flex: 1;
+            min-width: 70px;
+        }
+
+        .unit-option input[type="radio"] {
+            display: none;
+        }
+
+        .unit-label {
+            width: 100%;
+            text-align: center;
+            padding: 8px 4px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            border: 1px solid #bdc3c7;
+            background: #fff;
+            white-space: nowrap;
+        }
+
+        .unit-option input[type="radio"]:checked+.unit-label {
+            background-color: #1abc9c;
+            color: white;
+            border-color: #16a085;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 按钮通用 */
+        .btn-calc {
+            border: none;
+            border-radius: 10px;
+            padding: 14px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin: 16px 0 10px 0;
+            transition: all 0.3s ease;
+            color: white;
+        }
+
+        .btn-bmi {
+            background: #3498db;
+        }
+
+        .btn-bmi:active {
+            background: #2980b9;
+            transform: scale(0.98);
+        }
+
+        .btn-power {
+            background: linear-gradient(to right, #1abc9c, #16a085);
+        }
+
+        .btn-power:active {
+            transform: scale(0.98);
+        }
+
+        /* BMI 结果样式 */
+        #bmi-result {
+            margin-top: 16px;
+            padding: 16px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 500;
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .bmi-value {
+            font-size: 28px;
+            font-weight: bold;
+            margin: 6px 0;
+        }
+
+        .bmi-classification {
+            padding: 8px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        /* 移动端表格自适应与防溢出 */
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-top: 16px;
+        }
+
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .info-table th,
+        .info-table td {
+            border: 1px solid #ddd;
+            padding: 8px 4px;
+            text-align: center;
+        }
+
+        .info-table th {
+            background-color: #f2f2f2;
+            white-space: nowrap;
+        }
+
+        /* 电量 结果样式 */
+        .power-result {
+            margin-top: 16px;
+            padding: 16px;
+            background-color: #ecf0f1;
+            border-radius: 12px;
+            display: none;
+            animation: fadeIn 0.5s ease;
+            border: 1px solid #bdc3c7;
+        }
+
+        .power-result.show {
+            display: block;
+        }
+
+        .power-result h2 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .result-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1abc9c;
+            word-break: break-all;
+        }
+
+        .unit {
+            font-size: 16px;
+            color: #7f8c8d;
+        }
+
+        .footer {
+            margin-top: 16px;
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 针对超小屏设备（如 iPhone SE）的特定适配 */
+        @media (max-width: 360px) {
+            .main-container {
+                padding: 18px 14px;
+            }
+
+            h1 {
+                font-size: 20px;
+            }
+
+            .unit-label {
+                font-size: 12px;
+                padding: 6px 2px;
+            }
+
+            .result-value {
+                font-size: 26px;
+            }
+        }
+    </style>
+</head>
+
+<body id="body">
+
+    <div class="main-container">
+        <!-- 切换开关组件 -->
+        <div class="switch-wrapper">
+            <span class="switch-label active" id="label-bmi" onclick="setMode(false)">BMI 计算</span>
+            <label class="switch">
+                <input type="checkbox" id="calc-toggle" onchange="toggleCalculator()">
+                <span class="slider"></span>
+            </label>
+            <span class="switch-label" id="label-power" onclick="setMode(true)">电量消耗</span>
+        </div>
+
+        <!-- 面板 1：BMI健康计算器 -->
+        <div class="calc-panel active" id="bmi-panel">
+            <h1>🏋️ BMI健康计算器</h1>
+            <div class="input-group">
+                <label class="field-label" for="height">身高 (厘米):</label>
+                <input type="number" id="height" step="0.1" placeholder="请输入身高 (厘米)" min="1" inputmode="decimal">
+            </div>
+            <div class="input-group">
+                <label class="field-label" for="weight">体重 (斤):</label>
+                <input type="number" id="weight" step="0.1" placeholder="请输入体重 (斤)" min="1" inputmode="decimal">
+            </div>
+            <button class="btn-calc btn-bmi" onclick="calculateBMI()">计算 BMI</button>
+
+            <div id="bmi-result">
+                <div class="bmi-value" id="bmi-value">0.0</div>
+                <div class="bmi-classification" id="bmi-classification">健康状态</div>
+                <div id="health-tip" style="margin-top: 8px;"></div>
+
+                <div class="table-wrapper">
+                    <table class="info-table">
+                        <tr>
+                            <th>BMI 范围</th>
+                            <th>分类</th>
+                            <th>健康风险</th>
+                        </tr>
+                        <tr>
+                            <td>&lt; 18.5</td>
+                            <td>体重过轻</td>
+                            <td>营养不良风险</td>
+                        </tr>
+                        <tr>
+                            <td>18.5 - 23.9</td>
+                            <td>健康体重</td>
+                            <td>最低风险</td>
+                        </tr>
+                        <tr>
+                            <td>24.0 - 27.9</td>
+                            <td>超重</td>
+                            <td>轻度增加</td>
+                        </tr>
+                        <tr>
+                            <td>≥ 28.0</td>
+                            <td>肥胖</td>
+                            <td>显著增加</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="footer">
+                注：根据中国成人BMI分类标准
+            </div>
+        </div>
+
+        <!-- 面板 2：电量消耗计算器 -->
+        <div class="calc-panel" id="power-panel">
+            <h1>🔌 电量消耗计算器</h1>
+
+            <div class="input-group">
+                <label class="field-label" for="power-input">设备功率</label>
+                <div class="combined-input">
+                    <input type="number" id="power-input" placeholder="例如：60" min="0.1" step="0.1" inputmode="decimal"
+                        required>
+                </div>
+                <div class="unit-selector" id="power-unit-selector">
+                    <label class="unit-option">
+                        <input type="radio" name="power_unit" value="W" checked>
+                        <span class="unit-label">瓦特 (W)</span>
+                    </label>
+                    <label class="unit-option">
+                        <input type="radio" name="power_unit" value="kW">
+                        <span class="unit-label">千瓦 (kW)</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label class="field-label" for="duration-input">使用时长</label>
+                <div class="combined-input">
+                    <input type="number" id="duration-input" placeholder="例如：5" min="0.1" step="0.1" inputmode="decimal"
+                        required>
+                </div>
+                <div class="unit-selector" id="time-unit-selector">
+                    <label class="unit-option">
+                        <input type="radio" name="time_unit" value="hour" checked>
+                        <span class="unit-label">小时 (h)</span>
+                    </label>
+                    <label class="unit-option">
+                        <input type="radio" name="time_unit" value="minute">
+                        <span class="unit-label">分钟 (min)</span>
+                    </label>
+                    <label class="unit-option">
+                        <input type="radio" name="time_unit" value="second">
+                        <span class="unit-label">秒 (s)</span>
+                    </label>
+                </div>
+            </div>
+
+            <button class="btn-calc btn-power" onclick="calculatePower()">计算耗电量 (kWh)</button>
+
+            <div class="power-result" id="power-result">
+                <h2>总耗电量结果</h2>
+                <div>
+                    <span class="result-value" id="consumption">0.0000</span>
+                    <span class="unit">千瓦时 (kWh)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 开关切换逻辑
+        function toggleCalculator() {
+            const toggle = document.getElementById('calc-toggle');
+            setMode(toggle.checked);
+        }
+
+        function setMode(isPower) {
+            const toggle = document.getElementById('calc-toggle');
+            toggle.checked = isPower;
+
+            const bmiPanel = document.getElementById('bmi-panel');
+            const powerPanel = document.getElementById('power-panel');
+            const labelBmi = document.getElementById('label-bmi');
+            const labelPower = document.getElementById('label-power');
+            const body = document.getElementById('body');
+
+            if (isPower) {
+                bmiPanel.classList.remove('active');
+                powerPanel.classList.add('active');
+                labelBmi.classList.remove('active');
+                labelPower.classList.add('active');
+                body.classList.add('power-theme');
+            } else {
+                powerPanel.classList.remove('active');
+                bmiPanel.classList.add('active');
+                labelPower.classList.remove('active');
+                labelBmi.classList.add('active');
+                body.classList.remove('power-theme');
+            }
+        }
+
+        // --- BMI 计算逻辑 ---
+        function calculateBMI() {
+            const heightCm = parseFloat(document.getElementById('height').value);
+            const weightJin = parseFloat(document.getElementById('weight').value);
+
+            if (isNaN(heightCm) || isNaN(weightJin) || heightCm <= 0 || weightJin <= 0) {
+                alert("请输入有效的数值");
+                return;
+            }
+
+            const heightM = heightCm / 100;
+            const weightKg = weightJin / 2;
+            const bmi = weightKg / (heightM * heightM);
+
+            document.getElementById('bmi-value').textContent = bmi.toFixed(1);
+
+            let classification = "";
+            let healthTip = "";
+            let bmiClass = "";
+
+            if (bmi < 18.5) {
+                classification = "体重过轻";
+                healthTip = "建议增加营养摄入，适当增重";
+                bmiClass = "underweight";
+            } else if (bmi >= 18.5 && bmi < 24) {
+                classification = "健康体重";
+                healthTip = "恭喜！保持健康的生活方式";
+                bmiClass = "healthy";
+            } else if (bmi >= 24 && bmi < 28) {
+                classification = "超重";
+                healthTip = "建议适当控制饮食，增加运动量";
+                bmiClass = "overweight";
+            } else {
+                classification = "肥胖";
+                healthTip = "建议咨询专业人士，制定科学减重计划";
+                bmiClass = "obese";
+            }
+
+            document.getElementById('bmi-classification').textContent = classification;
+            document.getElementById('health-tip').textContent = healthTip;
+
+            const classificationElement = document.getElementById('bmi-classification');
+            classificationElement.className = "bmi-classification " + bmiClass;
+
+            document.getElementById('bmi-result').style.display = "block";
+
+            const colors = {
+                underweight: "#3498db",
+                healthy: "#2ecc71",
+                overweight: "#f39c12",
+                obese: "#e74c3c"
+            };
+
+            classificationElement.style.backgroundColor = colors[bmiClass];
+            classificationElement.style.color = "white";
+        }
+
+        // --- 电量计算逻辑 ---
+        function calculatePower() {
+            const powerValue = parseFloat(document.getElementById('power-input').value);
+            const durationValue = parseFloat(document.getElementById('duration-input').value);
+
+            const powerUnit = document.querySelector('input[name="power_unit"]:checked').value;
+            const timeUnit = document.querySelector('input[name="time_unit"]:checked').value;
+
+            if (isNaN(powerValue) || isNaN(durationValue) || powerValue <= 0 || durationValue <= 0) {
+                alert("请输入有效的正数值。");
+                document.getElementById('power-result').classList.remove('show');
+                return;
+            }
+
+            let powerInWatts = 0;
+            switch (powerUnit) {
+                case 'W':
+                    powerInWatts = powerValue;
+                    break;
+                case 'kW':
+                    powerInWatts = powerValue * 1000;
+                    break;
+                default:
+                    powerInWatts = powerValue;
+            }
+
+            let durationInHours = 0;
+            switch (timeUnit) {
+                case 'hour':
+                    durationInHours = durationValue;
+                    break;
+                case 'minute':
+                    durationInHours = durationValue / 60;
+                    break;
+                case 'second':
+                    durationInHours = durationValue / 3600;
+                    break;
+                default:
+                    durationInHours = durationValue;
+            }
+
+            const consumption = (powerInWatts * durationInHours) / 1000;
+
+            document.getElementById('consumption').textContent = consumption.toFixed(4);
+            document.getElementById('power-result').classList.add('show');
+        }
+    </script>
+</body>
+
+</html>
