@@ -461,7 +461,7 @@
         <p style="font-size:0.75rem; color:var(--text-dim); margin-bottom:12px;">管理与保存修改需要配置 GitHub Token 以实现云端同步。</p>
         <input id="ghToken" type="password" placeholder="GitHub Personal Access Token"
             style="width:100%; height:38px; margin-bottom:10px; background:rgba(0,0,0,0.3); border:1px solid var(--border); border-radius:8px; color:white; padding:0 10px; font-size:0.85rem; outline:none;">
-        <input id="ghRepo" placeholder="仓库路径 (例: xgd1062/v)"
+        <input id="ghRepo" placeholder="仓库路径 (例: xgd1062/1062)"
             style="width:100%; height:38px; margin-bottom:15px; background:rgba(0,0,0,0.3); border:1px solid var(--border); border-radius:8px; color:white; padding:0 10px; font-size:0.85rem; outline:none;">
         <div style="display:flex; gap:8px;">
             <button class="btn-main" style="background:var(--primary); flex:1;" onclick="saveConfig()">保存配置</button>
@@ -483,6 +483,7 @@
         let syncTimer = null;
         const STORAGE_KEY = 'poet_tools_v12';
         const FILE_NAME = 'tools.json';
+        const DEFAULT_RAW_URL = 'https://raw.githubusercontent.com/xgd1062/1062/main/tools.json';
 
         document.addEventListener('DOMContentLoaded', async () => {
             const local = localStorage.getItem(STORAGE_KEY);
@@ -492,7 +493,6 @@
                 initCategories();
             }
 
-            // 无需 Token 即可拉取只读数据/公开仓库数据
             await fetchFromGitHub();
             renderAll();
             initCategories();
@@ -512,7 +512,6 @@
             }, 2200);
         }
 
-        // 检查配置，不存在则弹窗
         function checkConfigOrPrompt() {
             const token = localStorage.getItem('gh_token');
             const repo = localStorage.getItem('gh_repo');
@@ -526,17 +525,29 @@
 
         async function fetchFromGitHub() {
             const token = localStorage.getItem('gh_token'), repo = localStorage.getItem('gh_repo');
-            const headers = token ? { 'Authorization': `token ${token}` } : {};
-            const targetRepo = repo || 'xgd1062/v'; // 默认公开只读回退仓库
-
             document.getElementById('syncStatus').innerText = "正在拉取...";
+
             try {
-                const res = await fetch(`https://api.github.com/repos/${targetRepo}/contents/${FILE_NAME}?t=${Date.now()}`, { headers });
+                // 如果未配置令牌，直接读取指定的公开 Raw 资源地址
+                if (!token || !repo) {
+                    const res = await fetch(`${DEFAULT_RAW_URL}?t=${Date.now()}`);
+                    if (res.ok) {
+                        allTools = await res.json();
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(allTools));
+                        document.getElementById('syncStatus').innerText = "只读模式";
+                    }
+                    return;
+                }
+
+                // 如果存在配置，继续使用 GitHub REST API 直读
+                const res = await fetch(`https://api.github.com/repos/${repo}/contents/${FILE_NAME}?t=${Date.now()}`, {
+                    headers: { 'Authorization': `token ${token}` }
+                });
                 if (res.ok) {
                     const data = await res.json();
                     allTools = JSON.parse(decodeURIComponent(escape(atob(data.content))));
                     localStorage.setItem(STORAGE_KEY, JSON.stringify(allTools));
-                    document.getElementById('syncStatus').innerText = token ? "云端就绪" : "本地/只读";
+                    document.getElementById('syncStatus').innerText = "云端就绪";
                 }
             } catch (e) {
                 document.getElementById('syncStatus').innerText = "本地模式";
@@ -661,7 +672,6 @@
         }
 
         function toggleEditMode() {
-            // 如果处于未编辑状态，尝试切换到编辑状态时进行 Token 校验
             if (!isEditing) {
                 if (!checkConfigOrPrompt()) return;
             }
