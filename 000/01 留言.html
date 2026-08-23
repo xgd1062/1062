@@ -5,8 +5,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <!-- 移动端视口设置 -->
-    <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>留言发布板</title>
     <style>
         /* 全局重置 */
@@ -37,7 +36,7 @@
         }
 
         /* 页面标题 */
-        .dv>p:first-child {
+        .dv > p:first-child {
             font-size: 20px;
             font-weight: 700;
             color: #0f172a;
@@ -47,7 +46,7 @@
             gap: 8px;
         }
 
-        .dv>p:first-child::before {
+        .dv > p:first-child::before {
             content: "";
             display: inline-block;
             width: 4px;
@@ -78,7 +77,7 @@
             padding: 12px 14px;
             border: 1px solid #e2e8f0;
             border-radius: 10px;
-            font-size: 16px;
+            font-size: 16px; 
             outline: none;
             background-color: #f8fafc;
             color: #1e293b;
@@ -209,6 +208,20 @@
             margin-top: 4px;
         }
 
+        /* 打开网址按钮 */
+        .open-btn {
+            background-color: #f0fdf4;
+            color: #16a34a;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            height: 32px;
+        }
+
+        .open-btn:active {
+            background-color: #dcfce7;
+        }
+
         .copy-btn {
             background-color: #f1f5f9;
             color: #475569;
@@ -308,7 +321,7 @@
 <body>
     <div class="dv">
         <p>留言发布板</p>
-
+        
         <div class="input-card">
             <div class="input-wrapper">
                 <input type="text" maxlength="200" placeholder="撰写你的留言...">
@@ -335,7 +348,7 @@
     <div class="sync-tip" id="syncTip">✓ 同步成功</div>
 
     <script>
-        let GITHUB_CONFIG = { token: '', username: '', repo: '', path: '000/01 留言.json' };
+        let GITHUB_CONFIG = { token: '', username: '', repo: '', path: '留言.json' };
         const ul = document.getElementById('messageList');
         const input = document.querySelector('input[type="text"]');
         const span = document.getElementById('charNum');
@@ -350,6 +363,12 @@
         function getAvatarUrl(text) {
             const seed = encodeURIComponent(text || Math.random().toString());
             return `https://api.dicebear.com/7.x/miniavs/svg?seed=${seed}`;
+        }
+
+        /* 判断文本是否为纯网址 */
+        function isOnlyUrl(text) {
+            const urlPattern = /^(https?:\/\/)?([\w-]+\.)+[\w-]+(\/[\w-./?%&=]*)?$/i;
+            return urlPattern.test(text.trim());
         }
 
         function parseGithubInfoFromUrl() {
@@ -418,6 +437,10 @@
         function renderMessageUI(content) {
             const li = document.createElement('li');
             const avatarUrl = getAvatarUrl(content);
+            const isUrl = isOnlyUrl(content);
+
+            /* 根据是否为网址插入“打开”按钮 */
+            const openBtnHtml = isUrl ? `<button class="open-btn">打开</button>` : '';
 
             li.innerHTML = `
                 <div class="msg-card">
@@ -426,12 +449,24 @@
                         <p class="message-text"></p>
                     </div>
                     <div class="msg-actions">
+                        ${openBtnHtml}
                         <button class="copy-btn">复制</button>
                         <button class="xx">删除</button>
                     </div>
                 </div>`;
             li.querySelector('.message-text').textContent = content;
             ul.insertBefore(li, ul.firstChild);
+
+            /* 若是网址，绑定打开事件 */
+            if (isUrl) {
+                li.querySelector('.open-btn').onclick = () => {
+                    let targetUrl = content.trim();
+                    if (!/^https?:\/\//i.test(targetUrl)) {
+                        targetUrl = 'https://' + targetUrl;
+                    }
+                    window.open(targetUrl, '_blank');
+                };
+            }
 
             /* 复制功能 */
             li.querySelector('.copy-btn').onclick = () => {
@@ -447,17 +482,14 @@
 
             deleteBtn.onclick = async () => {
                 if (!deleteBtn.classList.contains('confirming')) {
-                    // 第一次点击：切换为确认状态
                     deleteBtn.classList.add('confirming');
                     deleteBtn.textContent = '确认删除？';
-
-                    // 3 秒内未点击则复原
+                    
                     deleteTimer = setTimeout(() => {
                         deleteBtn.classList.remove('confirming');
                         deleteBtn.textContent = '删除';
                     }, 3000);
                 } else {
-                    // 第二次点击：执行真正删除
                     clearTimeout(deleteTimer);
                     li.remove();
                     const current = Array.from(ul.querySelectorAll('.message-text')).map(el => el.textContent);
@@ -476,10 +508,10 @@
         };
 
         input.oninput = () => span.innerHTML = input.value.length;
-        // 优化后的粘贴逻辑（适配移动端权限与 Safari）
+
+        /* 兼容移动端的粘贴逻辑 */
         pasteBtn.onclick = async () => {
             try {
-                // 1. 尝试使用现代 Clipboard API
                 if (navigator.clipboard && navigator.clipboard.readText) {
                     const text = await navigator.clipboard.readText();
                     if (text) {
@@ -490,11 +522,11 @@
                 }
                 throw new Error('Clipboard API unavailable');
             } catch (err) {
-                // 2. 移动端权限被拒绝或不支持时的提示降级
                 alert('受浏览器安全限制，请在输入框中【长按】并选择【粘贴】');
                 input.focus();
             }
         };
+
         window.onload = initGithubConfig;
     </script>
 </body>
