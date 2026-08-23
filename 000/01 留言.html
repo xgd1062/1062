@@ -5,7 +5,8 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <!-- 移动端视口设置 -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>留言发布板</title>
     <style>
         /* 全局重置 */
@@ -36,7 +37,7 @@
         }
 
         /* 页面标题 */
-        .dv > p:first-child {
+        .dv>p:first-child {
             font-size: 20px;
             font-weight: 700;
             color: #0f172a;
@@ -46,7 +47,7 @@
             gap: 8px;
         }
 
-        .dv > p:first-child::before {
+        .dv>p:first-child::before {
             content: "";
             display: inline-block;
             width: 4px;
@@ -77,7 +78,7 @@
             padding: 12px 14px;
             border: 1px solid #e2e8f0;
             border-radius: 10px;
-            font-size: 16px; 
+            font-size: 16px;
             outline: none;
             background-color: #f8fafc;
             color: #1e293b;
@@ -321,7 +322,7 @@
 <body>
     <div class="dv">
         <p>留言发布板</p>
-        
+
         <div class="input-card">
             <div class="input-wrapper">
                 <input type="text" maxlength="200" placeholder="撰写你的留言...">
@@ -348,7 +349,7 @@
     <div class="sync-tip" id="syncTip">✓ 同步成功</div>
 
     <script>
-        let GITHUB_CONFIG = { token: '', username: '', repo: '', path: '留言.json' };
+        let GITHUB_CONFIG = { token: '', username: '', repo: '', path: '000/01 留言.json' };
         const ul = document.getElementById('messageList');
         const input = document.querySelector('input[type="text"]');
         const span = document.getElementById('charNum');
@@ -484,7 +485,7 @@
                 if (!deleteBtn.classList.contains('confirming')) {
                     deleteBtn.classList.add('confirming');
                     deleteBtn.textContent = '确认删除？';
-                    
+
                     deleteTimer = setTimeout(() => {
                         deleteBtn.classList.remove('confirming');
                         deleteBtn.textContent = '删除';
