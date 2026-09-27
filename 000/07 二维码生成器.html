@@ -5,13 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>极简二维码生成器 Pro - 2026 版</title>
-    <script src="https://cdn.bootcdn.net/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.0/qrcode.js"></script>
     <style>
         :root {
             --primary: #667eea;
             --secondary: #764ba2;
             --accent: #00f2fe;
-            --bg: #f0f2f5;
             --danger: #e53e3e;
         }
 
@@ -85,11 +84,6 @@
         textarea.over {
             border-color: #fc8181;
             background: #fff5f5;
-        }
-
-        textarea.over:focus {
-            border-color: var(--danger);
-            box-shadow: 0 0 0 4px rgba(229, 62, 62, 0.15);
         }
 
         .input-meta {
@@ -238,6 +232,15 @@
             font-weight: 700;
         }
 
+        .placeholder code {
+            background: #fff5f5;
+            color: #c53030;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            word-break: break-all;
+        }
+
         .action-btns {
             margin-top: 20px;
             display: flex;
@@ -275,8 +278,7 @@
         }
 
         #qrcode img {
-            padding: 10px;
-            background: white;
+            display: block;
             border-radius: 8px;
         }
     </style>
@@ -291,8 +293,8 @@
         <textarea id="inputField" placeholder="输入网址、文本或 Wi-Fi 信息..."></textarea>
 
         <div class="input-meta" id="inputMeta">
-            <span>已用 <b id="charCount">0</b> / <b id="charLimit">1273</b> 字符</span>
-            <span class="hint">（中文按 3 字符计）</span>
+            <span>已用 <b id="charCount">0</b> / <b id="charLimit">1273</b> 字节</span>
+            <span class="hint">（中文按 3 字节计）</span>
         </div>
 
         <div class="config-row">
@@ -322,7 +324,35 @@
     </div>
 
     <script>
-        /* ---------- 元素引用（只获取一次，绝不再替换它们的父元素） ---------- */
+        /* =========================================================
+         * 库检测：自动识别当前加载的是哪个 QRCode
+         * ========================================================= */
+        const libInfo = (function () {
+            if (typeof QRCode === 'undefined') {
+                return { ok: false, name: 'none', msg: 'QRCode 未定义，脚本未加载' };
+            }
+            // node-qrcode：QRCode 是对象，带 toDataURL 方法
+            if (typeof QRCode.toDataURL === 'function') {
+                return { ok: true, name: 'node-qrcode', api: 'toDataURL' };
+            }
+            // qrcodejs：QRCode 是构造函数，但会误算 UTF-8 长度
+            if (typeof QRCode === 'function') {
+                return {
+                    ok: false,
+                    name: 'qrcodejs',
+                    msg: '检测到 qrcodejs（有 UTF-8 容量计算 bug），请换成 node-qrcode'
+                };
+            }
+            return {
+                ok: false,
+                name: 'unknown',
+                msg: 'QRCode 类型异常：' + typeof QRCode
+            };
+        })();
+
+        console.log('[QR] 库检测结果：', libInfo);
+
+        /* ---------- DOM 引用 ---------- */
         const input = document.getElementById('inputField');
         const container = document.getElementById('qrcode');
         const wrapper = document.getElementById('wrapper');
@@ -333,21 +363,12 @@
         const charCountEl = document.getElementById('charCount');
         const charLimitEl = document.getElementById('charLimit');
 
-        /* ---------- 容量配置 ---------- */
-        const MAX_BYTES_BY_LEVEL = { L: 2953, M: 2331, Q: 1663, H: 1273 };
-        const ECC_NAME = 'H';
-        const MAX_BYTES = MAX_BYTES_BY_LEVEL[ECC_NAME];
-
-        // 若 QRCode 库加载失败则使用默认值 2（H 级），避免脚本直接崩溃
-        const ECC_LEVEL =
-            (typeof QRCode !== 'undefined' && QRCode.CorrectLevel)
-                ? QRCode.CorrectLevel[ECC_NAME]
-                : 2;
-
-        // 初始化上限显示
+        /* ---------- 纠错等级与容量 ---------- */
+        const ECC_LEVEL = 'H';
+        const MAX_BYTES = 1273;
         charLimitEl.textContent = MAX_BYTES;
 
-        /* ---------- 工具函数 ---------- */
+        /* ---------- UTF-8 字节长度 ---------- */
         function getByteLength(str) {
             let bytes = 0;
             for (const ch of str) {
@@ -375,35 +396,70 @@
                 `<span class="placeholder-icon">${icon}</span><p>${html}</p>`;
         }
 
-        /* ---------- 关键修复：直接改 textContent，绝不替换 innerHTML ---------- */
+        /* ---------- 字符计数 ---------- */
         function updateCounter() {
             const used = getByteLength(input.value.trim());
             charCountEl.textContent = used;
             charLimitEl.textContent = MAX_BYTES;
-
             const over = used > MAX_BYTES;
             inputMeta.classList.toggle('over', over);
             input.classList.toggle('over', over);
-
             return { used, over };
         }
 
-        /* ---------- 生成二维码 ---------- */
-        function updateQR() {
+        /* ---------- 请求令牌：避免快速输入的竞态 ---------- */
+        let genToken = 0;
+
+        /* ---------- 统一的生成入口（支持两种库） ---------- */
+        function generateQR(text, fg, bg) {
+            return new Promise((resolve, reject) => {
+                /* --- node-qrcode：优先 --- */
+                if (typeof QRCode.toDataURL === 'function') {
+                    QRCode.toDataURL(text, {
+                        errorCorrectionLevel: ECC_LEVEL,
+                        width: 220,
+                        margin: 1,
+                        color: { dark: fg, light: bg }
+                    }).then(resolve).catch(reject);
+                    return;
+                }
+                /* --- qrcodejs：兜底（虽然容量有 bug，但短内容可用） --- */
+                if (typeof QRCode === 'function') {
+                    try {
+                        const tmp = document.createElement('div');
+                        new QRCode(tmp, {
+                            text: text,
+                            width: 220,
+                            height: 220,
+                            colorDark: fg,
+                            colorLight: bg,
+                            correctLevel: 2
+                        });
+                        setTimeout(() => {
+                            const img = tmp.querySelector('img');
+                            const canvas = tmp.querySelector('canvas');
+                            if (img && img.src) resolve(img.src);
+                            else if (canvas) resolve(canvas.toDataURL('image/png'));
+                            else reject(new Error('qrcodejs 未生成图像'));
+                        }, 50);
+                    } catch (e) {
+                        reject(e);
+                    }
+                    return;
+                }
+                reject(new Error('没有可用的 QRCode 库'));
+            });
+        }
+
+        /* ---------- 主更新逻辑 ---------- */
+        async function updateQR() {
             const content = input.value.trim();
             const fg = document.getElementById('fgColor').value;
             const bg = document.getElementById('bgColor').value;
 
-            const used = getByteLength(content);
-            const over = used > MAX_BYTES;
-
-            // 同步计数显示
-            charCountEl.textContent = used;
-            charLimitEl.textContent = MAX_BYTES;
-            inputMeta.classList.toggle('over', over);
-            input.classList.toggle('over', over);
-
+            const { used, over } = updateCounter();
             container.innerHTML = "";
+            const myToken = ++genToken;
 
             /* ---- 空状态 ---- */
             if (!content) {
@@ -422,37 +478,40 @@
                 dlBtn.style.display = 'none';
 
                 const overflow = used - MAX_BYTES;
-                showPlaceholder(
-                    '⚠️',
+                showPlaceholder('⚠️',
                     `内容超出二维码容量<br>
-                     <span class="big-num">当前 ${used} 字符</span><br>
-                     上限 ${MAX_BYTES} 字符（纠错等级 ${ECC_NAME}）<br>
-                     超出 <b>${overflow}</b> 字符，请精简内容`,
-                    true
-                );
+                     <span class="big-num">当前 ${used} 字节</span><br>
+                     上限 ${MAX_BYTES} 字节（纠错等级 ${ECC_LEVEL}）<br>
+                     超出 <b>${overflow}</b> 字节，请精简内容`, true);
                 return;
             }
 
-            /* ---- 库加载失败 ---- */
-            if (typeof QRCode === 'undefined') {
+            /* ---- 库检测失败：显示具体原因 ---- */
+            if (!libInfo.ok) {
                 wrapper.classList.remove('active');
                 wrapper.classList.add('error');
                 scanner.style.display = 'none';
                 dlBtn.style.display = 'none';
-                showPlaceholder('⚠️', '二维码库加载失败，请检查网络后刷新', true);
+
+                showPlaceholder('⚠️',
+                    `二维码库不可用<br>
+                     检测到：<code>${libInfo.name}</code><br>
+                     ${libInfo.msg || ''}<br>
+                     <span style="font-size:12px;color:#718096;">
+                       请下载 node-qrcode 版的 qrcode.min.js
+                     </span>`, true);
                 return;
             }
 
             /* ---- 正常生成 ---- */
             try {
-                new QRCode(container, {
-                    text: content,
-                    width: 220,
-                    height: 220,
-                    colorDark: fg,
-                    colorLight: bg,
-                    correctLevel: ECC_LEVEL
-                });
+                const dataUrl = await generateQR(content, fg, bg);
+                if (myToken !== genToken) return;
+
+                const img = document.createElement('img');
+                img.src = dataUrl;
+                img.alt = 'QR Code';
+                container.appendChild(img);
 
                 placeholder.style.display = 'none';
                 placeholder.classList.remove('warn');
@@ -461,31 +520,30 @@
                 scanner.style.display = 'block';
                 dlBtn.style.display = 'flex';
             } catch (err) {
-                console.error("生成失败:", err);
+                if (myToken !== genToken) return;
+
+                console.error('生成失败:', err);
                 wrapper.classList.remove('active');
                 wrapper.classList.add('error');
                 scanner.style.display = 'none';
                 dlBtn.style.display = 'none';
 
-                showPlaceholder(
-                    '⚠️',
-                    `生成失败：内容超出容量<br>
-                     <span class="big-num">当前 ${used} 字符</span><br>
-                     上限 ${MAX_BYTES} 字符（纠错等级 ${ECC_NAME}）`,
-                    true
-                );
+                const msg = (err && err.message) ? err.message : String(err);
+                showPlaceholder('⚠️',
+                    `生成失败：<br>
+                     <code>${msg}</code><br>
+                     <span class="big-num">当前 ${used} 字节</span><br>
+                     上限 ${MAX_BYTES} 字节（纠错等级 ${ECC_LEVEL}）`, true);
             }
         }
 
         /* ---------- 下载 ---------- */
         function downloadImage() {
             const img = container.querySelector('img');
-            const canvas = container.querySelector('canvas');
-            if (!img && !canvas) return;
-
+            if (!img) return;
             const link = document.createElement('a');
             link.download = 'qrcode_download.png';
-            link.href = img ? img.src : canvas.toDataURL("image/png");
+            link.href = img.src;
             link.click();
         }
 
@@ -497,19 +555,27 @@
             input.focus();
         }
 
-        /* ---------- 事件监听 ---------- */
-        const debouncedUpdateQR = debounce(updateQR, 400);
+        /* ---------- 事件绑定 ---------- */
+        const debouncedUpdateQR = debounce(updateQR, 300);
 
         input.addEventListener('input', () => {
-            updateCounter();      // 计数即时更新，不防抖
-            debouncedUpdateQR();  // 二维码延迟生成
+            updateCounter();
+            debouncedUpdateQR();
         });
 
         document.getElementById('fgColor').addEventListener('change', updateQR);
         document.getElementById('bgColor').addEventListener('change', updateQR);
 
-        /* ---------- 初始化 ---------- */
+        /* ---------- 初始化：如果库有问题，直接显示出来 ---------- */
         updateCounter();
+
+        if (!libInfo.ok) {
+            wrapper.classList.add('error');
+            showPlaceholder('⚠️',
+                `二维码库不可用<br>
+                 检测到：<code>${libInfo.name}</code><br>
+                 ${libInfo.msg || ''}`, true);
+        }
     </script>
 </body>
 
